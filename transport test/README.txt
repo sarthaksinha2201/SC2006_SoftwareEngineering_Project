@@ -1,7 +1,11 @@
 General idea if we implement routing caculations:
 
+
+
 This is just a rough test on whether it works, I am not sure about the tech stack we using yet.
 For now, I think it works well if given block and the street. 
+
+Make a .env file.(this should contain your onemap api token)
 Run python app.py
 
 (The links are generated with Chatgpt, but probably codable to auto run later on I think, I am using flask rn so it generates a json file)

@@ -5,11 +5,11 @@ General idea if we implement routing caculations:
 This is just a rough test on whether it works, I am not sure about the tech stack we using yet.
 For now, I think it works well if given block and the street. 
 
-Make a .env file.(this should contain your onemap api token)
-Run python app.py
+-Make a .env file.(this should contain your onemap api token)
+-Run python app.py
 
 (The links are generated with Chatgpt, but probably codable to auto run later on I think, I am using flask rn so it generates a json file)
-curl.exe "http://127.0.0.1:5000/search?location=Blk%20406%20Pandan%20Gardens" in powershell, to get the latitude and longitude
+-curl.exe "http://127.0.0.1:5000/search?location=Blk%20406%20Pandan%20Gardens" in powershell, to get the latitude and longitude
 
 Output:
 
@@ -26,7 +26,7 @@ Output:
   ]
 }
 
-curl.exe "http://127.0.0.1:5000/transport?lat=1.309254654600818&lon=103.7676627297488" will generate a json file that looks like this.
+-curl.exe "http://127.0.0.1:5000/transport?lat=1.309254654600818&lon=103.7676627297488" will generate a json file that looks like this.
 
 output:
 

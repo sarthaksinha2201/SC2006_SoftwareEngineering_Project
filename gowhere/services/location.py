@@ -16,8 +16,10 @@ word-for-word match (match_place); anything else is left unresolved so the event
 discarded and logged, rather than placed somewhere wrong.
 """
 import re
+import time
 
-from gowhere.adapters.onemap import OneMapAdapter
+from gowhere.adapters.http import HttpError
+from gowhere.adapters.onemap import REQUEST_TIME, OneMapAdapter
 from gowhere.etl.addresses import match_place, match_postal, normalise_place
 
 POSTAL = re.compile(r"\b(\d{6})\b")
@@ -28,6 +30,10 @@ _NOISE = re.compile(
     r"|\([^)]*\)",
     re.IGNORECASE)
 MIN_TRIMMED_WORDS = 2
+# After OneMap fails to answer a postal lookup, fail the same lookup at once for this
+# long instead of waiting on the network again: reloading a page or moving a weight
+# slider while offline then costs nothing, and the lookup recovers on its own.
+FAILURE_MEMORY_S = 60
 
 
 def _clean(text):
@@ -55,18 +61,32 @@ def candidate_queries(venue, address):
 
 
 class LocationService:
-    def __init__(self, adapter=None, cache=None, aliases=None):
+    def __init__(self, adapter=None, cache=None, aliases=None, clock=time.monotonic):
         self.adapter = adapter or OneMapAdapter()
         self.cache = cache                   # SearchCache for public venue queries, or None
         self.aliases = {normalise_place(k): v for k, v in (aliases or {}).items()}
         self._postal = {}                    # this session's postal lookups, memory only
+        self._postal_failed = {}             # postal -> when OneMap last failed, memory only
+        self._clock = clock
+
+    @classmethod
+    def for_session(cls):
+        """One user's service in the web app: request-time OneMap settings."""
+        return cls(OneMapAdapter(**REQUEST_TIME))
 
     # -- a user's own postal code: memory only ----------------------------------------
     def postal(self, postal):
         """(lat, lon) of a postal code, or None if OneMap has no such code.
         Raises HttpError if OneMap cannot be reached."""
         if postal not in self._postal:
-            response = self.adapter.search(postal, redact=True)
+            failed = self._postal_failed.get(postal)
+            if failed is not None and self._clock() - failed < FAILURE_MEMORY_S:
+                raise HttpError("OneMap was unreachable moments ago")
+            try:
+                response = self.adapter.search(postal, redact=True)
+            except HttpError:
+                self._postal_failed[postal] = self._clock()
+                raise
             match = match_postal(postal, response.get("results", []))
             self._postal[postal] = (match["lat"], match["lon"]) if match else None
         return self._postal[postal]

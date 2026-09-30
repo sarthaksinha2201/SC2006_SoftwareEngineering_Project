@@ -33,7 +33,7 @@ def create_app(overrides=None):
         SESSION_COOKIE_SECURE=os.getenv("GOWHERE_HTTPS") == "1",
         ROUTER_FACTORY=CommuteRouter,
         EVENTS_PATH=config.EVENTS_PATH,
-        LOCATION_FACTORY=LocationService,     # per session: postal lookups in memory only
+        LOCATION_FACTORY=LocationService.for_session,   # per session: postal lookups in memory only
         EVENT_ROUTER_FACTORY=EventRouter,     # per session
         PARKING_FACTORY=ParkingService,       # one per app: public data, shared cache
         NOW=sgt_now,

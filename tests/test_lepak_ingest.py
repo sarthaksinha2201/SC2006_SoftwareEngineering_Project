@@ -11,6 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from gowhere.adapters.http import HttpError
 from gowhere.adapters.llm import LlmAdapter, LlmError
 from gowhere.config import ROOT
 from gowhere.etl.addresses import match_place
@@ -492,3 +493,33 @@ def test_llm_adapter_without_a_key(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     with pytest.raises(LlmError, match="ANTHROPIC_API_KEY"):
         LlmAdapter().call_tool("s", "u", TOOL)
+
+
+def test_a_failed_postal_lookup_is_remembered_briefly():
+    t = [0.0]
+    search = RecordedSearch({}, fail=True)
+    service = LocationService(search, clock=lambda: t[0])
+    for _ in range(3):
+        with pytest.raises(HttpError):
+            service.postal("048583")
+    assert len(search.queries) == 1            # no second wait on a dead network
+    t[0] = 61.0
+    search.fail = False
+    search.responses = {"048583": {"results": [_r("X", postal="048583")]}}
+    assert service.postal("048583") is not None
+
+
+def test_request_time_onemap_gives_up_after_one_retry():
+    import requests as rq
+    from gowhere.adapters.onemap import REQUEST_TIME, OneMapAdapter
+
+    class Dead:
+        calls = 0
+
+        def get(self, *a, **kw):
+            Dead.calls += 1
+            raise rq.ConnectionError("no network")
+    with pytest.raises(HttpError):
+        OneMapAdapter(Dead(), token="t", min_interval_s=0, sleep=lambda s: None,
+                      **REQUEST_TIME).search("048583", redact=True)
+    assert Dead.calls == 2

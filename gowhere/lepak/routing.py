@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, time, timedelta
 
 from gowhere.adapters.http import HttpError
-from gowhere.adapters.onemap import OneMapAdapter
+from gowhere.adapters.onemap import REQUEST_TIME, OneMapAdapter
 from gowhere.etl.geo import haversine_m
 from gowhere.scoring.stats import round0
 
@@ -97,7 +97,7 @@ class EventRouter:
     """Routes one user's starting point to many events, in parallel. One per session."""
 
     def __init__(self, adapter=None, max_workers=MAX_WORKERS):
-        self.adapter = adapter or OneMapAdapter(min_interval_s=0)
+        self.adapter = adapter or OneMapAdapter(min_interval_s=0, **REQUEST_TIME)
         self.max_workers = max_workers
 
     def route(self, origin, destination, mode, departure):

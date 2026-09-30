@@ -16,11 +16,12 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
 from gowhere.adapters.http import HttpError
-from gowhere.adapters.onemap import OneMapAdapter
-from gowhere.etl.addresses import expand_street, match_postal
+from gowhere.adapters.onemap import REQUEST_TIME, OneMapAdapter
+from gowhere.etl.addresses import expand_street
 from gowhere.etl.geo import LocalProjection
 from gowhere.scoring.base import InvalidRequest, ScoringStrategy, TextPattern, select_by_area
 from gowhere.scoring.stats import round1
+from gowhere.services.location import LocationService
 
 MODES = {"pt": "public transport", "drive": "car"}
 BEST_MINUTES, WORST_MINUTES = 20.0, 80.0
@@ -55,20 +56,17 @@ class CommuteRouter:
 
     def __init__(self, adapter=None, departure=None, max_workers=4):
         # No pacing: at most 4 calls per comparison, far under OneMap's 250/min.
-        self.adapter = adapter or OneMapAdapter(min_interval_s=0)
+        self.adapter = adapter or OneMapAdapter(min_interval_s=0, **REQUEST_TIME)
         self.departure = departure
         self.max_workers = max_workers
-        self._located = {}      # postal -> (lat, lon) or None when OneMap has no match
+        # The shared Resolve Location path; holds the postal code in memory only.
+        self.locations = LocationService(self.adapter)
         self._minutes = {}      # (area, postal, mode) -> minutes or None when unroutable
 
     def locate(self, postal):
         """(lat, lon) of a postal code, or None if OneMap has no such postal code.
         Raises HttpError if OneMap cannot be reached."""
-        if postal not in self._located:
-            response = self.adapter.search(postal, redact=True)
-            match = match_postal(postal, response.get("results", []))
-            self._located[postal] = (match["lat"], match["lon"]) if match else None
-        return self._located[postal]
+        return self.locations.postal(postal)
 
     def minutes(self, origins, postal, mode):
         """{area: minutes or None}. origins: {area: (lat, lon)}."""

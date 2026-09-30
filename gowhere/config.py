@@ -15,8 +15,12 @@ RAW_HDB_PROPERTY = "hdb_property_information"
 RAW_MRT_EXITS = "lta_mrt_station_exits"
 RAW_PLANNING_AREAS = "ura_mp2019_planning_areas"
 
-# Walking model (DECISIONS.md section 4).
-DETOUR_FACTOR = 1.3
+# Walking model (DECISIONS.md section 4). The detour factor is the median ratio of
+# OneMap walking-route distance to straight-line distance over 200 sampled blocks;
+# it replaced a 1.3 placeholder. Re-run `python -m gowhere.etl.calibrate` to check it.
+DETOUR_FACTOR = 1.39
+DETOUR_FACTOR_CALIBRATED_ON = "2026-09-30"
+DETOUR_FACTOR_SOURCE = "median of 200 OneMap walking routes; docs/detour-calibration.md"
 WALK_SPEED_M_PER_MIN = 80.0
 WALK_THRESHOLD_MIN = 10.0
 

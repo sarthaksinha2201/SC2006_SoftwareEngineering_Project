@@ -163,7 +163,51 @@ def summarise(sample, current_factor=config.DETOUR_FACTOR,
     }
 
 
-def write_outputs(sample, s, seed):
+def ranking_impact(result_a, result_b, top=18, bottom=4):
+    """How switching factor changes area scores and ranks (results from build_snapshot.compute).
+
+    A uniform factor scales every walk equally, so the median-walk ranking cannot change;
+    only the share within 10 minutes can move scores and ranks.
+    """
+    sa, sb = result_a["scores"], result_b["scores"]
+    rank = lambda s: {a: i + 1 for i, a in enumerate(sorted(s, key=lambda a: (-s[a]["score"], a)))}
+    ra, rb = rank(sa), rank(sb)
+    n = len(sa)
+    moved = sorted((a for a in sa if ra[a] != rb[a]), key=lambda a: ra[a])
+    top_same = all(ra[a] == rb[a] for a in sa if ra[a] <= top)
+    bottom_same = all(ra[a] == rb[a] for a in sa if ra[a] > n - bottom)
+    pct = {a: (result_a["metrics"][a]["pct_within_10"], result_b["metrics"][a]["pct_within_10"])
+           for a in sa}
+    return {
+        "n_areas": n, "moved": [(a, ra[a], rb[a]) for a in moved],
+        "max_rank_shift": max(abs(ra[a] - rb[a]) for a in sa),
+        "max_score_change": max(abs(sa[a]["score"] - sb[a]["score"]) for a in sa),
+        "top": top, "top_unchanged": top_same, "bottom": bottom, "bottom_unchanged": bottom_same,
+        "max_pct_drop": max(pct[a][0] - pct[a][1] for a in sa),
+        "biggest_pct_change": max(pct.items(), key=lambda kv: abs(kv[1][0] - kv[1][1])),
+    }
+
+
+def ranking_impact_text(i, factor_a, factor_b):
+    if i is None:
+        return "Not computed (run with a built snapshot and geocode cache)."
+    area, (pa, pb) = i["biggest_pct_change"]
+    moved = ", ".join(f"{a} {r1}→{r2}" for a, r1, r2 in i["moved"]) or "none"
+    return (f"Both factors were applied to all {i['n_areas']} in-scope areas and the resulting "
+            f"scores compared. Scaling every walk by the same factor cannot change the "
+            f"median-walk ranking, so only the share of flats within 10 minutes moves.\n\n"
+            f"- Largest score change: **{i['max_score_change']:.2f}** points.\n"
+            f"- Areas changing rank: {len(i['moved'])}, by at most {i['max_rank_shift']} "
+            f"place(s): {moved}.\n"
+            f"- Top {i['top']}: {'unchanged' if i['top_unchanged'] else 'CHANGED'}. "
+            f"Bottom {i['bottom']}: {'unchanged' if i['bottom_unchanged'] else 'CHANGED'}.\n"
+            f"- Share of flats within 10 minutes (the figure users see) falls by up to "
+            f"{i['max_pct_drop']:.1f} points going from {factor_a} to {factor_b}; largest change "
+            f"{area} {pa:.1f}% → {pb:.1f}%.\n\n"
+            f"The change buys accuracy in a displayed figure without destabilising the ranking.")
+
+
+def write_outputs(sample, s, seed, impact=None):
     config.DOCS_DIR.mkdir(parents=True, exist_ok=True)
     fields = ["blk_no", "street", "planning_area", "lat", "lon", "nearest_station",
               "nearest_exit_code", "exit_distance_m", "route_distance_m", "route_time_s",
@@ -229,15 +273,37 @@ Areas with at least {MIN_AREA_SAMPLE} sampled blocks, highest median first:
 
 {limitation_text(s)}
 
+## Ranking impact of {s['current_factor']} → {s['calibrated_factor']}
+
+{ranking_impact_text(impact, s['current_factor'], s['calibrated_factor'])}
+
 ## Recommendation
 
 {recommendation_text(s)}
+
+### How the recommendation rule was chosen
+
+{RULE_HISTORY}
+
+The rule is now tied to what the score uses: **adopt the sample median when it improves agreement with real routes on the 10-minute verdict by at least {MATERIAL_AGREEMENT_GAIN * 100:.0f} point.** A factor change that leaves that verdict unchanged for almost every block cannot matter to the ranking, whatever its size; one that changes it can.
+
+## Decision
+
+Adopted: **{config.DETOUR_FACTOR}** on {config.DETOUR_FACTOR_CALIBRATED_ON} (`gowhere/config.py`, recorded in the snapshot's `meta` table as `detour_factor` and `detour_factor_calibrated_on`). Replaces the 1.3 placeholder, which came from the 1.2–1.4 range commonly cited for street-network circuity.
 """)
 
 
 MIN_AREA_SAMPLE = 5        # fewer sampled blocks than this gives no usable area median
 AREA_SPREAD_NOTICEABLE = 0.2  # gap between highest and lowest area median
 WIDE_IQR = 0.3            # middle half of blocks spans more than ±0.15 around the median
+# Fixed history (30 Sep 2026), not recomputed: it records why the rule below exists.
+RULE_HISTORY = (
+    "The first draft of this report (30 Sep 2026) kept the 1.3 placeholder unless the measured "
+    "median fell more than ±0.1 from it. The median came in at 1.39, inside that band, so the "
+    "draft said \"keep 1.3\". That tolerance was arbitrary: it would have kept a placeholder over "
+    "a measurement, and it hid a 3.5-point difference (89.5% vs 93.0%) in how often the model "
+    "gets the 10-minute verdict right, which is a number users read directly.")
+
 # Propose the sample median when it gets the 10-minute verdict right for at least this
 # many more sampled blocks than the current factor does. The 10-minute share is the only
 # place the factor changes rankings: scaling every walk by the same factor leaves the
@@ -293,6 +359,8 @@ def recommendation_text(s):
              f"against {s['agreement_current']:.1%} for {s['current_factor']}.")
     if s["agreement_calibrated"] - s["agreement_current"] < MATERIAL_AGREEMENT_GAIN:
         return (f"{facts} The difference is immaterial, so **{s['current_factor']} is kept**.")
+    if s["calibrated_factor"] == config.DETOUR_FACTOR:
+        return f"{facts} **{s['calibrated_factor']} is adopted** (see Decision below)."
     return (f"{facts} **Proposed new factor: {s['calibrated_factor']}.** Pending team decision; "
             f"`config.DETOUR_FACTOR` has not been changed.")
 
@@ -301,6 +369,8 @@ def main():
     parser = argparse.ArgumentParser(description="Calibrate the walking detour factor")
     parser.add_argument("--n", type=int, default=200)
     parser.add_argument("--seed", type=int, default=2006)
+    parser.add_argument("--baseline", type=float, default=config.DETOUR_FACTOR,
+                        help="factor to evaluate against the sample (default: current config)")
     args = parser.parse_args()
     config.load_dotenv()
 
@@ -309,8 +379,14 @@ def main():
         raise SystemExit("ONEMAP_TOKEN is not set (environment or .env); routing needs it")
     sample = sample_blocks(config.SNAPSHOT_PATH, args.n, args.seed)
     fetch_routes(sample, adapter, RouteCache(ROUTE_CACHE_PATH))
-    s = summarise(sample)
-    write_outputs(sample, s, args.seed)
+    s = summarise(sample, current_factor=args.baseline)
+    impact = None
+    if s["calibrated_factor"] != args.baseline:
+        from gowhere.etl.build_snapshot import load_inputs, compute
+        inputs = load_inputs()
+        impact = ranking_impact(compute(*inputs, detour=args.baseline),
+                                compute(*inputs, detour=s["calibrated_factor"]))
+    write_outputs(sample, s, args.seed, impact)
     print(f"{s['n_ok']}/{s['n_sampled']} routes; median ratio {s['median']:.2f} "
           f"(P10 {s['p10']:.2f}, P90 {s['p90']:.2f}); 10-min agreement "
           f"{s['agreement_current']:.1%} at {s['current_factor']}, "

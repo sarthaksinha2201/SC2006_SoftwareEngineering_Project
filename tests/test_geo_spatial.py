@@ -23,7 +23,7 @@ def test_haversine_one_degree_latitude():
 
 
 def test_walk_minutes_model():
-    assert walk_minutes(800) == pytest.approx(800 * 1.3 / 80)
+    assert walk_minutes(800) == pytest.approx(800 * 1.39 / 80)
     assert walk_minutes(800, detour=1.0) == 10.0
 
 
@@ -59,7 +59,7 @@ def test_compute_places_blocks_and_logs_unplaced():
     assert {b["blk_no"]: b["reason"] for b in out["unplaced"]} == {
         "3": "geocode no_match", "4": "outside every planning area"}
     b1 = next(b for b in out["placed"] if b["blk_no"] == "1")
-    assert b1["walk_min"] == pytest.approx(haversine_m(1.35, 103.75, 1.355, 103.75) * 1.3 / 80)
+    assert b1["walk_min"] == pytest.approx(haversine_m(1.35, 103.75, 1.355, 103.75) * 1.39 / 80)
     # EMPTY has no HDB blocks, so it is out of scope and gets no score
     assert set(out["scores"]) == {"WEST", "EAST"}
     assert out["metrics"]["EAST"]["n_flats"] == 300

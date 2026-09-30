@@ -70,13 +70,18 @@ def test_close_median_keeps_factor_and_narrow_spread_not_flagged():
 
 
 def test_far_median_is_proposed_not_applied_and_wide_spread_flagged():
-    from gowhere import config
     from gowhere.etl.calibrate import recommendation_text, spread_text
     s = stats_with(1.6, 1.3, 1.9, agreement_gain=0.035)
     text = recommendation_text(s)
     assert "Proposed new factor: 1.6" in text and "has not been changed" in text
     assert "spread is wide" in spread_text(s)
-    assert config.DETOUR_FACTOR == 1.3
+
+
+def test_adopted_detour_factor_is_the_calibrated_median():
+    """Pins the team decision of 30 Sep 2026 (DECISIONS.md section 4): 1.39, not 1.3."""
+    from gowhere import config
+    assert config.DETOUR_FACTOR == 1.39
+    assert config.DETOUR_FACTOR_CALIBRATED_ON == "2026-09-30"
 
 
 def test_report_renders(tmp_path, monkeypatch):
@@ -131,3 +136,26 @@ def test_onemap_implied_speed():
     sample = [dict(block(1.1, 500), route_status="ok", route_distance_m=800, route_time_s=600),
               dict(block(1.2, 500), route_status="ok", route_distance_m=900, route_time_s=600)]
     assert summarise(sample)["onemap_speed_m_per_min"] == pytest.approx((80 + 90) / 2)
+
+
+def test_ranking_impact_reports_moves_and_stable_ends():
+    from gowhere.etl.calibrate import ranking_impact, ranking_impact_text
+
+    def result(scores, pcts):
+        return {"scores": {a: {"score": v} for a, v in scores.items()},
+                "metrics": {a: {"pct_within_10": v} for a, v in pcts.items()}}
+    a = result({"P": 9.0, "Q": 5.0, "R": 4.9, "S": 1.0}, {"P": 100, "Q": 60, "R": 58, "S": 10})
+    b = result({"P": 9.0, "Q": 4.7, "R": 4.95, "S": 1.0}, {"P": 100, "Q": 52, "R": 57, "S": 10})
+    i = ranking_impact(a, b, top=1, bottom=1)
+    assert i["moved"] == [("Q", 2, 3), ("R", 3, 2)] and i["max_rank_shift"] == 1
+    assert i["max_score_change"] == pytest.approx(0.3)
+    assert i["top_unchanged"] and i["bottom_unchanged"]
+    assert i["max_pct_drop"] == pytest.approx(8)
+    text = ranking_impact_text(i, 1.3, 1.39)
+    assert "Q 2→3" in text and "Top 1: unchanged" in text and "Q 60.0% → 52.0%" in text
+
+
+def test_recommendation_says_adopted_once_config_matches():
+    from gowhere.etl.calibrate import recommendation_text
+    text = recommendation_text(stats_with(1.39, 1.29, 1.57, agreement_gain=0.035))
+    assert "1.39 is adopted" in text and "Pending" not in text

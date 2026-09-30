@@ -76,6 +76,27 @@ The per-area medians differ noticeably: from 1.31 (BEDOK) to 1.70 (HOUGANG), a g
 
 **Future work:** a per-area detour factor, calibrated with a larger sample per area. Not built for this project.
 
+## Ranking impact of 1.3 → 1.39
+
+Both factors were applied to all 32 in-scope areas and the resulting scores compared. Scaling every walk by the same factor cannot change the median-walk ranking, so only the share of flats within 10 minutes moves.
+
+- Largest score change: **0.45** points.
+- Areas changing rank: 9, by at most 2 place(s): TAMPINES 19→20, BEDOK 20→21, BISHAN 21→19, CLEMENTI 22→23, SERANGOON 23→22, HOUGANG 25→26, JURONG WEST 26→25, JURONG EAST 27→28, YISHUN 28→27.
+- Top 18: unchanged. Bottom 4: unchanged.
+- Share of flats within 10 minutes (the figure users see) falls by up to 6.4 points going from 1.3 to 1.39; largest change QUEENSTOWN 77.5% → 71.2%.
+
+The change buys accuracy in a displayed figure without destabilising the ranking.
+
 ## Recommendation
 
-73% of sampled blocks walk further than a factor of 1.3 assumes. The sample median (1.39) gives the same 10-minute verdict as the real route for 93.0% of blocks, against 89.5% for 1.3. **Proposed new factor: 1.39.** Pending team decision; `config.DETOUR_FACTOR` has not been changed.
+73% of sampled blocks walk further than a factor of 1.3 assumes. The sample median (1.39) gives the same 10-minute verdict as the real route for 93.0% of blocks, against 89.5% for 1.3. **1.39 is adopted** (see Decision below).
+
+### How the recommendation rule was chosen
+
+The first draft of this report (30 Sep 2026) kept the 1.3 placeholder unless the measured median fell more than ±0.1 from it. The median came in at 1.39, inside that band, so the draft said "keep 1.3". That tolerance was arbitrary: it would have kept a placeholder over a measurement, and it hid a 3.5-point difference (89.5% vs 93.0%) in how often the model gets the 10-minute verdict right, which is a number users read directly.
+
+The rule is now tied to what the score uses: **adopt the sample median when it improves agreement with real routes on the 10-minute verdict by at least 1 point.** A factor change that leaves that verdict unchanged for almost every block cannot matter to the ranking, whatever its size; one that changes it can.
+
+## Decision
+
+Adopted: **1.39** on 2026-09-30 (`gowhere/config.py`, recorded in the snapshot's `meta` table as `detour_factor` and `detour_factor_calibrated_on`). Replaces the 1.3 placeholder, which came from the 1.2–1.4 range commonly cited for street-network circuity.

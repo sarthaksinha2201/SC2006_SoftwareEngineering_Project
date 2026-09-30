@@ -129,11 +129,15 @@ def write_unplaced_log(unplaced, path=UNPLACED_LOG):
             w.writerow([b["blk_no"], b["street"], b["total_dwelling_units"], b["reason"], b["detail"]])
 
 
+def load_inputs():
+    """(blocks, geocodes, areas, exits) from data/raw and the geocode cache. Offline."""
+    blocks = load_hdb_residential()
+    return blocks, load_geocodes(blocks=blocks), load_planning_areas(), load_mrt_exits()
+
+
 def build(snapshot_path=config.SNAPSHOT_PATH, min_geocode_coverage=0.98,
           detour=config.DETOUR_FACTOR):
-    blocks = load_hdb_residential()
-    geocodes = load_geocodes(blocks=blocks)
-    areas, exits = load_planning_areas(), load_mrt_exits()
+    blocks, geocodes, areas, exits = load_inputs()
     result = compute(blocks, geocodes, areas, exits, detour)
     write_unplaced_log(result["unplaced"])
     coverage = validate(result, len(blocks), min_geocode_coverage)
@@ -143,6 +147,8 @@ def build(snapshot_path=config.SNAPSHOT_PATH, min_geocode_coverage=0.98,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "schema_version": SCHEMA_VERSION,
         "detour_factor": str(detour),
+        "detour_factor_calibrated_on": config.DETOUR_FACTOR_CALIBRATED_ON,
+        "detour_factor_source": config.DETOUR_FACTOR_SOURCE,
         "walk_speed_m_per_min": str(config.WALK_SPEED_M_PER_MIN),
         "walk_threshold_min": str(config.WALK_THRESHOLD_MIN),
         "small_area_blocks": str(config.SMALL_AREA_BLOCKS),

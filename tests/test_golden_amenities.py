@@ -1,6 +1,6 @@
 """Golden test: Amenities for a fixed mini-dataset, calculated by hand
 (docs/golden-amenities.md). Each type is capped at 3 per block; the area value is the
-flat-weighted median of the capped sum; the score is the percentile rank."""
+flat-weighted mean of the capped sum; the score is the percentile rank."""
 import pytest
 
 from gowhere.etl.geo import CountIndex
@@ -31,11 +31,11 @@ AMENITIES = {
     "hawker_centre": [], "library": [], "mall": [], "gym": [],
 }
 
-# combination -> area -> (median capped count, score)
+# combination -> area -> (mean capped count, score)
 EXPECTED = {
-    "supermarket,cafe": {"A": (2, 0.0), "B": (3, 7.5), "C": (3, 7.5)},   # B, C tie: rank 2.5
-    "cafe": {"A": (2, 5.0), "B": (1, 0.0), "C": (3, 10.0)},             # C: 20 cafes -> 3
-    "supermarket": {"A": (0, 2.5), "B": (2, 10.0), "C": (0, 2.5)},       # A, C tie: rank 1.5
+    "supermarket,cafe": {"A": (3.0, 7.5), "B": (2.25, 0.0), "C": (3.0, 7.5)},  # A, C tie: rank 2.5
+    "cafe": {"A": (2.5, 5.0), "B": (0.75, 0.0), "C": (3.0, 10.0)},           # C: 20 cafes -> 3
+    "supermarket": {"A": (0.5, 5.0), "B": (1.5, 10.0), "C": (0.0, 0.0)},
 }
 
 
@@ -46,10 +46,10 @@ def area_rows():
 
 
 @pytest.mark.parametrize("combo", sorted(EXPECTED))
-def test_golden_medians_and_scores(area_rows, combo):
-    for area, (median, score) in EXPECTED[combo].items():
+def test_golden_means_and_scores(area_rows, combo):
+    for area, (mean, score) in EXPECTED[combo].items():
         row = area_rows[(combo, area)]
-        assert row["median_capped_count"] == median, (combo, area)
+        assert row["mean_capped_count"] == pytest.approx(mean), (combo, area)
         assert row["score"] == pytest.approx(score), (combo, area)
 
 

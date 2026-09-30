@@ -78,3 +78,11 @@ def tenths(x):
     "differ by 0.2 or less" an integer comparison instead.
     """
     return int(Decimal(repr(round1(x))) * 10)   # repr(2.3) is "2.3", so this is exact
+
+
+def weighted_mean(values, weights):
+    """Sum of value x weight divided by the sum of weights."""
+    total = sum(weights)
+    if total <= 0:
+        raise ValueError("weights must sum to a positive number")
+    return sum(v * w for v, w in zip(values, weights)) / total

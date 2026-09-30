@@ -6,8 +6,13 @@ This is the manual recalculation behind `tests/test_golden_amenities.py`.
 
 1. For each HDB block, count each selected amenity type within 800 m (straight line, boundary inclusive).
 2. Cap each type's count at 3, then add the capped counts together.
-3. For the area, take the flat-weighted median of that sum (the same rule as Public Transport: the first value at which the running total of flats reaches half).
-4. Score the median by percentile rank across areas, with the average rank for ties.
+3. For the area, take the flat-weighted mean of that sum: Σ(sum × flats) ÷ Σ(flats).
+4. Score the mean by percentile rank across areas, with the average rank for ties.
+
+**Why a mean, not a median** (changed 30 Sep 2026, on measurement):
+- The median was chosen to stop one block with twenty cafes distorting an area. The per-type cap already removes such outliers, so the median's only advantage was gone.
+- Its cost remained: on a supermarket-only selection, 28 of 32 areas tied at the median value 3, and on library-only, 25 tied at 0.
+- With the mean, the largest ties are 6 areas on each of those selections.
 
 ## Input
 
@@ -31,21 +36,21 @@ Blocks are about 5.5 km apart, so an amenity placed at a block counts only for t
 | b2 | 0 |
 | c1 | 0 + min(20, 3) = **3** |
 
-- **Medians:**
-  - A: sorted 2 (100 flats), 4 (100 flats). Half of 200 flats is 100, reached at **2**.
-  - B: sorted 0 (100 flats), 3 (300 flats). Half of 400 flats is 200, reached at **3**.
-  - C: **3**.
-- **Percentile ranks** (n = 3, so PR = (rank − 1) × 5): A is rank 1 → **0**. B and C tie for ranks 2 and 3, so both take rank 2.5 → **7.5**.
+- **Means:**
+  - A = (4 × 100 + 2 × 100) ÷ 200 = **3**.
+  - B = (3 × 300 + 0 × 100) ÷ 400 = **2.25**.
+  - C = **3**.
+- **Percentile ranks** (n = 3, so PR = (rank − 1) × 5): B is rank 1 → **0**. A and C tie for ranks 2 and 3, so both take rank 2.5 → **7.5**.
 
-The twenty cafes earn C no more than B's mix of supermarkets and a cafe. This is what the cap is for.
+The twenty cafes earn C exactly what A gets from a supermarket and a handful of cafes. This is what the cap is for.
 
 ## Single types
 
 - **Cafes only:**
   - Capped counts: a1 3, a2 2, b1 1, b2 0, c1 3.
-  - Medians: A **2**, B **1** (half of 400 flats reached at 1), C **3**.
+  - Means: A (300 + 200) ÷ 200 = **2.5**; B (1 × 300) ÷ 400 = **0.75**; C **3**.
   - Scores: B **0**, A **5**, C **10**.
 - **Supermarkets only:**
   - Capped counts: a1 1, a2 0, b1 2, b2 0, c1 0.
-  - Medians: A **0**, B **2**, C **0**.
-  - A and C tie for ranks 1 and 2 → rank 1.5 → **2.5**. B → **10**.
+  - Means: A **0.5**, B (2 × 300) ÷ 400 = **1.5**, C **0**.
+  - Scores: C **0**, A **5**, B **10**.

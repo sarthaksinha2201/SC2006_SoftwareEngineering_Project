@@ -77,7 +77,7 @@ HOUSING_MIN_TRANSACTIONS = 10    # fewer matching transactions -> no data for th
 
 # Amenities (DECISIONS.md section 2): per block, count each selected amenity type within
 # 800 m (straight line), capping each type at 3 so twenty cafes cannot outweigh having no
-# supermarket; per area, the flat-weighted median of the sum; scored by percentile rank.
+# supermarket; per area, the flat-weighted mean of the sum; scored by percentile rank.
 AMENITY_RADIUS_M = 800.0
 AMENITY_CAP = 3
 # OpenStreetMap tags for the amenity types that have no government dataset.

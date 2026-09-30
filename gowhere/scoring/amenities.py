@@ -2,9 +2,12 @@
 
 The user picks one or more amenity types. For each HDB block, count each selected type
 within 800 m (straight line), cap each count at 3, and add them up; so twenty cafes
-cannot outweigh having no supermarket. Per area, take the flat-weighted median of that
-sum, and score it by percentile rank across in-scope areas (average rank for ties; the
-cap makes ties common).
+cannot outweigh having no supermarket. Per area, take the flat-weighted mean of that
+sum, and score it by percentile rank across in-scope areas (average rank for ties).
+
+The mean replaced a median on 30 Sep 2026, a decision changed on measurement: the median
+was chosen to stop one outlier block distorting an area, but the per-type cap already
+removes outliers, and the median tied 28 of 32 areas on a supermarket-only selection.
 
 Every non-empty combination of the six types (63) is precomputed per area, so the
 request only looks up a row.
@@ -18,7 +21,7 @@ from gowhere import config
 from gowhere.etl.geo import CountIndex, LocalProjection
 from gowhere.scoring.base import (ScoringStrategy, SubsetOf, add_percentile_scores,
                                   group_by_area, select_by_area)
-from gowhere.scoring.stats import round1, weighted_quantile
+from gowhere.scoring.stats import round1, weighted_mean
 
 AMENITY_TYPES = {  # key -> plural label, in canonical order
     "supermarket": "supermarkets", "hawker_centre": "hawker centres", "library": "libraries",
@@ -53,7 +56,7 @@ CREATE TABLE amenity_block (
 CREATE TABLE amenity_area (
     planning_area TEXT NOT NULL REFERENCES planning_area(name),
     amenity_types TEXT NOT NULL,          -- canonical comma list, e.g. 'supermarket,cafe'
-    median_capped_count REAL NOT NULL,    -- flat-weighted median of the capped sum
+    mean_capped_count REAL NOT NULL,      -- flat-weighted mean of the capped sum
     score REAL NOT NULL,                  -- percentile rank within this combination
     PRIMARY KEY (planning_area, amenity_types));
 """
@@ -74,9 +77,9 @@ CREATE TABLE amenity_area (
         for combo in all_combinations():
             value = lambda b: sum(min(counts[(b["id"], t)], self.cap) for t in combo)
             rows = [{"planning_area": a, "amenity_types": combination_key(combo),
-                     "median_capped_count": weighted_quantile(v, f, 0.5)}
+                     "mean_capped_count": weighted_mean(v, f)}
                     for a, (v, f) in sorted(group_by_area(blocks, value).items())]
-            area_rows += add_percentile_scores(rows, "median_capped_count", higher_is_better=True)
+            area_rows += add_percentile_scores(rows, "mean_capped_count", higher_is_better=True)
         return {"amenity_block": block_rows, "amenity_area": area_rows}
 
     def meta(self, sources):
@@ -96,19 +99,19 @@ CREATE TABLE amenity_area (
 
     def raw_values(self, snapshot, areas, options):
         selected = [t for t in AMENITY_TYPES if t in options["amenity_types"]]
-        combined = select_by_area(snapshot, "amenity_area", ["median_capped_count"], areas,
+        combined = select_by_area(snapshot, "amenity_area", ["mean_capped_count"], areas,
                                   where="amenity_types = ?", params=(combination_key(selected),))
         out = {}
         for a, r in combined.items():
-            out[a] = {"summary": f"The typical flat has {round1(r['median_capped_count']):g} of "
-                                 f"the selected amenities within {self.radius_m:.0f} m "
+            out[a] = {"summary": f"Flats here have on average {round1(r['mean_capped_count']):g} "
+                                 f"of the selected amenities within {self.radius_m:.0f} m "
                                  f"(each type counted up to {self.cap})"}
         for t in selected:
-            rows = select_by_area(snapshot, "amenity_area", ["median_capped_count"], areas,
+            rows = select_by_area(snapshot, "amenity_area", ["mean_capped_count"], areas,
                                   where="amenity_types = ?", params=(t,))
             for a, r in rows.items():
-                out.setdefault(a, {})[f"{AMENITY_TYPES[t]} (typical flat, up to {self.cap})"] = \
-                    r["median_capped_count"]
+                out.setdefault(a, {})[f"{AMENITY_TYPES[t]} (average per flat, up to {self.cap})"] = \
+                    r["mean_capped_count"]
         return out
 
     def factor_notes(self, snapshot, options):

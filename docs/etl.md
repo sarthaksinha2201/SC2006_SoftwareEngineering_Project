@@ -83,7 +83,7 @@ Core tables are defined in `CORE_SCHEMA` in `gowhere/etl/build_snapshot.py`. Eac
   - Score = % of matching sales within budget ÷ 10 (absolute). Fewer than 10 matching sales means no data. Worked example: [golden-housing.md](golden-housing.md).
 - Amenities (`AmenitiesScorer`), with the types chosen by the user as option `amenity_types` (one or more of supermarket, hawker_centre, library, mall, gym, cafe):
   - `amenity_block`: uncapped count of each type within 800 m of each block.
-  - `amenity_area`: for all 63 combinations, the flat-weighted median of the capped sum and its percentile-rank score.
+  - `amenity_area`: for all 63 combinations, the flat-weighted mean of the capped sum (`mean_capped_count`) and its percentile-rank score.
   - Sources: SFA supermarket licences (placed by postal code), NEA hawker centres (under construction excluded), NLB libraries (OneMap theme, current, in place of data.gov.sg's 2019 copy), and OpenStreetMap malls, gyms and cafes (points outside Singapore's planning areas dropped).
   - Worked example: [golden-amenities.md](golden-amenities.md).
 - Commute (`CommuteScorer`):

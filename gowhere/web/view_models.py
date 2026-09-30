@@ -144,7 +144,8 @@ def setup_view(engine, snapshot, form=None, error=None):
             continue
         included = bool(get(f"include_{key}")) if form else key not in DEFAULTS["excluded"]
         factors.append({"key": key, "label": labels[key], "included": included,
-                        "weight": int(get(f"weight_{key}", DEFAULTS["weight"]) or DEFAULTS["weight"]),
+                        # as typed, so an invalid entry is shown back rather than crashing
+                        "weight": str(get(f"weight_{key}", DEFAULTS["weight"]) or DEFAULTS["weight"]),
                         "controls": _controls(key, get, getlist)})
     return {
         "snapshot_date": snapshot_date(snapshot.meta()),

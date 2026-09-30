@@ -72,29 +72,39 @@ A date with no time is all day, following DECISIONS §3. An event with no end is
 until the end of its start day. Text fields are cleaned to plain single lines and length
 capped.
 
-**Venue placement** (`gowhere/services/location.py`, `match_place`). Candidate queries
-are tried in this order:
+**Venue placement** (`gowhere/services/location.py`, `match_place`). Lookups are tried in
+this order:
 
-1. a 6-digit postal code, if the post gives one;
-2. the venue name;
-3. each comma-separated part of the address;
-4. the venue name with trailing words dropped, down to 2 words ("Marina Bay Sands
+1. **The alias list**, `data/reference/venue_aliases.csv` (DECISIONS §12). It holds venue
+   names that OneMap doesn't know, each mapped to a postal code, with a source and the
+   date it was checked. An alias matches the whole venue name after normalisation, never
+   part of one. The list is filled by hand from the discard log, following the same
+   pattern as the polyclinic and hospital lists, so every match stays auditable.
+2. A 6-digit postal code, if the post gives one.
+3. The venue name.
+4. Each comma-separated part of the address.
+5. The venue name with trailing words dropped, down to 2 words ("Marina Bay Sands
    Convention Centre" becomes "Marina Bay Sands").
 
 Unit numbers, floors and halls are removed from the text first.
 
-A result is accepted only if the whole query appears word for word in its name or street
-address. A one-word query must match a name exactly. Several matches are accepted only if
-they are the same place: within 300 m of each other, or all sharing one postal code.
+A OneMap result is accepted only if the whole query appears word for word in its name or
+street address. A one-word query must match a name exactly. Several matches are accepted
+only if they are the same place: within 300 m of each other, or all sharing one postal
+code.
 
-Two venues in the fixtures show why the rule is this strict:
+The alias list is seeded with the two venues the strict rule rejected in the fixtures:
 
-- "Tampines 1" would otherwise have been placed on Tampines Avenue 1.
-- OneMap has no "Capitol Singapore", only "Eden Residences Capitol".
+- "Tampines 1" would otherwise have been placed on Tampines Avenue 1. Its alias points to
+  Tampines One, postal code 529536.
+- OneMap has no "Capitol Singapore", only "Eden Residences Capitol" and "Capitol Piazza".
+  Its alias points to postal code 178905.
 
-Both are discarded and logged rather than placed somewhere wrong. OneMap's venue answers
-are public, so they use the on-disk search cache. A user's own postal code
-(`LocationService.postal`) stays in memory only.
+The rule itself stays strict: a wrong venue sends a user somewhere with a confident travel
+time attached, while a missing one is only a gap. Measured cost without aliases: 2 of the
+13 events still running were discarded. OneMap's venue answers are public, so they use the
+on-disk search cache. A user's own postal code (`LocationService.postal`) stays in memory
+only.
 
 **Duplicates.** Two events are one event when all of these hold:
 
@@ -133,8 +143,8 @@ The fixture is 31 real posts, saved 30 Sep 2026: 20 from @sgweekend and 11 from
 | Events extracted | 32 |
 | Discarded: already ended | 15 |
 | Discarded: missing location (online shop, "all stores", no venue given) | 4 |
-| Discarded: venue could not be placed | 2 |
-| **Stored** | **11** |
+| Discarded: venue could not be placed | 0 (2 without the alias list) |
+| **Stored** | **13** |
 
 "Already ended" dominates only because the fixture posts are up to three weeks old. A live
 6-hourly run sees mostly new posts.

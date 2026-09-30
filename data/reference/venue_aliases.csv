@@ -1,0 +1,3 @@
+alias,postal_code,place,source,checked_on
+Tampines 1,529536,"Tampines One, 10 Tampines Central 1",OneMap search for 529536 returns TAMPINES ONE at 10 Tampines Central 1; OneMap has no place named "Tampines 1",2026-09-30
+Capitol Singapore,178905,"Capitol Singapore (Capitol Piazza), 13 Stamford Road",OneMap search for 178905 returns CAPITOL PIAZZA at 13 Stamford Road; OneMap knows the complex only as Capitol Piazza and Eden Residences Capitol,2026-09-30

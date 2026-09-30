@@ -26,6 +26,7 @@ from gowhere import config
 from gowhere.adapters.http import HttpError
 from gowhere.adapters.llm import LlmAdapter, LlmError
 from gowhere.etl.geocode import SearchCache
+from gowhere.etl.reference import load_venue_aliases
 from gowhere.ingest.extract import Discard, extract_batch, validate
 from gowhere.ingest.prefilter import has_date_like_text
 from gowhere.lepak import sgt_now
@@ -167,7 +168,8 @@ def main(argv=None):
         return
     source = FilePostSource(args.posts_file) if args.posts_file else TelegramPostSource()
     ingestor = Ingestor(store, LlmAdapter(),
-                        LocationService(cache=SearchCache(config.CACHE_DIR / "onemap_search.sqlite")))
+                        LocationService(cache=SearchCache(config.CACHE_DIR / "onemap_search.sqlite"),
+                                        aliases=load_venue_aliases()))
     channels = args.channel or config.LEPAK_CHANNELS
     while True:
         ingestor.run(source, channels)

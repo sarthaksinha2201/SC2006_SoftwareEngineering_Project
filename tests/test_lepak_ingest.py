@@ -14,6 +14,7 @@ import pytest
 from gowhere.adapters.llm import LlmAdapter, LlmError
 from gowhere.config import ROOT
 from gowhere.etl.addresses import match_place
+from gowhere.etl.reference import load_venue_aliases
 from gowhere.ingest.extract import (SYSTEM_PROMPT, TOOL, Discard, build_user_message, clean_text,
                                     extract_batch, validate)
 from gowhere.ingest.prefilter import has_date_like_text
@@ -50,7 +51,8 @@ def item(**over):
 
 def ingestor(store=None, llm=None, search=None, batch_size=10):
     return Ingestor(store or EventStore(":memory:"), llm or RecordedLlm(REPLIES),
-                    LocationService(search or RecordedSearch(SEARCHES)), batch_size=batch_size)
+                    LocationService(search or RecordedSearch(SEARCHES), aliases=load_venue_aliases()),
+                    batch_size=batch_size)
 
 
 # ---- pre-filter ------------------------------------------------------------------
@@ -186,10 +188,9 @@ def test_malformed_replies_are_discarded_not_crashed_on(reply):
 
 EXPECTED_COUNTS = {
     "posts_seen": 31, "posts_prefiltered_out": 5, "posts_sent_to_llm": 26,
-    "posts_without_events": 5, "events_extracted": 32, "events_stored": 11,
+    "posts_without_events": 5, "events_extracted": 32, "events_stored": 13,
     "events_merged": 0, "purged_ended": 0,
-    "discarded": {"already ended": 15, "missing location": 4,
-                  "venue could not be placed on the map": 2}}
+    "discarded": {"already ended": 15, "missing location": 4}}
 
 
 def test_fixture_run_counts_and_events():
@@ -201,7 +202,8 @@ def test_fixture_run_counts_and_events():
         "Mid-Autumn Light-Up", "The Secret Vault Immersive Exhibition",
         "BellyGom Summer Day Out Party", "Halloween Horror Nights 14: Fear Unlocked",
         "JisuLife Global Brand Experience Store", "Halloween Yacht Party Singles Mixer",
-        "Seoul Anthem K-pop Party", "Game On, Dreamers!"}
+        "Seoul Anthem K-pop Party", "Game On, Dreamers!", "Haunted Toy Factory Maze",
+        "The Grand Circuit Fan Zone"}
     assert all(e["category"] in CATEGORIES and len(e["sources"]) == 1 for e in events)
     assert ing.store.last_post_id("sgweekend") == 3809 and ing.store.last_post_id("sgwhereto") == 4499
 
@@ -213,14 +215,41 @@ def test_batches_of_ten():
     assert sizes == [10, 7, 9]      # 17 sgweekend posts pass the pre-filter, 9 sgwhereto
 
 
-def test_venue_placement_rejects_near_misses():
+def test_venue_placement():
     ing = ingestor()
     ing.run(FilePostSource(FIXTURES / "posts.json"), CHANNELS, now=NOW)
     by_title = {e["title"]: e for e in ing.store.events(NOW)}
     mbs = by_title["Game On, Dreamers!"]          # "... Convention Centre" -> Marina Bay Sands
     assert mbs["place_name"] == "MARINA BAY SANDS"
-    assert "Haunted Toy Factory Maze" not in by_title   # "Tampines 1" != TAMPINES AVENUE 1
-    assert "The Grand Circuit Fan Zone" not in by_title  # OneMap has no "Capitol Singapore"
+    maze = by_title["Haunted Toy Factory Maze"]    # alias: Tampines One, not TAMPINES AVENUE 1
+    assert (maze["lat"], maze["lon"]) == pytest.approx((1.35425, 103.9451), abs=1e-4)
+    assert by_title["The Grand Circuit Fan Zone"]["place_name"] == "Capitol Singapore"
+
+
+def test_without_aliases_the_strict_match_discards_rather_than_misplaces():
+    ing = Ingestor(EventStore(":memory:"), RecordedLlm(REPLIES), LocationService(RecordedSearch(SEARCHES)))
+    result = ing.run(FilePostSource(FIXTURES / "posts.json"), CHANNELS, now=NOW)
+    assert result["discarded"]["venue could not be placed on the map"] == 2
+    titles = {e["title"] for e in ing.store.events(NOW)}
+    assert not titles & {"Haunted Toy Factory Maze", "The Grand Circuit Fan Zone"}
+
+
+def test_alias_file_rows_are_complete_and_sourced():
+    import csv
+    with open(ROOT / "data" / "reference" / "venue_aliases.csv", newline="") as f:
+        rows = list(csv.DictReader(f))
+    assert rows and len({r["alias"].lower() for r in rows}) == len(rows)
+    for r in rows:
+        assert r["postal_code"].isdigit() and len(r["postal_code"]) == 6
+        assert r["source"].strip() and datetime.strptime(r["checked_on"], "%Y-%m-%d")
+
+
+def test_an_alias_matches_whole_names_only_and_comes_first():
+    search = RecordedSearch({"529536": {"results": [_r("TAMPINES ONE", 1.354, 103.945, "529536")]}})
+    service = LocationService(search, aliases={"Tampines 1": "529536"})
+    assert service.place("TAMPINES 1", "Rooftop")["lat"] == pytest.approx(1.354)
+    assert search.queries == ["529536"]
+    assert service.place("Tampines 10", None) is None      # not a whole-name match
 
 
 def test_second_run_sees_only_new_posts():
@@ -228,7 +257,7 @@ def test_second_run_sees_only_new_posts():
     source = FilePostSource(FIXTURES / "posts.json")
     ing.run(source, CHANNELS, now=NOW)
     again = ing.run(source, CHANNELS, now=NOW)
-    assert again["posts_seen"] == 0 and len(ing.store.events(NOW)) == 11
+    assert again["posts_seen"] == 0 and len(ing.store.events(NOW)) == 13
 
 
 # ---- the marker never skips a post whose events were not stored ------------------
@@ -349,7 +378,7 @@ def test_store_holds_only_extracted_fields_and_links(tmp_path):
 def test_logs_carry_reasons_not_post_text(caplog):
     caplog.set_level(logging.DEBUG)
     ingestor().run(FilePostSource(FIXTURES / "posts.json"), CHANNELS, now=NOW)
-    assert "discard sgweekend/3804: venue could not be placed on the map" in caplog.text
+    assert "discard sgweekend/3797: missing location" in caplog.text
     for p in POSTS:
         for line in p["text"].splitlines():
             if len(line.strip()) > 30:

@@ -9,14 +9,16 @@ Two kinds of input, handled very differently:
   public data and go through the on-disk search cache, so re-running ingestion does not
   repeat searches.
 
-A venue is tried as several queries in turn (candidate_queries) and accepted only on a
+A venue is first looked up in the hand-kept alias list (data/reference/venue_aliases.csv:
+names OneMap does not know, each mapped to a postal code with its source). Otherwise it
+is tried as several queries in turn (candidate_queries) and accepted only on a
 word-for-word match (match_place); anything else is left unresolved so the event is
 discarded and logged, rather than placed somewhere wrong.
 """
 import re
 
 from gowhere.adapters.onemap import OneMapAdapter
-from gowhere.etl.addresses import match_place, match_postal
+from gowhere.etl.addresses import match_place, match_postal, normalise_place
 
 POSTAL = re.compile(r"\b(\d{6})\b")
 _NOISE = re.compile(
@@ -53,9 +55,10 @@ def candidate_queries(venue, address):
 
 
 class LocationService:
-    def __init__(self, adapter=None, cache=None):
+    def __init__(self, adapter=None, cache=None, aliases=None):
         self.adapter = adapter or OneMapAdapter()
         self.cache = cache                   # SearchCache for public venue queries, or None
+        self.aliases = {normalise_place(k): v for k, v in (aliases or {}).items()}
         self._postal = {}                    # this session's postal lookups, memory only
 
     # -- a user's own postal code: memory only ----------------------------------------
@@ -81,12 +84,19 @@ class LocationService:
         """{lat, lon, name, query} for an event venue, or None if it cannot be placed.
         Raises HttpError if OneMap cannot be reached, so the caller can retry later
         instead of discarding the event."""
+        queries = candidate_queries(venue, address)
+        for query in queries:
+            postal = self.aliases.get(normalise_place(query))
+            if postal:
+                match = match_postal(postal, self._search(postal))
+                if match:
+                    return {**match, "name": query, "query": f"alias {postal}"}
         text = f"{venue or ''} {address or ''}"
         for postal in POSTAL.findall(text):
             match = match_postal(postal, self._search(postal))
             if match:
                 return {**match, "name": postal, "query": postal}
-        for query in candidate_queries(venue, address):
+        for query in queries:
             match = match_place(query, self._search(query))
             if match:
                 return {**match, "query": query}

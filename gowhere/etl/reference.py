@@ -1,7 +1,9 @@
 """Readers for data/reference/: small hand-compiled files, each row carrying its source.
 
 These are the project's only hand-maintained data. They exist because no government
-dataset lists polyclinic locations or says which hospitals offer 24-hour emergency care.
+dataset lists polyclinic locations or says which hospitals offer 24-hour emergency care,
+and because OneMap does not know some venues by the names events use
+(venue_aliases.csv, filled from the ingestion discard log; DECISIONS.md section 12).
 """
 import csv
 
@@ -9,6 +11,7 @@ from gowhere import config
 
 POLYCLINICS = "polyclinics.csv"
 HOSPITALS = "hospitals.csv"
+VENUE_ALIASES = "venue_aliases.csv"
 
 
 def _rows(name, ref_dir=None):
@@ -30,3 +33,9 @@ def hospital_counts(hospital):
     """Whether a classified hospital is in the Healthcare factor's 'hospital' type."""
     return (hospital["category"] in config.HOSPITAL_CATEGORIES
             and hospital["care_24h"] in config.HOSPITAL_CARE_24H)
+
+
+def load_venue_aliases(ref_dir=None):
+    """{venue name as events write it: postal code}. Matched after place-name
+    normalisation, whole name only, before OneMap's own names are tried."""
+    return {r["alias"]: r["postal_code"] for r in _rows(VENUE_ALIASES, ref_dir)}

@@ -433,5 +433,33 @@
     "LONGITUDE": "103.8607209772459"
    }
   ]
+ },
+ "529536": {
+  "found": 1,
+  "results": [
+   {
+    "SEARCHVAL": "TAMPINES ONE",
+    "BLK_NO": "10",
+    "ROAD_NAME": "TAMPINES CENTRAL 1",
+    "BUILDING": "TAMPINES ONE",
+    "POSTAL": "529536",
+    "LATITUDE": "1.35425637962116",
+    "LONGITUDE": "103.9450717480269"
+   }
+  ]
+ },
+ "178905": {
+  "found": 1,
+  "results": [
+   {
+    "SEARCHVAL": "CAPITOL PIAZZA",
+    "BLK_NO": "13",
+    "ROAD_NAME": "STAMFORD ROAD",
+    "BUILDING": "CAPITOL PIAZZA",
+    "POSTAL": "178905",
+    "LATITUDE": "1.293078847631338",
+    "LONGITUDE": "103.8512619821488"
+   }
+  ]
  }
 }

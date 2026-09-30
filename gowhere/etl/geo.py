@@ -3,6 +3,7 @@ import math
 
 from shapely import STRtree
 from shapely.geometry import Point, shape
+from shapely.ops import transform
 
 from gowhere import config
 
@@ -49,3 +50,44 @@ class PlanningAreaIndex:
         pt = Point(lon, lat)
         hits = sorted(self.tree.query(pt, predicate="intersects"))
         return self.names[hits[0]] if hits else None
+
+
+class LocalProjection:
+    """Lon/lat -> metres on a flat plane centred on Singapore (equirectangular).
+
+    Across Singapore's 0.3 degrees of latitude the scale error is under 0.01%, far
+    below geocoding error, so distances to polygons and lines can be measured in metres
+    with shapely without a projection library.
+    """
+
+    def __init__(self, lat0=1.35, lon0=103.82):
+        self.lat0, self.lon0 = lat0, lon0
+        self.kx = math.radians(1) * EARTH_RADIUS_M * math.cos(math.radians(lat0))
+        self.ky = math.radians(1) * EARTH_RADIUS_M
+
+    def xy(self, lat, lon):
+        return ((lon - self.lon0) * self.kx, (lat - self.lat0) * self.ky)
+
+    def geometry(self, geojson):
+        """A GeoJSON geometry (lon/lat) as a shapely geometry in metres."""
+        return transform(lambda lon, lat, z=None: ((lon - self.lon0) * self.kx,
+                                                   (lat - self.lat0) * self.ky),
+                         shape(geojson))
+
+
+class NearestIndex:
+    """Distance in metres from a point to the nearest of many features (points, lines,
+    polygons). A point inside a polygon is at distance 0."""
+
+    def __init__(self, features, projection=None):
+        """features: [{"name", and "geometry" (GeoJSON) or "lat"/"lon"}]."""
+        self.proj = projection or LocalProjection()
+        self.names = [f["name"] for f in features]
+        self.geoms = [self.proj.geometry(f["geometry"]) if "geometry" in f
+                      else Point(self.proj.xy(f["lat"], f["lon"])) for f in features]
+        self.tree = STRtree(self.geoms)
+
+    def nearest(self, lat, lon):
+        """(name, distance_m) of the nearest feature."""
+        idx, dist = self.tree.query_nearest(Point(self.proj.xy(lat, lon)), return_distance=True)
+        return self.names[int(idx[0])], float(dist[0])

@@ -142,8 +142,7 @@ def test_ranking_impact_reports_moves_and_stable_ends():
     from gowhere.etl.calibrate import ranking_impact, ranking_impact_text
 
     def result(scores, pcts):
-        return {"scores": {a: {"score": v} for a, v in scores.items()},
-                "metrics": {a: {"pct_within_10": v} for a, v in pcts.items()}}
+        return {a: {"score": v, "pct_within_10": pcts[a]} for a, v in scores.items()}
     a = result({"P": 9.0, "Q": 5.0, "R": 4.9, "S": 1.0}, {"P": 100, "Q": 60, "R": 58, "S": 10})
     b = result({"P": 9.0, "Q": 4.7, "R": 4.95, "S": 1.0}, {"P": 100, "Q": 52, "R": 57, "S": 10})
     i = ranking_impact(a, b, top=1, bottom=1)

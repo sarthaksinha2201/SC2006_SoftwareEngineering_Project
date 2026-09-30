@@ -14,6 +14,10 @@ DOCS_DIR = ROOT / "docs"
 RAW_HDB_PROPERTY = "hdb_property_information"
 RAW_MRT_EXITS = "lta_mrt_station_exits"
 RAW_PLANNING_AREAS = "ura_mp2019_planning_areas"
+RAW_PARKS = "nparks_parks"                        # park and nature reserve boundaries
+RAW_PARK_CONNECTORS = "nparks_park_connectors"    # built park connector network (lines)
+RAW_CHAS_CLINICS = "moh_chas_clinics"
+RAW_HOSPITALS = "moh_hospitals"                   # MOH layer served as a OneMap theme
 
 # Walking model (DECISIONS.md section 4). The detour factor is the median ratio of
 # OneMap walking-route distance to straight-line distance over 200 sampled blocks;
@@ -39,3 +43,15 @@ def load_dotenv(path=ROOT / ".env"):
         if line and not line.startswith("#") and "=" in line:
             key, value = line.split("=", 1)
             os.environ.setdefault(key.strip(), value.strip().strip("'\""))
+
+# Greenery: a flat counts as near green space within this straight-line distance of a
+# park, nature reserve or park connector (DECISIONS.md section 2).
+GREEN_SPACE_RADIUS_M = 400.0
+
+# Hospitals left out of the Healthcare factor: not open to the public.
+HOSPITAL_EXCLUDE = {"Changi Medical Facility"}   # prison medical facility
+
+# Public Transport: an area whose flat-weighted median distance to the nearest rail exit
+# exceeds this is flagged far_from_rail, so the UI can say which stations the score
+# reflects (e.g. Tengah before the Jurong Region Line opens).
+FAR_FROM_RAIL_M = 1500.0

@@ -83,10 +83,10 @@ def sample_blocks(snapshot_path, n, seed):
     db.row_factory = sqlite3.Row
     rows = [dict(r) for r in db.execute(
         "SELECT b.blk_no, b.street, b.lat, b.lon, b.planning_area, b.total_dwelling_units,"
-        " b.nearest_station, b.nearest_exit_code, b.exit_distance_m, e.lat AS exit_lat,"
+        " p.nearest_station, p.nearest_exit_code, p.exit_distance_m, e.lat AS exit_lat,"
         " e.lon AS exit_lon"
-        " FROM hdb_block b JOIN mrt_exit e"
-        "   ON e.station = b.nearest_station AND e.exit_code = b.nearest_exit_code"
+        " FROM hdb_block b JOIN public_transport_block p ON p.block_id = b.id"
+        " JOIN mrt_exit e ON e.station = p.nearest_station AND e.exit_code = p.nearest_exit_code"
         " GROUP BY b.id ORDER BY b.id")]
     return stratified_sample(rows, n, seed)
 
@@ -163,21 +163,27 @@ def summarise(sample, current_factor=config.DETOUR_FACTOR,
     }
 
 
+def public_transport_by_area(result):
+    """{area: public_transport_area row} from a build_snapshot.compute result."""
+    return {r["planning_area"]: r for r in result["tables"]["public_transport_area"]}
+
+
 def ranking_impact(result_a, result_b, top=18, bottom=4):
-    """How switching factor changes area scores and ranks (results from build_snapshot.compute).
+    """How switching factor changes area scores and ranks.
+
+    result_a/result_b: {area: {"score", "pct_within_10"}}, e.g. public_transport_by_area().
 
     A uniform factor scales every walk equally, so the median-walk ranking cannot change;
     only the share within 10 minutes can move scores and ranks.
     """
-    sa, sb = result_a["scores"], result_b["scores"]
+    sa, sb = result_a, result_b
     rank = lambda s: {a: i + 1 for i, a in enumerate(sorted(s, key=lambda a: (-s[a]["score"], a)))}
     ra, rb = rank(sa), rank(sb)
     n = len(sa)
     moved = sorted((a for a in sa if ra[a] != rb[a]), key=lambda a: ra[a])
     top_same = all(ra[a] == rb[a] for a in sa if ra[a] <= top)
     bottom_same = all(ra[a] == rb[a] for a in sa if ra[a] > n - bottom)
-    pct = {a: (result_a["metrics"][a]["pct_within_10"], result_b["metrics"][a]["pct_within_10"])
-           for a in sa}
+    pct = {a: (sa[a]["pct_within_10"], sb[a]["pct_within_10"]) for a in sa}
     return {
         "n_areas": n, "moved": [(a, ra[a], rb[a]) for a in moved],
         "max_rank_shift": max(abs(ra[a] - rb[a]) for a in sa),
@@ -382,10 +388,12 @@ def main():
     s = summarise(sample, current_factor=args.baseline)
     impact = None
     if s["calibrated_factor"] != args.baseline:
-        from gowhere.etl.build_snapshot import load_inputs, compute
+        from gowhere.etl.build_snapshot import compute, load_inputs
+        from gowhere.scoring.public_transport import PublicTransportScorer
         inputs = load_inputs()
-        impact = ranking_impact(compute(*inputs, detour=args.baseline),
-                                compute(*inputs, detour=s["calibrated_factor"]))
+        impact = ranking_impact(*(
+            public_transport_by_area(compute(*inputs, [PublicTransportScorer(detour=f)]))
+            for f in (args.baseline, s["calibrated_factor"])))
     write_outputs(sample, s, args.seed, impact)
     print(f"{s['n_ok']}/{s['n_sampled']} routes; median ratio {s['median']:.2f} "
           f"(P10 {s['p10']:.2f}, P90 {s['p90']:.2f}); 10-min agreement "

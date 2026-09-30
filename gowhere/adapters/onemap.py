@@ -13,6 +13,7 @@ from gowhere.adapters.http import HttpError, RateLimiter, get_json
 
 SEARCH_URL = "https://www.onemap.gov.sg/api/common/elastic/search"
 ROUTE_URL = "https://www.onemap.gov.sg/api/public/routingsvc/route"
+THEME_URL = "https://www.onemap.gov.sg/api/public/themesvc/retrieveTheme"
 
 
 TOKEN_INTERVAL_S = 0.3        # 200/min, under the documented 250/min
@@ -36,6 +37,13 @@ class OneMapAdapter:
         return get_json(self.session, SEARCH_URL,
                         params={"searchVal": query, "returnGeom": "Y",
                                 "getAddrDetails": "Y", "pageNum": page},
+                        headers=self._auth(), limiter=self.limiter, sleep=self._sleep)
+
+    def theme(self, query_name):
+        """Raw OneMap theme (a government layer such as MOH hospitals). Needs a token."""
+        if not self.token:
+            raise HttpError("ONEMAP_TOKEN is not set; themes require a OneMap account token")
+        return get_json(self.session, THEME_URL, params={"queryName": query_name},
                         headers=self._auth(), limiter=self.limiter, sleep=self._sleep)
 
     def walking_route(self, start, end):

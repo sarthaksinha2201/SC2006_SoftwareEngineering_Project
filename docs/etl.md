@@ -43,17 +43,25 @@ Raw dataset names (S1 must use these): `hdb_property_information`, `lta_mrt_stat
 - `ST.` with a full stop expands to SAINT. Matches more than 50 m apart that share a single postal code are one long block, placed at the midpoint of its points.
 - A query already in the cache is never re-sent. HTTP/network errors are not cached, so they are retried on the next run.
 
-## Snapshot contract (`data/snapshot.db`)
+## Snapshot contract (`data/snapshot.db`, schema_version 3)
 
-Schema: `SCHEMA` in `gowhere/etl/build_snapshot.py`.
+Core tables are defined in `CORE_SCHEMA` in `gowhere/etl/build_snapshot.py`. Each factor's tables are defined by its strategy's `schema()` in `gowhere/scoring/`.
 
-- `meta`: `generated_at`, `schema_version`, model constants, geocode coverage, the raw manifest
-- `planning_area`: all 55 areas, with boundary GeoJSON and these columns:
+- `meta`: `generated_at`, `schema_version`, `factors` (keys of the factors built), model constants, `detour_factor` with `detour_factor_calibrated_on`, `rail_data_as_of` (when LTA's exits data last changed), geocode coverage, the raw manifest.
+- `planning_area`: all 55 areas with boundary GeoJSON.
   - `in_scope = 1` when the area contains at least one placed HDB residential block. No area is excluded for being small.
   - `n_blocks` and `n_flats`: the counts the UI shows.
-  - `small_sample = 1` when an in-scope area has fewer than `meta.small_area_blocks` blocks (currently 10), so the UI can note that its scores rest on few blocks. The view reads this flag; the threshold lives only in `gowhere/config.py`.
-- `hdb_block`: one row per placed block: planning area, nearest exit, straight-line distance, modelled walk time
-- `mrt_exit`: every MRT **and LRT** exit point (LTA dataset: 613 exits, 190 stations, 41 of them LRT). The two are one set: "nearest exit" means the nearest MRT or LRT exit, matching the MRT/LRT wording in DECISIONS.md
-- `public_transport_area`: per in-scope area: % of flats within 10 min, median and P90 walk, both percentile ranks, 0–10 score
+  - `small_sample = 1` when an in-scope area has fewer than `meta.small_area_blocks` blocks (currently 10).
+- `hdb_block`: one row per placed block: location, planning area, dwelling units.
+- Public Transport (`PublicTransportScorer`):
+  - `mrt_exit`: every MRT **and LRT** exit, one set: "nearest exit" means the nearest MRT or LRT exit.
+  - `public_transport_block`: nearest exit, straight-line distance and modelled walk time per block.
+  - `public_transport_area`: % of flats within 10 min, median and P90 walk, the median distance to an exit, `far_from_rail` (median distance above `meta.far_from_rail_m`), both percentile ranks, and the 0–10 score.
+
+**Web app access:** read the snapshot only through `gowhere.snapshot.Snapshot` (read-only) and `gowhere.scoring.engine.ScoringEngine`. `engine.compare(areas, {factor_key: FactorChoice(weight, options)})` returns a JSON-ready dict: ranked areas with overall and category scores, `_display` values rounded half-up, raw figures, `notes`, dropped factors, `close_call`, and the marginal-contribution explanation. All user-facing note wording is in `gowhere/scoring/notes.py`.
+
+## Adding a factor
+
+Write a `ScoringStrategy` subclass (`gowhere/scoring/base.py`) that implements `schema`, `precompute` and `category_scores`, plus optionally `meta`, `options`, `raw_values` and `notes`. Then add it to `default_strategies()` in `gowhere/scoring/registry.py`. The build and the engine need no changes.
 
 Scoring definitions and a worked example: [golden-public-transport.md](golden-public-transport.md).

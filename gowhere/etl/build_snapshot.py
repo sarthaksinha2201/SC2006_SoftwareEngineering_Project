@@ -1,7 +1,9 @@
 """Build data/snapshot.db from data/raw/ and the geocode cache. Makes no network calls.
 
-The snapshot is written to a temporary file and only replaces the active snapshot once
-validation passes, so a failed build leaves the previous snapshot in place.
+The build places every HDB block in its planning area, then asks each scoring strategy
+(gowhere.scoring.registry) for its tables. The snapshot is written to a temporary file
+and only replaces the active snapshot once validation passes, so a failed build leaves
+the previous snapshot in place.
 
     python -m gowhere.etl.build_snapshot [--min-geocode-coverage 0.98]
 """
@@ -10,20 +12,20 @@ import csv
 import json
 import os
 import sqlite3
-from collections import defaultdict
 from datetime import datetime, timezone
 
 from gowhere import config
 from gowhere.etl.geo import PlanningAreaIndex
 from gowhere.etl.geocode import load_geocodes
-from gowhere.etl.raw import load_hdb_residential, load_mrt_exits, load_planning_areas
-from gowhere.etl.spatial import enrich_blocks
-from gowhere.scoring.public_transport import area_metrics, public_transport_scores
+from gowhere.etl.raw import RawSources, load_hdb_residential, load_planning_areas
+from gowhere.etl.spatial import place_blocks
+from gowhere.scoring.base import group_by_area
+from gowhere.scoring.registry import default_strategies
 
-SCHEMA_VERSION = "2"   # 2: transport -> public_transport, planning_area.small_sample
+SCHEMA_VERSION = "3"   # 3: factor tables owned by strategies; hdb_block holds location only
 UNPLACED_LOG = config.LOG_DIR / "unplaced_blocks.csv"
 
-SCHEMA = """
+CORE_SCHEMA = """
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE planning_area (
     name TEXT PRIMARY KEY, region TEXT NOT NULL,
@@ -31,24 +33,13 @@ CREATE TABLE planning_area (
     n_blocks INTEGER NOT NULL, n_flats INTEGER NOT NULL,
     small_sample INTEGER NOT NULL,        -- 1 if in scope with < meta.small_area_blocks blocks
     geometry_geojson TEXT NOT NULL);
-CREATE TABLE mrt_exit (station TEXT NOT NULL, exit_code TEXT NOT NULL,
-    lat REAL NOT NULL, lon REAL NOT NULL);
 CREATE TABLE hdb_block (
     id INTEGER PRIMARY KEY, blk_no TEXT NOT NULL, street TEXT NOT NULL, postal TEXT,
     lat REAL NOT NULL, lon REAL NOT NULL,
     planning_area TEXT NOT NULL REFERENCES planning_area(name),
     total_dwelling_units INTEGER NOT NULL,
-    nearest_station TEXT NOT NULL, nearest_exit_code TEXT NOT NULL,
-    exit_distance_m REAL NOT NULL,        -- straight line (Haversine)
-    walk_min REAL NOT NULL,               -- exit_distance_m x detour / walk speed
     UNIQUE (blk_no, street));
 CREATE INDEX hdb_block_area ON hdb_block(planning_area);
-CREATE TABLE public_transport_area (
-    planning_area TEXT PRIMARY KEY REFERENCES planning_area(name),
-    n_blocks INTEGER NOT NULL, n_flats INTEGER NOT NULL,
-    pct_within_10 REAL NOT NULL, median_walk_min REAL NOT NULL, p90_walk_min REAL NOT NULL,
-    pr_pct_within_10 REAL NOT NULL, pr_median_walk REAL NOT NULL,
-    score REAL NOT NULL);                 -- 0-10 category score
 """
 
 
@@ -56,16 +47,24 @@ class ValidationError(Exception):
     pass
 
 
-def compute(blocks, geocodes, areas, exits, detour=config.DETOUR_FACTOR):
-    """Everything the snapshot holds, as plain data. No I/O, so it is testable directly."""
-    placed, unplaced = enrich_blocks(blocks, geocodes, PlanningAreaIndex(areas), exits, detour)
-    by_area = defaultdict(list)
-    for b in placed:
-        by_area[b["planning_area"]].append(b)
-    metrics = {a: area_metrics([b["walk_min"] for b in bs], [b["total_dwelling_units"] for b in bs])
-               for a, bs in by_area.items()}
-    scores = public_transport_scores(metrics)
-    return {"placed": placed, "unplaced": unplaced, "metrics": metrics, "scores": scores}
+def is_small_sample(n_blocks, threshold=config.SMALL_AREA_BLOCKS):
+    """True for an in-scope area whose scores rest on too few blocks to be stable."""
+    return 0 < n_blocks < threshold
+
+
+def compute(blocks, geocodes, areas, sources, strategies=None):
+    """Everything the snapshot holds, as plain data. No I/O beyond `sources`."""
+    strategies = default_strategies() if strategies is None else strategies
+    placed, unplaced = place_blocks(blocks, geocodes, PlanningAreaIndex(areas))
+    counts = {a: (len(f), sum(f))
+              for a, (_, f) in group_by_area(placed, lambda b: None).items()}
+    tables = {}
+    for s in strategies:
+        for name, rows in s.precompute(placed, sources).items():
+            if name in tables:
+                raise ValueError(f"{s.key}: table {name} already produced by another factor")
+            tables[name] = rows
+    return {"placed": placed, "unplaced": unplaced, "counts": counts, "tables": tables}
 
 
 def validate(result, n_residential, min_geocode_coverage):
@@ -73,49 +72,42 @@ def validate(result, n_residential, min_geocode_coverage):
     if coverage < min_geocode_coverage:
         raise ValidationError(f"only {coverage:.1%} of residential blocks placed "
                               f"(need {min_geocode_coverage:.0%}); see {UNPLACED_LOG}")
-    if not result["scores"]:
+    if not result["counts"]:
         raise ValidationError("no in-scope planning areas")
-    for area, s in result["scores"].items():
-        if not 0 <= s["score"] <= 10:
-            raise ValidationError(f"{area}: score {s['score']} outside 0-10")
-    for area, m in result["metrics"].items():
-        if m["n_flats"] <= 0:
-            raise ValidationError(f"{area}: no flats")
+    for table, rows in result["tables"].items():
+        for r in rows:
+            if "score" in r and not 0 <= r["score"] <= 10:
+                raise ValidationError(f"{table}: {r.get('planning_area')} score {r['score']} "
+                                      f"outside 0-10")
     return coverage
 
 
-def is_small_sample(n_blocks, threshold=config.SMALL_AREA_BLOCKS):
-    """True for an in-scope area whose scores rest on too few blocks to be stable."""
-    return 0 < n_blocks < threshold
+def _insert_rows(db, table, rows):
+    if not rows:
+        return
+    cols = list(rows[0])
+    db.executemany(f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({', '.join('?' for _ in cols)})",
+                   [tuple(r[c] for c in cols) for r in rows])
 
 
-def write_snapshot(path, result, areas, exits, meta):
+def write_snapshot(path, result, areas, strategies, meta):
     if path.exists():
         path.unlink()
     db = sqlite3.connect(path)
-    db.executescript(SCHEMA)
+    db.executescript(CORE_SCHEMA)
+    for s in strategies:
+        db.executescript(s.schema())
     db.executemany("INSERT INTO meta VALUES (?, ?)", sorted(meta.items()))
     for a in areas:
-        m = result["metrics"].get(a["name"])
-        n_blocks = m["n_blocks"] if m else 0
+        n_blocks, n_flats = result["counts"].get(a["name"], (0, 0))
         db.execute("INSERT INTO planning_area VALUES (?, ?, ?, ?, ?, ?, ?)",
-                   (a["name"], a["region"], int(m is not None), n_blocks,
-                    m["n_flats"] if m else 0, int(is_small_sample(n_blocks)),
-                    json.dumps(a["geometry"])))
-    db.executemany("INSERT INTO mrt_exit VALUES (?, ?, ?, ?)",
-                   [(e["station"], e["exit_code"], e["lat"], e["lon"]) for e in exits])
-    db.executemany(
-        "INSERT INTO hdb_block (blk_no, street, postal, lat, lon, planning_area, "
-        "total_dwelling_units, nearest_station, nearest_exit_code, exit_distance_m, walk_min) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [(b["blk_no"], b["street"], b["postal"], b["lat"], b["lon"], b["planning_area"],
-          b["total_dwelling_units"], b["nearest_station"], b["nearest_exit_code"],
-          b["exit_distance_m"], b["walk_min"]) for b in result["placed"]])
-    for area, m in result["metrics"].items():
-        s = result["scores"][area]
-        db.execute("INSERT INTO public_transport_area VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                   (area, m["n_blocks"], m["n_flats"], m["pct_within_10"], m["median_walk_min"],
-                    m["p90_walk_min"], s["pr_pct_within_10"], s["pr_median_walk"], s["score"]))
+                   (a["name"], a["region"], int(n_blocks > 0), n_blocks, n_flats,
+                    int(is_small_sample(n_blocks)), json.dumps(a["geometry"])))
+    _insert_rows(db, "hdb_block", [
+        {k: b[k] for k in ("id", "blk_no", "street", "postal", "lat", "lon", "planning_area",
+                           "total_dwelling_units")} for b in result["placed"]])
+    for table, rows in result["tables"].items():
+        _insert_rows(db, table, rows)
     db.commit()
     db.close()
 
@@ -130,15 +122,15 @@ def write_unplaced_log(unplaced, path=UNPLACED_LOG):
 
 
 def load_inputs():
-    """(blocks, geocodes, areas, exits) from data/raw and the geocode cache. Offline."""
+    """(blocks, geocodes, areas, sources) from data/raw and the geocode cache. Offline."""
     blocks = load_hdb_residential()
-    return blocks, load_geocodes(blocks=blocks), load_planning_areas(), load_mrt_exits()
+    return blocks, load_geocodes(blocks=blocks), load_planning_areas(), RawSources()
 
 
-def build(snapshot_path=config.SNAPSHOT_PATH, min_geocode_coverage=0.98,
-          detour=config.DETOUR_FACTOR):
-    blocks, geocodes, areas, exits = load_inputs()
-    result = compute(blocks, geocodes, areas, exits, detour)
+def build(snapshot_path=config.SNAPSHOT_PATH, min_geocode_coverage=0.98, strategies=None):
+    strategies = default_strategies() if strategies is None else strategies
+    blocks, geocodes, areas, sources = load_inputs()
+    result = compute(blocks, geocodes, areas, sources, strategies)
     write_unplaced_log(result["unplaced"])
     coverage = validate(result, len(blocks), min_geocode_coverage)
 
@@ -146,7 +138,7 @@ def build(snapshot_path=config.SNAPSHOT_PATH, min_geocode_coverage=0.98,
     meta = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "schema_version": SCHEMA_VERSION,
-        "detour_factor": str(detour),
+        "factors": ",".join(s.key for s in strategies),
         "detour_factor_calibrated_on": config.DETOUR_FACTOR_CALIBRATED_ON,
         "detour_factor_source": config.DETOUR_FACTOR_SOURCE,
         "walk_speed_m_per_min": str(config.WALK_SPEED_M_PER_MIN),
@@ -155,15 +147,16 @@ def build(snapshot_path=config.SNAPSHOT_PATH, min_geocode_coverage=0.98,
         "residential_blocks": str(len(blocks)),
         "placed_blocks": str(len(result["placed"])),
         "geocode_coverage": f"{coverage:.4f}",
-        # MRT and LRT exits are one set: "nearest exit" means nearest MRT or LRT exit.
-        "rail_exits": str(len(exits)),
-        "rail_stations": str(len({e["station"] for e in exits})),
-        "lrt_stations": str(len({e["station"] for e in exits if "LRT" in e["station"]})),
         "raw_manifest": manifest_path.read_text() if manifest_path.exists() else "{}",
     }
+    for s in strategies:
+        for key, value in s.meta(sources).items():
+            if key in meta:
+                raise ValueError(f"{s.key}: meta key {key} already set")
+            meta[key] = value
     tmp = snapshot_path.with_suffix(".db.tmp")
     snapshot_path.parent.mkdir(parents=True, exist_ok=True)
-    write_snapshot(tmp, result, areas, exits, meta)
+    write_snapshot(tmp, result, areas, strategies, meta)
     os.replace(tmp, snapshot_path)
     return result, meta
 
@@ -177,13 +170,11 @@ def main():
     except ValidationError as e:
         raise SystemExit(f"validation failed, previous snapshot kept: {e}")
     print(f"snapshot written: {meta['placed_blocks']}/{meta['residential_blocks']} blocks placed, "
-          f"{len(result['scores'])} in-scope areas, {len(result['unplaced'])} unplaced "
-          f"(logged to {UNPLACED_LOG})")
-    for area, s in sorted(result["scores"].items(), key=lambda kv: -kv[1]["score"]):
-        m = result["metrics"][area]
-        print(f"  {area:<24} score {s['score']:4.1f}  within10 {m['pct_within_10']:5.1f}%  "
-              f"median {m['median_walk_min']:4.1f}  p90 {m['p90_walk_min']:4.1f}  "
-              f"blocks {m['n_blocks']}")
+          f"{len(result['counts'])} in-scope areas, {len(result['unplaced'])} unplaced "
+          f"(logged to {UNPLACED_LOG}); factors: {meta['factors']}")
+    for table, rows in result["tables"].items():
+        if rows and "score" in rows[0]:
+            print(f"  {table}: {len(rows)} rows")
 
 
 if __name__ == "__main__":

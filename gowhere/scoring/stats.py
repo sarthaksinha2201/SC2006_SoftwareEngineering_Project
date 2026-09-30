@@ -69,3 +69,12 @@ def percentile_ranks(values, higher_is_better=True):
             ranks[k] = avg_rank
         i = j + 1
     return {k: (r - 1) / (n - 1) * 10 for k, r in ranks.items()}
+
+
+def tenths(x):
+    """x in tenths after half-up rounding to 1 d.p., as an int, for exact comparisons.
+
+    round1(8.3) - round1(8.1) is 0.20000000000000107 in floating point; tenths makes
+    "differ by 0.2 or less" an integer comparison instead.
+    """
+    return int(Decimal(repr(round1(x))) * 10)   # repr(2.3) is "2.3", so this is exact

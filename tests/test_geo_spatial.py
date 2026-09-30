@@ -1,6 +1,8 @@
 import pytest
 
 from gowhere.etl.build_snapshot import compute
+from gowhere.scoring.public_transport import PublicTransportScorer
+from tests.fakes import FakeSources
 from gowhere.etl.geo import PlanningAreaIndex, haversine_m, nearest, walk_minutes
 
 
@@ -53,16 +55,17 @@ def test_compute_places_blocks_and_logs_unplaced():
         {"blk_no": "4", "street": "D", "status": "ok", "lat": 1.50, "lon": 103.75, "detail": ""},
     ]
     exits = [{"station": "S1", "exit_code": "A", "lat": 1.355, "lon": 103.75}]
-    out = compute(blocks, geocodes, AREAS, exits)
+    out = compute(blocks, geocodes, AREAS, FakeSources(exits=exits), [PublicTransportScorer()])
 
     assert {b["blk_no"]: b["planning_area"] for b in out["placed"]} == {"1": "WEST", "2": "EAST"}
     assert {b["blk_no"]: b["reason"] for b in out["unplaced"]} == {
         "3": "geocode no_match", "4": "outside every planning area"}
-    b1 = next(b for b in out["placed"] if b["blk_no"] == "1")
+    b1 = out["tables"]["public_transport_block"][0]
     assert b1["walk_min"] == pytest.approx(haversine_m(1.35, 103.75, 1.355, 103.75) * 1.39 / 80)
     # EMPTY has no HDB blocks, so it is out of scope and gets no score
-    assert set(out["scores"]) == {"WEST", "EAST"}
-    assert out["metrics"]["EAST"]["n_flats"] == 300
+    areas = {r["planning_area"]: r for r in out["tables"]["public_transport_area"]}
+    assert set(areas) == {"WEST", "EAST"}
+    assert areas["EAST"]["n_flats"] == 300 and out["counts"]["EAST"] == (1, 300)
 
 
 def test_snapshot_flags_small_areas_but_keeps_them_in_scope(tmp_path):
@@ -77,9 +80,10 @@ def test_snapshot_flags_small_areas_but_keeps_them_in_scope(tmp_path):
                 + [{"blk_no": "1", "street": "E", "status": "ok", "lat": 1.35, "lon": 103.85,
                     "detail": ""}])
     exits = [{"station": "S", "exit_code": "A", "lat": 1.355, "lon": 103.75}]
-    out = compute(blocks, geocodes, AREAS, exits)
+    strategies = [PublicTransportScorer()]
+    out = compute(blocks, geocodes, AREAS, FakeSources(exits=exits), strategies)
     path = tmp_path / "s.db"
-    write_snapshot(path, out, AREAS, exits, {"small_area_blocks": "10"})
+    write_snapshot(path, out, AREAS, strategies, {"small_area_blocks": "10"})
 
     rows = {r[0]: r[1:] for r in sqlite3.connect(path).execute(
         "SELECT name, in_scope, n_blocks, n_flats, small_sample FROM planning_area")}

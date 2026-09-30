@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.pytest_cache/
+
+# Generated data: raw downloads, API caches and the built snapshot are
+# reproducible from the ETL and too large for git.
+data/raw/
+data/cache/
+data/logs/
+data/snapshot.db
+data/snapshot.db.tmp

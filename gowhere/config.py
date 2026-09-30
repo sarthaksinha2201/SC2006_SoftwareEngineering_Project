@@ -1,0 +1,32 @@
+"""Filesystem locations and model constants shared by the ETL and the web app."""
+import os
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+DATA_DIR = ROOT / "data"
+RAW_DIR = DATA_DIR / "raw"            # unmodified API responses (S1 contract)
+CACHE_DIR = DATA_DIR / "cache"        # resumable API caches (geocoding, routing)
+LOG_DIR = DATA_DIR / "logs"
+SNAPSHOT_PATH = DATA_DIR / "snapshot.db"   # the only file the web app reads
+DOCS_DIR = ROOT / "docs"
+
+# Raw dataset names under data/raw/. S1 (fetch_raw) must write these names.
+RAW_HDB_PROPERTY = "hdb_property_information"
+RAW_MRT_EXITS = "lta_mrt_station_exits"
+RAW_PLANNING_AREAS = "ura_mp2019_planning_areas"
+
+# Walking model (DECISIONS.md section 4).
+DETOUR_FACTOR = 1.3
+WALK_SPEED_M_PER_MIN = 80.0
+WALK_THRESHOLD_MIN = 10.0
+
+
+def load_dotenv(path=ROOT / ".env"):
+    """Load KEY=VALUE lines from .env into os.environ without overriding what is set."""
+    if not path.exists():
+        return
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip().strip("'\""))

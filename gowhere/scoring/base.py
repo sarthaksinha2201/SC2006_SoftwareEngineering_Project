@@ -7,8 +7,24 @@ ScoringEngine changes (Supportability NFR).
 """
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from dataclasses import dataclass
 
 from gowhere.scoring.stats import percentile_ranks
+
+
+class InvalidRequest(ValueError):
+    """A comparison request the engine or a factor cannot accept; shown to the user."""
+
+
+@dataclass(frozen=True)
+class NumberRange:
+    """An option taking any number in [minimum, maximum], e.g. a budget."""
+    minimum: float
+    maximum: float
+
+    def __contains__(self, value):
+        return (isinstance(value, (int, float)) and not isinstance(value, bool)
+                and self.minimum <= value <= self.maximum)
 
 
 class ScoringStrategy(ABC):
@@ -37,8 +53,13 @@ class ScoringStrategy(ABC):
     # ---- request time (web app, reads the snapshot only) ------------------------
 
     def options(self, snapshot):
-        """{option name: [allowed values]} the user must choose, e.g. a facility type."""
+        """{option name: allowed values} the user must supply: a list of choices, or a
+        NumberRange. Every option must be present in a request (use None in a list for
+        "no preference")."""
         return {}
+
+    def validate_options(self, options):
+        """Checks across options, e.g. budget minimum <= maximum. Raise InvalidRequest."""
 
     @abstractmethod
     def category_scores(self, snapshot, areas, options):
@@ -49,8 +70,12 @@ class ScoringStrategy(ABC):
         return {}
 
     def notes(self, snapshot, areas, options):
-        """{area: [note text]} caveats specific to this factor."""
+        """{area: [note text]} caveats about this factor for particular areas."""
         return {}
+
+    def factor_notes(self, snapshot, options):
+        """[note text] caveats about this factor as a whole, e.g. what a figure covers."""
+        return []
 
 
 def group_by_area(blocks, value_of):

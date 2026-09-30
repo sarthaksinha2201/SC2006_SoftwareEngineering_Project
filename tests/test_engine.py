@@ -5,7 +5,7 @@ Supportability claim: any ScoringStrategy works without changing the engine.
 """
 import pytest
 
-from gowhere.scoring.base import ScoringStrategy
+from gowhere.scoring.base import NumberRange, ScoringStrategy
 from gowhere.scoring.engine import FactorChoice, InvalidRequest, NoFactorsLeft, ScoringEngine
 
 
@@ -153,3 +153,40 @@ def test_option_value_must_be_allowed():
     s = Stub("h", {"gp": {}}, options={"kind": ["gp"]})
     with pytest.raises(InvalidRequest, match="kind must be one of"):
         engine(s).compare(["ALPHA", "BETA"], {"h": FactorChoice(5, {"kind": "vet"})})
+
+
+class RangedStub(Stub):
+    """A factor with numeric options and a cross-option rule, like a budget."""
+
+    def options(self, snapshot):
+        return {"low": NumberRange(0, 100), "high": NumberRange(0, 100)}
+
+    def validate_options(self, options):
+        if options["low"] > options["high"]:
+            raise InvalidRequest("low must not exceed high")
+
+    def category_scores(self, snapshot, areas, options):
+        return {a: self._scores.get(a) for a in areas}
+
+    def factor_notes(self, snapshot, options):
+        return [f"covers {options['low']}-{options['high']}"]
+
+
+@pytest.mark.parametrize("opts, message", [
+    ({"low": -1, "high": 50}, "low must be a number from 0 to 100"),
+    ({"low": 10, "high": 101}, "high must be a number"),
+    ({"low": "10", "high": 50}, "low must be a number"),
+    ({"low": True, "high": 50}, "low must be a number"),
+    ({"low": 60, "high": 50}, "low must not exceed high"),
+])
+def test_number_range_and_cross_option_validation(opts, message):
+    e = engine(RangedStub("r", {"ALPHA": 1.0, "BETA": 2.0}))
+    with pytest.raises(InvalidRequest, match=message):
+        e.compare(["ALPHA", "BETA"], {"r": FactorChoice(5, opts)})
+
+
+def test_range_boundaries_accepted_and_factor_notes_returned():
+    e = engine(RangedStub("r", {"ALPHA": 1.0, "BETA": 2.0}))
+    r = e.compare(["ALPHA", "BETA"], {"r": FactorChoice(5, {"low": 0, "high": 100})})
+    assert r["factors"][0]["notes"] == ["covers 0-100"]
+    assert e.factors()[0]["options"] == {"low": {"min": 0, "max": 100}, "high": {"min": 0, "max": 100}}

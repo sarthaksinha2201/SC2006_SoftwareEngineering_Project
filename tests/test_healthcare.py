@@ -49,11 +49,11 @@ def test_postal_match_uses_exact_code_and_midpoint():
     assert match_postal("123456", results) is None
 
 
-def test_hospital_rule_counts_acute_and_private_with_24h_care():
+def test_hospital_rule_counts_public_acute_general_hospitals_only():
     counts = lambda cat, care: hospital_counts({"category": cat, "care_24h": care})
     assert counts("public_acute", "emergency_department")
     assert counts("public_acute", "urgent_care_centre")        # Alexandra
-    assert counts("private", "urgent_care_centre")
+    assert not counts("private", "urgent_care_centre")         # SCDF takes emergencies to public EDs
     assert not counts("private", "outpatient_24h")             # Crawfurd
     assert not counts("community", "not_assessed")
     assert not counts("public_specialty", "specialty_emergency")  # KKH
@@ -91,4 +91,20 @@ def test_hospital_reference_rows_have_provenance():
         assert r["category_source_url"].startswith("https://"), r
         if r["care_24h"] != "not_assessed":
             assert r["care_24h_source_url"].startswith("https://"), r
-    assert sum(hospital_counts(r) for r in rows.values()) == 17
+    counted = sorted(n for n, r in rows.items() if hospital_counts(r))
+    assert counted == ["ALEXANDRA HOSPITAL", "CHANGI GENERAL HOSPITAL", "KHOO TECK PUAT HOSPITAL",
+                       "NATIONAL UNIVERSITY HOSPITAL", "NG TENG FONG GENERAL HOSPITAL",
+                       "SENGKANG GENERAL HOSPITAL", "SINGAPORE GENERAL HOSPITAL",
+                       "TAN TOCK SENG HOSPITAL", "Woodlands Hospital"]
+
+
+def test_factor_notes_state_hospital_scope_and_gp_data_age():
+    class Snap:
+        def meta(self):
+            return {"gp_data_as_of": "2021-09-26"}
+    s = HealthcareScorer()
+    assert "9 public acute general hospitals" in s.factor_notes(Snap(), {"facility_type": "hospital"})[0]
+    assert s.factor_notes(Snap(), {"facility_type": "gp"}) == [
+        "GP clinic locations come from MOH's CHAS clinic list, last updated 26 Sep 2021. "
+        "Clinics opened or closed since then are not reflected."]
+    assert s.factor_notes(Snap(), {"facility_type": "polyclinic"}) == []

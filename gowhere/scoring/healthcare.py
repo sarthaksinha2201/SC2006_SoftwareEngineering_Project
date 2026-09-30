@@ -9,6 +9,7 @@ Sources: GP clinics are CHAS medical clinics (MOH). Polyclinics and the hospital
 classification come from the hand-compiled, sourced files in data/reference/.
 """
 from gowhere.etl.geo import LocalProjection, NearestIndex
+from gowhere.scoring import notes
 from gowhere.scoring.base import (ScoringStrategy, add_percentile_scores, group_by_area,
                                   select_by_area)
 from gowhere.scoring.stats import weighted_quantile
@@ -16,7 +17,7 @@ from gowhere.scoring.stats import weighted_quantile
 FACILITY_LABELS = {
     "gp": "GP clinic (CHAS)",
     "polyclinic": "polyclinic",
-    "hospital": "hospital with 24-hour emergency or urgent care",
+    "hospital": "public acute hospital",
 }
 
 
@@ -90,3 +91,10 @@ CREATE TABLE healthcare_area (
                               where="facility_type = ?", params=(ftype,))
         return {a: {f"median distance to nearest {FACILITY_LABELS.get(ftype, ftype)} (m)":
                     r["median_distance_m"]} for a, r in rows.items()}
+
+    def factor_notes(self, snapshot, options):
+        if options["facility_type"] == "hospital":
+            return [notes.hospital_scope_note()]
+        if options["facility_type"] == "gp":
+            return [notes.gp_data_note(snapshot.meta()["gp_data_as_of"])]
+        return []

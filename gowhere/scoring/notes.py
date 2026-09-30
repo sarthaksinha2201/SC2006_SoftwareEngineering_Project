@@ -17,6 +17,16 @@ def rail_data_note(as_of_iso):
             f"data as of {_day_month_year(as_of_iso)}.")
 
 
+def hospital_scope_note():
+    return ("The hospital option measures distance to the 9 public acute general hospitals, "
+            "where emergency cases are taken. Private hospitals are not included.")
+
+
+def gp_data_note(as_of_iso):
+    return (f"GP clinic locations come from MOH's CHAS clinic list, last updated "
+            f"{_day_month_year(as_of_iso)}. Clinics opened or closed since then are not reflected.")
+
+
 def _day_month_year(iso):
     d = date.fromisoformat(iso)
     return f"{d.day} {d:%b %Y}"

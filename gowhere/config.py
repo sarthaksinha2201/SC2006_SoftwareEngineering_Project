@@ -51,9 +51,11 @@ GREEN_SPACE_RADIUS_M = 400.0
 
 # Healthcare: which hospitals count, by their classification in
 # data/reference/hospitals.csv (every MOH-licensed hospital, with a source per row).
-# Provisional (30 Sep 2026): acute and private hospitals with 24-hour emergency or urgent
-# care. Community, psychiatric and specialty hospitals and the prison facility never count.
-HOSPITAL_CATEGORIES = {"public_acute", "private"}
+# Decided 30 Sep 2026 (DECISIONS.md section 9): the 9 public acute general hospitals.
+# In an emergency SCDF conveys patients to public emergency departments, so a nearby
+# private hospital does not improve emergency access. Alexandra (urgent care centre,
+# no full ED) is included so the category holds every public general hospital.
+HOSPITAL_CATEGORIES = {"public_acute"}
 HOSPITAL_CARE_24H = {"emergency_department", "urgent_care_centre"}
 REFERENCE_CLASSIFIED_ON = "2026-09-30"   # date both reference files were compiled
 

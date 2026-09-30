@@ -11,15 +11,12 @@ category scores and applies the rules in DECISIONS.md section 2:
 from dataclasses import dataclass, field
 
 from gowhere.scoring import notes as notes_text
+from gowhere.scoring.base import InvalidRequest, NumberRange
 from gowhere.scoring.stats import round1, tenths
 
 MIN_AREAS, MAX_AREAS = 2, 4
 MIN_WEIGHT, MAX_WEIGHT = 1, 10
 CLOSE_CALL_TENTHS = 2   # 0.2
-
-
-class InvalidRequest(ValueError):
-    pass
 
 
 class NoFactorsLeft(Exception):
@@ -43,7 +40,12 @@ class ScoringEngine:
 
     def factors(self):
         """[{key, label, options}] for building the setup screen."""
-        return [{"key": s.key, "label": s.label, "options": s.options(self.snapshot)}
+        def describe(allowed):
+            if isinstance(allowed, NumberRange):
+                return {"min": allowed.minimum, "max": allowed.maximum}
+            return list(allowed)
+        return [{"key": s.key, "label": s.label,
+                 "options": {k: describe(v) for k, v in s.options(self.snapshot).items()}}
                 for s in self.strategies.values()]
 
     def compare(self, areas, choices):
@@ -94,7 +96,8 @@ class ScoringEngine:
                        "raw": {k: raw[k].get(a, {}) for k in scores},
                        "notes": notes[a], **info[a]} for a in order],
             "factors": [{"key": k, "label": self.strategies[k].label,
-                         "weight": choices[k].weight, "options": choices[k].options}
+                         "weight": choices[k].weight, "options": choices[k].options,
+                         "notes": self.strategies[k].factor_notes(self.snapshot, choices[k].options)}
                         for k in scores],
             "dropped": dropped,
             "close_call": tenths(overall[winner]) - tenths(overall[runner_up]) <= CLOSE_CALL_TENTHS,
@@ -124,6 +127,10 @@ class ScoringEngine:
                 raise InvalidRequest(f"{key}: options must be exactly {sorted(allowed)}")
             for name, value in choice.options.items():
                 if value not in allowed[name]:
+                    if isinstance(allowed[name], NumberRange):
+                        raise InvalidRequest(f"{key}: {name} must be a number from "
+                                             f"{allowed[name].minimum:g} to {allowed[name].maximum:g}")
                     raise InvalidRequest(f"{key}: {name} must be one of {allowed[name]}")
+            self.strategies[key].validate_options(choice.options)
         return {a: {k: info[a][k] for k in ("region", "n_blocks", "n_flats", "small_sample")}
                 for a in areas}

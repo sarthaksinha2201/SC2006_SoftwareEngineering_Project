@@ -51,6 +51,8 @@ class SubsetOf:
 class ScoringStrategy(ABC):
     key = ""     # identifier in code, JSON and CSS, e.g. "public_transport"
     label = ""   # name shown to users, e.g. "Public Transport"
+    # Completes "<Factor> was left out because <area> ..." when an area has no data.
+    missing_reason = "has no data for this factor"
 
     # ---- ETL time (offline, builds the snapshot) --------------------------------
 
@@ -87,7 +89,8 @@ class ScoringStrategy(ABC):
         """{area: 0-10 score, or None when this factor has no data for the area}."""
 
     def raw_values(self, snapshot, areas, options):
-        """{area: {label: value}} the figures behind the score, for display."""
+        """{area: {label: value}} the figures behind the score, for display. Include a
+        "summary" entry: one plain sentence a person can check the score against."""
         return {}
 
     def notes(self, snapshot, areas, options):

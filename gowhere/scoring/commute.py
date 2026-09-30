@@ -99,6 +99,7 @@ class CommuteRouter:
 class CommuteScorer(ScoringStrategy):
     key = "commute"
     label = "Commute"
+    missing_reason = "could not be routed to your destination"
 
     def __init__(self, router=None):
         self.router = router or CommuteRouter()

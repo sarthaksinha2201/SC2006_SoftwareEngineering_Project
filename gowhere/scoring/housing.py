@@ -26,6 +26,7 @@ MAX_BUDGET = 5_000_000
 class HousingAffordabilityScorer(ScoringStrategy):
     key = "housing_affordability"
     label = "Housing Affordability"
+    missing_reason = f"had fewer than {config.HOUSING_MIN_TRANSACTIONS} matching resales"
 
     def __init__(self, min_transactions=config.HOUSING_MIN_TRANSACTIONS):
         self.min_transactions = min_transactions

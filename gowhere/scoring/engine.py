@@ -63,7 +63,8 @@ class ScoringEngine:
             cat = s.category_scores(self.snapshot, areas, choice.options)
             missing = [a for a in areas if cat.get(a) is None]
             if missing:
-                dropped.append({"key": key, "label": s.label, "missing_for": missing})
+                dropped.append({"key": key, "label": s.label, "missing_for": missing,
+                                "reason": s.missing_reason})
                 continue
             scores[key] = cat
             raw[key] = s.raw_values(self.snapshot, areas, choice.options)

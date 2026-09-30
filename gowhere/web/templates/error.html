@@ -1,0 +1,4 @@
+{# PLACEHOLDER template (backend half). Sarthak's S3 templates replace this. #}
+{% extends "base.html" %}
+{% block content %}<h1>{{ title }}</h1>{% for m in messages %}<p>{{ m }}</p>{% endfor %}
+<p><a href="{{ url_for('web.live_setup') }}">Back to Where to Live</a></p>{% endblock %}

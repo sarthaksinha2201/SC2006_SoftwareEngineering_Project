@@ -94,7 +94,8 @@ def test_explanation_ranks_factors_by_marginal_contribution():
 def test_factor_missing_for_one_area_is_dropped_for_all():
     e = engine(Stub("a", {"ALPHA": 9.0, "BETA": 1.0}), Stub("b", {"ALPHA": 1.0}))
     r = e.compare(["ALPHA", "BETA"], {"a": FactorChoice(5), "b": FactorChoice(5)})
-    assert r["dropped"] == [{"key": "b", "label": "B", "missing_for": ["BETA"]}]
+    assert r["dropped"] == [{"key": "b", "label": "B", "missing_for": ["BETA"],
+                             "reason": "has no data for this factor"}]
     assert [f["key"] for f in r["factors"]] == ["a"]
     assert all(set(x["category"]) == {"a"} for x in r["areas"])
     assert r["areas"][0]["overall"] == 9.0

@@ -13,7 +13,8 @@ from gowhere import config
 from gowhere.etl.geo import nearest, walk_minutes
 from gowhere.scoring import notes
 from gowhere.scoring.base import ScoringStrategy, group_by_area, select_by_area
-from gowhere.scoring.stats import percentile_ranks, weighted_quantile, weighted_share_at_most
+from gowhere.scoring.stats import (percentile_ranks, round1, weighted_quantile,
+                                   weighted_share_at_most)
 
 WEIGHT_PCT_WITHIN = 0.7
 WEIGHT_MEDIAN = 0.3
@@ -107,7 +108,10 @@ CREATE TABLE public_transport_area (
     def raw_values(self, snapshot, areas, options):
         rows = select_by_area(snapshot, "public_transport_area",
                               ["pct_within_10", "median_walk_min", "p90_walk_min"], areas)
-        return {a: {"% of flats within 10 min walk": r["pct_within_10"],
+        return {a: {"summary": f"{round1(r['pct_within_10']):g}% of flats are within a 10-minute "
+                               f"walk of an MRT/LRT exit; median walk "
+                               f"{round1(r['median_walk_min']):g} min",
+                    "% of flats within 10 min walk": r["pct_within_10"],
                     "median walk (min)": r["median_walk_min"],
                     "90th percentile walk (min)": r["p90_walk_min"]}
                 for a, r in rows.items()}

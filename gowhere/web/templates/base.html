@@ -1,0 +1,17 @@
+{# PLACEHOLDER template (backend half). Sarthak's S3 templates and CSS replace this. #}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}GoWhere{% endblock %}</title>
+</head>
+<body>
+  <nav><a href="{{ url_for('web.home') }}">GoWhere</a> ·
+       <a href="{{ url_for('web.live_setup') }}">Where to Live</a> ·
+       <a href="{{ url_for('web.lepak_placeholder') }}">Where to Lepak</a></nav>
+  <main>{% block content %}{% endblock %}</main>
+  <footer>Map and location data from OneMap (SLA) · Amenity data © OpenStreetMap contributors ·
+    Government data from data.gov.sg</footer>
+</body>
+</html>

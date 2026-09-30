@@ -89,8 +89,10 @@ CREATE TABLE healthcare_area (
         ftype = options["facility_type"]
         rows = select_by_area(snapshot, "healthcare_area", ["median_distance_m"], areas,
                               where="facility_type = ?", params=(ftype,))
-        return {a: {f"median distance to nearest {FACILITY_LABELS.get(ftype, ftype)} (m)":
-                    r["median_distance_m"]} for a, r in rows.items()}
+        label = FACILITY_LABELS.get(ftype, ftype)
+        return {a: {"summary": f"Half of flats are within {r['median_distance_m']:,.0f} m of a {label}",
+                    f"median distance to nearest {label} (m)": r["median_distance_m"]}
+                for a, r in rows.items()}
 
     def factor_notes(self, snapshot, options):
         if options["facility_type"] == "hospital":

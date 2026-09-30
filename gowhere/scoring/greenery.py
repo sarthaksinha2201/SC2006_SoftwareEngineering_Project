@@ -11,7 +11,7 @@ from gowhere import config
 from gowhere.etl.geo import LocalProjection, NearestIndex
 from gowhere.scoring.base import (ScoringStrategy, add_percentile_scores, group_by_area,
                                   select_by_area)
-from gowhere.scoring.stats import weighted_quantile, weighted_share_at_most
+from gowhere.scoring.stats import round1, weighted_quantile, weighted_share_at_most
 
 
 class GreeneryScorer(ScoringStrategy):
@@ -67,7 +67,9 @@ CREATE TABLE greenery_area (
         radius = float(snapshot.meta()["green_space_radius_m"])
         rows = select_by_area(snapshot, "greenery_area",
                               ["pct_within_radius", "median_distance_m"], areas)
-        return {a: {f"% of flats within {radius:.0f} m of a park or park connector":
+        return {a: {"summary": f"{round1(r['pct_within_radius']):g}% of flats are within "
+                               f"{radius:.0f} m of a park or park connector",
+                    f"% of flats within {radius:.0f} m of a park or park connector":
                     r["pct_within_radius"],
                     "median distance to green space (m)": r["median_distance_m"]}
                 for a, r in rows.items()}

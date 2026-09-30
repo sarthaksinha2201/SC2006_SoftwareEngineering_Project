@@ -1,0 +1,41 @@
+{# PLACEHOLDER template (backend half). Sarthak's S3 templates replace this.
+   Context: view = lepak_views.setup_view(...). The postal code field is posted, never
+   put in a URL. "Use my location" fills the hidden lat/lon fields from the browser. #}
+{% extends "base.html" %}
+{% block title %}Where to Lepak · GoWhere{% endblock %}
+{% block content %}
+<h1>Where to Lepak</h1>
+{% if view.error %}<p role="alert">{{ view.error }}</p>{% endif %}
+<form method="post" action="{{ url_for('web.lepak_submit') }}">
+  <fieldset><legend>Categories (choose {{ view.min_categories }} to {{ view.max_categories }})</legend>
+    {% for c in view.categories %}
+    <label><input type="checkbox" name="categories" value="{{ c.value }}" {% if c.checked %}checked{% endif %}> {{ c.label }}</label>
+    {% endfor %}
+  </fieldset>
+  <label>When <select name="date_option">{% for d in view.date_options %}
+    <option value="{{ d.value }}" {% if d.selected %}selected{% endif %}>{{ d.label }}</option>{% endfor %}
+  </select></label>
+  <fieldset><legend>Starting point</legend>
+    <label><input type="radio" name="origin" value="postal" {% if view.origin != 'here' %}checked{% endif %}> Postal code</label>
+    <input name="postal" inputmode="numeric" maxlength="6" autocomplete="off" value="{{ view.postal }}">
+    <label><input type="radio" name="origin" value="here" {% if view.origin == 'here' %}checked{% endif %}> Use my location</label>
+    <input type="hidden" name="lat"><input type="hidden" name="lon">
+  </fieldset>
+  <label>Travel by <select name="mode">{% for m in view.modes %}
+    <option value="{{ m.value }}" {% if m.selected %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
+  </select></label>
+  <label>At most <select name="max_minutes">{% for m in view.max_minutes %}
+    <option value="{{ m.value }}" {% if m.selected %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
+  </select></label>
+  <button type="submit">Find events</button>
+</form>
+<script>
+document.querySelector('input[name=origin][value=here]').addEventListener('change', function () {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(function (p) {
+    document.querySelector('input[name=lat]').value = p.coords.latitude;
+    document.querySelector('input[name=lon]').value = p.coords.longitude;
+  });
+});
+</script>
+{% endblock %}

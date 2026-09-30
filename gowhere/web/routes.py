@@ -1,12 +1,16 @@
-"""The six screens. Where to Live is wired to the scoring engine; Where to Lepak is a
-placeholder until the event-ingestion half exists."""
+"""The six screens: Where to Live (setup, results) on the scoring engine, and Where to
+Lepak (search, results, event detail) on the event store."""
 from flask import (Blueprint, current_app, jsonify, redirect, render_template, request,
                    session, url_for)
 from werkzeug.datastructures import MultiDict
 
+from gowhere.adapters.http import HttpError
+from gowhere.lepak.search import InvalidSearch, TooManyEvents, search
+from gowhere.lepak.store import EventStore
 from gowhere.scoring.engine import InvalidRequest, NoFactorsLeft, ScoringEngine
 from gowhere.scoring.registry import default_strategies
 from gowhere.web.forms import FormError, parse_live_form
+from gowhere.web import lepak_views
 from gowhere.web.view_models import dropped_messages, results_view, setup_view
 
 bp = Blueprint("web", __name__)
@@ -89,10 +93,91 @@ def live_check():
         return jsonify(warnings=[], incomplete=str(e))
 
 
-# ---- Where to Lepak: not built yet ----
+# ---- Where to Lepak ----
+
+def _lepak(state):
+    cfg = current_app.config
+    if state.locations is None:
+        state.locations = cfg["LOCATION_FACTORY"]()
+        state.event_router = cfg["EVENT_ROUTER_FACTORY"]()
+    return state
+
+
+def _events():
+    return EventStore(current_app.config["EVENTS_PATH"])
+
+
+def _lepak_error(form, message):
+    return render_template("lepak_setup.html",
+                           view=lepak_views.setup_view(form, error=message)), 400
+
 
 @bp.get("/lepak")
+def lepak_setup():
+    state = _state()
+    form = state.lepak["form"] if state.lepak else None
+    return render_template("lepak_setup.html", view=lepak_views.setup_view(form))
+
+
+@bp.post("/lepak")
+def lepak_submit():
+    state = _lepak(_state())
+    form = MultiDict(request.form)
+    now = current_app.config["NOW"]()
+    try:
+        req = lepak_views.parse_lepak_form(form)
+        kind, value = req["origin"]
+        if kind == "postal":
+            origin = state.locations.postal(value)
+            if origin is None:
+                raise InvalidSearch("We couldn't find that postal code. Check it and try again.")
+        else:
+            origin = value
+        parking = current_app.extensions["gowhere"]["parking"] if req["mode"] == "drive" else None
+        found = search(_events().events(now), origin, req["categories"], req["date_option"],
+                       req["mode"], req["max_minutes"], state.event_router, now, parking=parking)
+    except InvalidSearch as e:
+        return _lepak_error(form, str(e))
+    except TooManyEvents as e:
+        return _lepak_error(form, lepak_views.too_many_message(e.count))
+    except HttpError:
+        return _lepak_error(form, "OneMap can't be reached right now, so we can't look up "
+                                  "your starting point. Please try again shortly.")
+    state.lepak = {"form": form, "request": req, "search": found}
+    return redirect(url_for("web.lepak_results"), code=303)
+
+
 @bp.get("/lepak/results")
-@bp.get("/lepak/events/<event_id>")
-def lepak_placeholder(event_id=None):
-    return render_template("lepak_placeholder.html"), 501
+def lepak_results():
+    """Sort, category chip and page come from the query string and only reorder the
+    saved results: nothing here calls an external service."""
+    state = _state()
+    if state.lepak is None:
+        return redirect(url_for("web.lepak_setup"))
+    try:
+        page = int(request.args.get("page", 1))
+    except ValueError:
+        page = 1
+    view = lepak_views.results_view(state.lepak, request.args.get("sort"),
+                                    request.args.get("category"), page,
+                                    current_app.config["NOW"]())
+    return render_template("lepak_results.html", view=view)
+
+
+@bp.get("/lepak/events/<int:event_id>")
+def lepak_event(event_id):
+    state = _state()
+    now = current_app.config["NOW"]()
+    saved = state.lepak
+    found = next((r for r in saved["search"]["results"] if r["id"] == event_id), None) if saved else None
+    if found is not None:
+        mode = saved["request"]["mode"]
+        if mode == "drive":        # refreshed here (cached 2 min), never on sort or chips
+            found = {**found, "parking": current_app.extensions["gowhere"]["parking"].near(
+                found["lat"], found["lon"])}
+        return render_template("event_detail.html", view=lepak_views.event_view(found, mode, now))
+    event = _events().event(event_id)
+    if event is None or event["ends_at"] < now.strftime("%Y-%m-%d %H:%M"):
+        return render_template("error.html", title="Event not found",
+                               messages=["It may have ended or been removed."]), 404
+    return render_template("event_detail.html", view=lepak_views.event_view(event, None, now))

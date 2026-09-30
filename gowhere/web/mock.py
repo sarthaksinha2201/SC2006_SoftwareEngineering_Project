@@ -3,9 +3,12 @@
     python -m gowhere.web.mock
 
 Commute uses FixedRouter (fixed minutes, no network, no real destination), so the
-fixtures are reproducible for a given snapshot.
+fixtures are reproducible for a given snapshot. The Where to Lepak fixtures come from the
+ingestion fixtures (tests/fixtures/lepak) run through the real pipeline, with
+FixedEventRouter for travel times and a parking service that cannot reach DataMall.
 """
 import json
+from datetime import datetime
 
 from gowhere import config
 from gowhere.scoring.engine import FactorChoice, ScoringEngine
@@ -55,6 +58,78 @@ SCENARIOS = {
 }
 
 
+class FixedEventRouter:
+    """An EventRouter stand-in: fixed minutes per event title (None = unroutable), with
+    the recorded OneMap route for the mode supplying summary and geometry. Counts calls."""
+
+    def __init__(self, minutes, default=30.0):
+        self._minutes, self._default = minutes, default
+        self.calls = 0
+        from gowhere.lepak.routing import parse_route
+        routes = json.loads((FIXTURE_DIR / "lepak" / "onemap_routes.json").read_text())
+        self._routes = {m: parse_route(routes[m], m) for m in ("pt", "drive", "walk")}
+
+    def route_many(self, origin, events, mode, now):
+        self.calls += 1
+        out = {}
+        for e in events:
+            m = self._minutes.get(e["title"], self._default)
+            out[e["id"]] = None if m is None else {**self._routes[mode], "minutes": m}
+        return out
+
+
+LEPAK_NOW = datetime(2026, 9, 30, 12, 0)     # the ingestion fixtures' "now" (a Wednesday)
+LEPAK_ORIGIN = (1.3521, 103.8198)            # an arbitrary central point, not a user's
+LEPAK_MINUTES = {"Anime Earth": 22.4, "Free Yukata Experience": 22.4,
+                 "Seoul Anthem K-pop Party": 18.9, "Halloween Horror Nights 14: Fear Unlocked": 41.0,
+                 "The Heeren": 15.0, "BellyGom Summer Day Out Party": None}
+
+
+def lepak_events():
+    """The ingestion fixtures, stored as of LEPAK_NOW (13 events)."""
+    from gowhere.etl.reference import load_venue_aliases
+    from gowhere.ingest.run import FilePostSource, Ingestor
+    from gowhere.lepak.store import EventStore
+    from gowhere.services.location import LocationService
+    from tests.fakes import RecordedLlm, RecordedSearch
+    fx = FIXTURE_DIR / "lepak"
+    load = lambda n: json.loads((fx / n).read_text(encoding="utf-8"))
+    store = EventStore(":memory:")
+    Ingestor(store, RecordedLlm(load("extractions.json")),
+             LocationService(RecordedSearch(load("onemap_search.json")),
+                             aliases=load_venue_aliases())).run(
+        FilePostSource(fx / "posts.json"), config.LEPAK_CHANNELS, now=LEPAK_NOW)
+    return store
+
+
+def build_lepak():
+    from gowhere.lepak.parking import ParkingService
+    from gowhere.lepak.search import search
+    from gowhere.web import lepak_views
+
+    class NoDataMall:
+        def carpark_availability(self):
+            from gowhere.adapters.http import HttpError
+            raise HttpError("LTA_DATAMALL_KEY is not set")
+
+    events = lepak_events().events(LEPAK_NOW)
+    cats = ["Arts & Culture", "Music & Performances", "Family & Kids", "Sales & Pop-ups"]
+    pt = search(events, LEPAK_ORIGIN, cats, "month", "pt", 45,
+                FixedEventRouter(LEPAK_MINUTES), LEPAK_NOW)
+    saved = {"request": {"categories": cats, "date_option": "month", "mode": "pt",
+                         "max_minutes": 45}, "search": pt}
+    drive = search(events, LEPAK_ORIGIN, cats, "month", "drive", 45,
+                   FixedEventRouter(LEPAK_MINUTES), LEPAK_NOW, parking=ParkingService(NoDataMall()))
+    anime = next(r for r in drive["results"] if r["title"] == "Anime Earth")
+    from flask import Flask
+    app = Flask(__name__)
+    from gowhere.web.routes import bp
+    app.register_blueprint(bp)
+    with app.test_request_context():
+        return {"mock_lepak_results.json": lepak_views.results_view(saved, "travel", None, 1, LEPAK_NOW),
+                "mock_lepak_event.json": lepak_views.event_view(anime, "drive", LEPAK_NOW)}
+
+
 def build(snapshot=None):
     snapshot = snapshot or Snapshot()
     out = {}
@@ -66,7 +141,7 @@ def build(snapshot=None):
 
 def main():
     FIXTURE_DIR.mkdir(parents=True, exist_ok=True)
-    for name, view in build().items():
+    for name, view in {**build(), **build_lepak()}.items():
         (FIXTURE_DIR / name).write_text(json.dumps(view, indent=1, ensure_ascii=False) + "\n")
         print(f"wrote tests/fixtures/{name}")
 

@@ -1,0 +1,18 @@
+{# PLACEHOLDER template (backend half). Sarthak's S3 templates replace this.
+   Context: view = lepak_views.event_view(...); see tests/fixtures/mock_lepak_event.json.
+   view.map is GeoJSON (lon/lat): the route line (when there is one) and the venue point. #}
+{% extends "base.html" %}
+{% block title %}{{ view.title }} · GoWhere{% endblock %}
+{% block content %}
+<h1>{{ view.title }}</h1>
+<p>{{ view.category }} · {{ view.when }}</p>
+<p>{{ view.venue }}{% if view.address %}, {{ view.address }}{% endif %}</p>
+{% if view.travel %}<p>{{ view.travel }}{% if view.route_summary %}: {{ view.route_summary }}{% endif %}</p>{% endif %}
+{% if view.parking %}<p>{{ view.parking }}</p>
+  {% if view.carparks %}<ul>{% for c in view.carparks %}<li>{{ c.name }}: {{ c.lots }} lots, {{ c.distance }}</li>{% endfor %}</ul>{% endif %}
+{% endif %}
+<p>{{ view.summary }}</p>
+<p>Source: {% for s in view.sources %}<a href="{{ s.url }}" rel="noopener noreferrer" target="_blank">{{ s.label }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</p>
+<script type="application/json" id="map-data">{{ view.map|tojson }}</script>
+<p><a href="{{ view.back_url }}">Back to results</a> · <a href="{{ view.search_url }}">New search</a></p>
+{% endblock %}

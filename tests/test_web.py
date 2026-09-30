@@ -81,6 +81,7 @@ def app(tmp_path):
     write_snapshot(path, out, AREAS, strategies, meta)
     RecordingRouter.calls = []
     return create_app({"SNAPSHOT_PATH": path, "SECRET_KEY": "test", "TESTING": True,
+                       "EVENTS_PATH": tmp_path / "events.db",
                        "ROUTER_FACTORY": lambda: RecordingRouter({"WEST": 30.0, "EAST": 50.0})})
 
 
@@ -100,8 +101,9 @@ def test_pages_render(client):
     assert client.get("/").status_code == 200
     page = client.get("/live")
     assert page.status_code == 200 and b"West" in page.data and b"Empty" not in page.data
-    for url in ("/lepak", "/lepak/results", "/lepak/events/42"):
-        assert client.get(url).status_code == 501
+    assert client.get("/lepak").status_code == 200
+    assert client.get("/lepak/results").status_code == 302      # nothing searched yet
+    assert client.get("/lepak/events/42").status_code == 404
     assert client.get("/nope").status_code == 404
 
 

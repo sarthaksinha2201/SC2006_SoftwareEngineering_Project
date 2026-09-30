@@ -83,7 +83,8 @@ def test_no_builtin_round_outside_round1():
             continue
         tree = ast.parse(path.read_text())
         allowed = {id(n) for f in ast.walk(tree)
-                   if isinstance(f, ast.FunctionDef) and f.name == "round1" for n in ast.walk(f)}
+                   if isinstance(f, ast.FunctionDef) and f.name in {"round1", "round0"}
+                   for n in ast.walk(f)}
         offenders += [f"{path.relative_to(pkg.parent)}:{n.lineno}"
                       for n in ast.walk(tree)
                       if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)

@@ -15,6 +15,11 @@ def round1(x):
     return float(Decimal(repr(round(x, 9))).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
 
 
+def round0(x):
+    """Round to a whole number, half up (displayed minutes and distances)."""
+    return int(Decimal(repr(round(x, 9))).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+
 def weighted_share_at_most(values, weights, threshold):
     """Percentage (0-100) of total weight whose value is <= threshold."""
     total = sum(weights)

@@ -1,5 +1,6 @@
-"""Flask app factory. The app reads only data/snapshot.db (read-only) and calls OneMap
-routing for Commute at request time; it never calls a bulk Data Source."""
+"""Flask app factory. The app reads data/snapshot.db (read-only) and data/events.db, and
+calls its External Services at request time: OneMap routing (Commute, Lepak travel
+times) and LTA DataMall carpark availability. It never calls a bulk Data Source."""
 import logging
 import os
 import secrets
@@ -7,7 +8,11 @@ import secrets
 from flask import Flask, render_template
 
 from gowhere import config
+from gowhere.lepak import sgt_now
+from gowhere.lepak.parking import ParkingService
+from gowhere.lepak.routing import EventRouter
 from gowhere.scoring.commute import CommuteRouter
+from gowhere.services.location import LocationService
 from gowhere.snapshot import Snapshot
 from gowhere.web.session_store import SessionStore
 
@@ -27,11 +32,17 @@ def create_app(overrides=None):
         SESSION_COOKIE_SAMESITE="Lax",
         SESSION_COOKIE_SECURE=os.getenv("GOWHERE_HTTPS") == "1",
         ROUTER_FACTORY=CommuteRouter,
+        EVENTS_PATH=config.EVENTS_PATH,
+        LOCATION_FACTORY=LocationService,     # per session: postal lookups in memory only
+        EVENT_ROUTER_FACTORY=EventRouter,     # per session
+        PARKING_FACTORY=ParkingService,       # one per app: public data, shared cache
+        NOW=sgt_now,
     )
     app.config.update(overrides or {})
     app.extensions["gowhere"] = {
         "snapshot": Snapshot(app.config["SNAPSHOT_PATH"]),
         "store": SessionStore(router_factory=app.config["ROUTER_FACTORY"]),
+        "parking": app.config["PARKING_FACTORY"](),
     }
 
     from gowhere.web.routes import bp

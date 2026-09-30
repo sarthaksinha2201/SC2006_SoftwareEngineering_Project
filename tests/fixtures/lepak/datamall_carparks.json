@@ -1,0 +1,78 @@
+{
+ "_note": "Constructed in the documented shape of DataMall's CarParkAvailabilityv2 response (no DataMall key yet). Carparks placed around fixture venues: City Square Mall (1.31142, 103.85662) and Marina at Keppel Bay (1.26398, 103.81252).",
+ "odata.metadata": "http://datamall2.mytransport.sg/ltaodataservice/$metadata#CarParkAvailability",
+ "value": [
+  {
+   "CarParkID": "1",
+   "Area": "",
+   "Development": "City Square Mall",
+   "Location": "1.31150 103.85650",
+   "AvailableLots": 412,
+   "LotType": "C",
+   "Agency": "LTA"
+  },
+  {
+   "CarParkID": "2",
+   "Area": "",
+   "Development": "City Square Mall",
+   "Location": "1.31150 103.85650",
+   "AvailableLots": 35,
+   "LotType": "Y",
+   "Agency": "LTA"
+  },
+  {
+   "CarParkID": "3",
+   "Area": "",
+   "Development": "Mustafa Centre",
+   "Location": "1.30990 103.85540",
+   "AvailableLots": 57,
+   "LotType": "C",
+   "Agency": "LTA"
+  },
+  {
+   "CarParkID": "4",
+   "Area": "",
+   "Development": "Farrer Park Hospital",
+   "Location": "1.31270 103.85420",
+   "AvailableLots": 120,
+   "LotType": "C",
+   "Agency": "LTA"
+  },
+  {
+   "CarParkID": "5",
+   "Area": "",
+   "Development": "Far Away Carpark",
+   "Location": "1.35000 103.90000",
+   "AvailableLots": 900,
+   "LotType": "C",
+   "Agency": "LTA"
+  },
+  {
+   "CarParkID": "6",
+   "Area": "",
+   "Development": "Broken record",
+   "Location": "not a location",
+   "AvailableLots": 10,
+   "LotType": "C",
+   "Agency": "LTA"
+  },
+  {
+   "CarParkID": "7",
+   "Area": "",
+   "Development": "Heavy vehicles",
+   "Location": "1.31142 103.85662",
+   "AvailableLots": 20,
+   "LotType": "H",
+   "Agency": "LTA"
+  },
+  {
+   "CarParkID": "8",
+   "Area": "",
+   "Development": "Keppel Bay",
+   "Location": "1.26450 103.81200",
+   "AvailableLots": 88,
+   "LotType": "C",
+   "Agency": "LTA"
+  }
+ ]
+}

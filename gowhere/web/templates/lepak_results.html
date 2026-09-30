@@ -1,0 +1,27 @@
+{# PLACEHOLDER template (backend half). Sarthak's S3 templates replace this.
+   Context: view = lepak_views.results_view(...); see tests/fixtures/mock_lepak_results.json.
+   Sort links and chips only reorder saved results: no external call. #}
+{% extends "base.html" %}
+{% block title %}Events · GoWhere{% endblock %}
+{% block content %}
+<h1>{{ view.heading }}</h1>
+<p>Sort: {% for s in view.sorts %}{% if s.selected %}<strong>{{ s.label }}</strong>{% else %}<a href="{{ s.url }}">{{ s.label }}</a>{% endif %}{% if not loop.last %} · {% endif %}{% endfor %}</p>
+<p>{% for c in view.chips %}{% if c.selected %}<strong>{{ c.label }} ({{ c.count }})</strong>{% else %}<a href="{{ c.url }}">{{ c.label }} ({{ c.count }})</a>{% endif %}{% if not loop.last %} · {% endif %}{% endfor %}</p>
+{% if view.empty_text %}<p>{{ view.empty_text }}</p>{% endif %}
+{% if view.unroutable_note %}<p><small>{{ view.unroutable_note }}</small></p>{% endif %}
+{% for e in view.cards %}
+<article>
+  <h2><a href="{{ e.detail_url }}">{{ e.title }}</a></h2>
+  <p>{{ e.category }} · {{ e.when }}</p>
+  <p>{{ e.venue }}{% if e.address %}, {{ e.address }}{% endif %}</p>
+  <p>{{ e.travel }}{% if e.route_summary %}: {{ e.route_summary }}{% endif %}</p>
+  {% if e.parking %}<p>{{ e.parking }}</p>{% endif %}
+  <p>{{ e.summary }}</p>
+  <p>Source: {% for s in e.sources %}<a href="{{ s.url }}" rel="noopener noreferrer" target="_blank">{{ s.label }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</p>
+</article>
+{% endfor %}
+<p>{% if view.prev_url %}<a href="{{ view.prev_url }}">Previous</a>{% endif %}
+   Page {{ view.page }} of {{ view.pages }}
+   {% if view.next_url %}<a href="{{ view.next_url }}">Next</a>{% endif %}</p>
+<p><a href="{{ view.search_url }}">Change the search</a></p>
+{% endblock %}

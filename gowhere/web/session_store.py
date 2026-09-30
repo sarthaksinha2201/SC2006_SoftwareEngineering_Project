@@ -1,7 +1,8 @@
 """Server-side, in-memory session state.
 
 The browser's cookie holds only an opaque random session id (in Flask's signed session).
-Everything personal, above all the commute destination postal code (Security NFR), stays
+Everything personal, above all the commute destination postal code and the Where to
+Lepak starting point (Security NFR), stays
 in this process's memory and expires with the session. Nothing here is written to disk.
 
 The store is per process, so the app must run as a single process (threads are fine),
@@ -21,6 +22,11 @@ class SessionState:
     def __init__(self, router):
         self.router = router            # this session's CommuteRouter (route cache)
         self.last_request = None        # the most recent Where to Live form, parsed
+        # Where to Lepak, created on first use: this session's postal-code lookups, its
+        # event router, and its last search (starting point, form and results).
+        self.locations = None
+        self.event_router = None
+        self.lepak = None
         self.touched = time.monotonic()
 
 

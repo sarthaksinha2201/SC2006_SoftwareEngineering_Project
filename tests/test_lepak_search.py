@@ -224,7 +224,8 @@ def test_short_trip_with_no_transit_itinerary_is_walked():
             return {"plan": {"itineraries": []}}
     adapter = NoTransit()
     near = EventRouter(adapter).route(JUNCTION_8, (1.3510, 103.8490), "pt", NOW)
-    assert near["summary"] == "Walk 5.6 km" and adapter.calls == [("pt", True), ("walk", True)]
+    assert near["summary"] == "Walk 5.6 km" and near["mode"] == "walk"
+    assert adapter.calls == [("pt", True), ("walk", True)]
     adapter.calls = []
     assert EventRouter(adapter).route(JUNCTION_8, CITY_SQUARE, "pt", NOW) is None   # 4.4 km
     assert adapter.calls == [("pt", True)]

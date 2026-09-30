@@ -7,6 +7,7 @@
  "address": null,
  "summary": "Cosplay showcases, anime merchandise and artist booths.",
  "travel": "22 min by car",
+ "travel_estimated": false,
  "route_summary": "Drive 6.9 km",
  "parking": "Parking information unavailable",
  "sources": [

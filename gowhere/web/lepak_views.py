@@ -78,10 +78,28 @@ def when_text(event, now):
     return f"{_day(start)} – {_day(end)}" + ("" if event["all_day"] else f", from {_clock(start)}")
 
 
-def travel_text(minutes, mode):
-    if minutes is None:
-        return "Travel time unavailable"
-    return f"{max(1, round0(minutes))} min by {MODES[mode]}"
+def distance_text(metres):
+    if metres < 1000:
+        return f"{round0(metres / 10) * 10} m"
+    return f"{round0(metres / 100) / 10:.1f} km"
+
+
+def travel_text(r, mode):
+    """The travel line on a card. Three cases, each labelled for what it is:
+    a route in the chosen mode; a walking route used because public transport had no
+    itinerary for a short trip; or no route at all, where only the straight-line
+    distance is known (FR 2.2.6: shown as an estimate)."""
+    route = r.get("route")
+    if route is None:
+        if r.get("distance_m") is None:
+            return None
+        return (f"About {distance_text(r['distance_m'])} away "
+                f"(straight-line estimate, no route available)")
+    minutes = max(1, round0(route["minutes"]))
+    if route.get("mode", mode) != mode:
+        return (f"{minutes} min on foot (walking route: no {MODES[mode]} route was found "
+                f"for this short trip)")
+    return f"{minutes} min by {MODES[mode]}"
 
 
 def _source(url):
@@ -96,7 +114,8 @@ def card(r, mode, now):
         "when": when_text(r, now), "venue": r["venue"] or r["address"],
         "address": r["address"] if r["venue"] else None,
         "summary": r["summary"],
-        "travel": travel_text(r.get("minutes"), mode),
+        "travel": travel_text(r, mode),
+        "travel_estimated": route is None,
         "route_summary": route["summary"] if route else None,
         "parking": parking["text"] if parking else None,
         "sources": [_source(u) for u in r["sources"]],
@@ -151,8 +170,9 @@ def results_view(saved, sort, category, page, now):
         "empty_text": ("" if total else
                        "No events match. Try more categories, a longer date range or a longer "
                        "travel time."),
-        "unroutable_note": ("Travel time could not be worked out for some events. They are "
-                            "listed last." if any(r["minutes"] is None for r in rows) else ""),
+        "unroutable_note": ("No route could be found for some events, so their straight-line "
+                            "distance is shown as an estimate and they are listed last."
+                            if any(r["minutes"] is None for r in rows) else ""),
         "sorts": [{"value": k, "label": v, "selected": k == sort, "url": link(sort=k)}
                   for k, v in SORTS.items()],
         "chips": ([{"label": "All", "count": all_count, "selected": category is None,
@@ -170,9 +190,9 @@ def results_view(saved, sort, category, page, now):
 def event_view(r, mode, now):
     """The event detail screen: its card plus a map of the venue and, when the event
     came from this session's search, the route to it."""
-    c = card(r, mode, now) if mode else card({**r, "minutes": None}, "pt", now)
+    c = card(r, mode, now) if mode else card({**r, "route": None, "distance_m": None}, "pt", now)
     if not mode:
-        c["travel"] = None
+        c["travel"], c["travel_estimated"] = None, False
     features = [{"type": "Feature", "geometry": {"type": "Point", "coordinates": [r["lon"], r["lat"]]},
                  "properties": {"kind": "venue", "name": c["venue"]}}]
     if r.get("route"):

@@ -86,7 +86,7 @@ def test_search_then_results(client):
     assert "9 events within 45 min by public transport, next 30 days" in page
     assert "19 min by public transport" in page and "Seoul Anthem K-pop Party" in page
     assert page.index("Seoul Anthem") < page.index("Anime Earth")            # shortest first
-    assert "Travel time unavailable" in page and "listed last" in page
+    assert "(straight-line estimate, no route available)" in page and "listed last" in page
     assert "https://t.me/sgwhereto/4497" in page
 
 
@@ -184,6 +184,17 @@ def test_event_text_is_escaped(app, client):
     page = client.get("/lepak/results").get_data(as_text=True)
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in page and "<script>alert(1)" not in page
     assert "<img src=x" not in page and "<b>V</b>" not in page
+
+
+def test_travel_wording_says_what_each_figure_is():
+    from gowhere.web.lepak_views import travel_text
+    walked = {"route": {"minutes": 6.2, "mode": "walk"}}
+    assert travel_text(walked, "pt") == ("6 min on foot (walking route: no public transport "
+                                         "route was found for this short trip)")
+    assert travel_text({"route": {"minutes": 6.2, "mode": "pt"}}, "pt") == "6 min by public transport"
+    assert travel_text({"route": None, "distance_m": 2449.0}, "pt") == (
+        "About 2.4 km away (straight-line estimate, no route available)")
+    assert travel_text({"route": None, "distance_m": 384.0}, "drive").startswith("About 380 m away")
 
 
 # ---- Security NFR: the starting point stays in server memory ----

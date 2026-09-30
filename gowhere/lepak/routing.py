@@ -18,7 +18,8 @@ MODES = {"pt": "public transport", "drive": "car", "walk": "walking"}
 ALL_DAY_DEPARTURE = time(10, 0)      # an all-day event on a future day: leave mid-morning
 # OneMap returns no public transport itinerary for a short trip (measured: a venue at the
 # starting point itself). Within this distance a failed public transport route is
-# retried as a walk, which is what the trip would be.
+# retried as a walk, which is what the trip would be. The route keeps mode "walk", so
+# it is always labelled as a walking route, never shown as a public transport time.
 WALK_FALLBACK_M = 1500.0
 # 50 routes (the cap) must fit the 8-second target. Measured 30 Sep 2026: 40 public
 # transport routes took 7.4 s with 8 workers and 3.1 s with 16, with no failures.
@@ -80,14 +81,14 @@ def parse_route(response, mode):
         best = min(itineraries, key=lambda it: it["duration"])
         legs = best.get("legs") or []
         points = [p for leg in legs for p in decode_polyline((leg.get("legGeometry") or {}).get("points", ""))]
-        return {"minutes": best["duration"] / 60,
+        return {"minutes": best["duration"] / 60, "mode": "pt",
                 "summary": " → ".join(_leg_text(leg) for leg in legs),
                 "geometry": _line(points)}
     summary = response.get("route_summary") or {}
     if summary.get("total_time") is None:
         return None
     km = summary.get("total_distance", 0) / 1000
-    return {"minutes": summary["total_time"] / 60,
+    return {"minutes": summary["total_time"] / 60, "mode": mode,
             "summary": f"{'Drive' if mode == 'drive' else 'Walk'} {km:.1f} km",
             "geometry": _line(decode_polyline(response.get("route_geometry") or ""))}
 

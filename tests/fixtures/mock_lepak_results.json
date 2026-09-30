@@ -1,7 +1,7 @@
 {
  "heading": "9 events within 45 min by public transport, next 30 days",
  "empty_text": "",
- "unroutable_note": "Travel time could not be worked out for some events. They are listed last.",
+ "unroutable_note": "No route could be found for some events, so their straight-line distance is shown as an estimate and they are listed last.",
  "sorts": [
   {
    "value": "travel",
@@ -56,6 +56,26 @@
  ],
  "cards": [
   {
+   "id": 9,
+   "title": "JisuLife Global Brand Experience Store",
+   "category": "Sales & Pop-ups",
+   "when": "On now until Sat 26 Dec",
+   "venue": "The Heeren",
+   "address": "#01-01",
+   "summary": "Interactive installations, discounts and a lucky draw at JisuLife's first experience store.",
+   "travel": "9 min on foot (walking route: no public transport route was found for this short trip)",
+   "travel_estimated": false,
+   "route_summary": "Walk 5.6 km",
+   "parking": null,
+   "sources": [
+    {
+     "url": "https://t.me/sgweekend/3808",
+     "label": "t.me/sgweekend/3808"
+    }
+   ],
+   "detail_url": "/lepak/events/9"
+  },
+  {
    "id": 12,
    "title": "Seoul Anthem K-pop Party",
    "category": "Music & Performances",
@@ -64,6 +84,7 @@
    "address": "Clarke Quay Central, 6 Eu Tong Sen Street",
    "summary": "Five hours of K-pop with DJ RAW, strictly 18 and over; tickets from $25.",
    "travel": "19 min by public transport",
+   "travel_estimated": false,
    "route_summary": "Walk 2 min → North South Line → Walk 2 min → Bus 141 → Walk 3 min",
    "parking": null,
    "sources": [
@@ -83,6 +104,7 @@
    "address": null,
    "summary": "Cosplay showcases, anime merchandise and artist booths.",
    "travel": "22 min by public transport",
+   "travel_estimated": false,
    "route_summary": "Walk 2 min → North South Line → Walk 2 min → Bus 141 → Walk 3 min",
    "parking": null,
    "sources": [
@@ -102,6 +124,7 @@
    "address": null,
    "summary": "Free yukata dress-up for up to four family members with a minimum spend.",
    "travel": "22 min by public transport",
+   "travel_estimated": false,
    "route_summary": "Walk 2 min → North South Line → Walk 2 min → Bus 141 → Walk 3 min",
    "parking": null,
    "sources": [
@@ -121,6 +144,7 @@
    "address": null,
    "summary": "Free Mid-Autumn light displays and festive pop-ups.",
    "travel": "30 min by public transport",
+   "travel_estimated": false,
    "route_summary": "Walk 2 min → North South Line → Walk 2 min → Bus 141 → Walk 3 min",
    "parking": null,
    "sources": [
@@ -132,25 +156,6 @@
    "detail_url": "/lepak/events/4"
   },
   {
-   "id": 9,
-   "title": "JisuLife Global Brand Experience Store",
-   "category": "Sales & Pop-ups",
-   "when": "On now until Sat 26 Dec",
-   "venue": "The Heeren",
-   "address": "#01-01",
-   "summary": "Interactive installations, discounts and a lucky draw at JisuLife's first experience store.",
-   "travel": "30 min by public transport",
-   "route_summary": "Walk 2 min → North South Line → Walk 2 min → Bus 141 → Walk 3 min",
-   "parking": null,
-   "sources": [
-    {
-     "url": "https://t.me/sgweekend/3808",
-     "label": "t.me/sgweekend/3808"
-    }
-   ],
-   "detail_url": "/lepak/events/9"
-  },
-  {
    "id": 5,
    "title": "The Secret Vault Immersive Exhibition",
    "category": "Arts & Culture",
@@ -159,6 +164,7 @@
    "address": "L2 School Hall",
    "summary": "A free six-chamber exhibition on Singapore's financial resilience, with a free shuttle from Orchard.",
    "travel": "30 min by public transport",
+   "travel_estimated": false,
    "route_summary": "Walk 2 min → North South Line → Walk 2 min → Bus 141 → Walk 3 min",
    "parking": null,
    "sources": [
@@ -178,6 +184,7 @@
    "address": "Rooftop",
    "summary": "A gamified horror maze; tickets are $10 or free with a minimum spend.",
    "travel": "30 min by public transport",
+   "travel_estimated": false,
    "route_summary": "Walk 2 min → North South Line → Walk 2 min → Bus 141 → Walk 3 min",
    "parking": null,
    "sources": [
@@ -197,6 +204,7 @@
    "address": "Resorts World Sentosa",
    "summary": "Haunted houses, live shows and scare zones at Universal Studios; tickets from $63.",
    "travel": "41 min by public transport",
+   "travel_estimated": false,
    "route_summary": "Walk 2 min → North South Line → Walk 2 min → Bus 141 → Walk 3 min",
    "parking": null,
    "sources": [
@@ -215,7 +223,8 @@
    "venue": "Waterway Point",
    "address": null,
    "summary": "Free themed play zones and photo spots with the BellyGom mascot.",
-   "travel": "Travel time unavailable",
+   "travel": "About 11.0 km away (straight-line estimate, no route available)",
+   "travel_estimated": true,
    "route_summary": null,
    "parking": null,
    "sources": [

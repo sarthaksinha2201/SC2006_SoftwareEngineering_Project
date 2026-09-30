@@ -73,3 +73,10 @@ def test_onemap_routing_requires_token():
 def test_onemap_paces_slower_without_token():
     assert OneMapAdapter(session=FakeSession([]), token="").limiter.min_interval_s > \
         OneMapAdapter(session=FakeSession([]), token="t").limiter.min_interval_s
+
+
+def test_backoff_is_jittered_exponential():
+    slept = []
+    s = FakeSession([Resp(429), Resp(429), Resp(200, {"ok": 1})])
+    get_json(s, "u", backoff_s=2.0, sleep=slept.append, jitter=iter([0.0, 1.0]).__next__)
+    assert slept == [1.0, 6.0]        # 2 s x 0.5, then 4 s x 1.5

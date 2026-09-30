@@ -59,8 +59,9 @@ SCENARIOS = {
 
 
 class FixedEventRouter:
-    """An EventRouter stand-in: fixed minutes per event title (None = unroutable), with
-    the recorded OneMap route for the mode supplying summary and geometry. Counts calls."""
+    """An EventRouter stand-in: fixed minutes per event title (None = unroutable, or
+    ("walk", minutes) for a walking fallback), with the recorded OneMap route for the
+    mode supplying summary and geometry. Counts calls."""
 
     def __init__(self, minutes, default=30.0):
         self._minutes, self._default = minutes, default
@@ -74,7 +75,10 @@ class FixedEventRouter:
         out = {}
         for e in events:
             m = self._minutes.get(e["title"], self._default)
-            out[e["id"]] = None if m is None else {**self._routes[mode], "minutes": m}
+            used = mode
+            if isinstance(m, tuple):
+                used, m = m
+            out[e["id"]] = None if m is None else {**self._routes[used], "minutes": m}
         return out
 
 
@@ -82,7 +86,8 @@ LEPAK_NOW = datetime(2026, 9, 30, 12, 0)     # the ingestion fixtures' "now" (a 
 LEPAK_ORIGIN = (1.3521, 103.8198)            # an arbitrary central point, not a user's
 LEPAK_MINUTES = {"Anime Earth": 22.4, "Free Yukata Experience": 22.4,
                  "Seoul Anthem K-pop Party": 18.9, "Halloween Horror Nights 14: Fear Unlocked": 41.0,
-                 "The Heeren": 15.0, "BellyGom Summer Day Out Party": None}
+                 "JisuLife Global Brand Experience Store": ("walk", 9.0),
+                 "BellyGom Summer Day Out Party": None}
 
 
 def lepak_events():

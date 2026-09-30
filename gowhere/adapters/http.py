@@ -1,5 +1,6 @@
 """Shared HTTP plumbing for adapters: polite rate limiting and retry with backoff."""
 import logging
+import random
 import time
 
 import requests
@@ -35,7 +36,8 @@ class HttpError(Exception):
 
 
 def get_json(session, url, params=None, headers=None, limiter=None,
-             retries=4, backoff_s=2.0, timeout_s=30, sleep=time.sleep, redact=False):
+             retries=4, backoff_s=2.0, timeout_s=30, sleep=time.sleep, redact=False,
+             jitter=random.random):
     """GET a JSON document, retrying transient failures with exponential backoff.
 
     redact=True for requests carrying personal data (a user's destination): errors and
@@ -62,7 +64,9 @@ def get_json(session, url, params=None, headers=None, limiter=None,
             if resp.status_code not in RETRYABLE_STATUS:
                 raise last_error
         if attempt < retries:
-            delay = backoff_s * 2 ** attempt
+            # Jittered (50-150% of the exponential step), so parallel requests that were
+            # rate-limited together do not all retry at the same instant.
+            delay = backoff_s * 2 ** attempt * (0.5 + jitter())
             log.warning("retrying %s in %.0fs after %s", url, delay, last_error)
             sleep(delay)
     raise last_error

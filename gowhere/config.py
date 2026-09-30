@@ -83,3 +83,12 @@ AMENITY_CAP = 3
 # OpenStreetMap tags for the amenity types that have no government dataset.
 OSM_AMENITY_TAGS = {"mall": '["shop"="mall"]', "gym": '["leisure"="fitness_centre"]',
                     "cafe": '["amenity"="cafe"]'}
+
+# ---- Where to Lepak (DECISIONS.md sections 3 and 11) ----
+EVENTS_PATH = DATA_DIR / "events.db"     # read-write event store; the snapshot stays read-only
+LEPAK_CHANNELS = ["sgweekend", "sgwhereto"]   # public broadcast channels with a t.me/s/ view
+LLM_MODEL = "claude-haiku-4-5"
+LLM_BATCH_SIZE = 10                      # posts per extraction call
+EVENT_MERGE_RADIUS_M = 200.0             # duplicates: same date, similar title, this close
+EVENT_MAX_DAYS_AHEAD = 400               # an event dated further out is treated as a misread
+INGEST_INTERVAL_H = 6

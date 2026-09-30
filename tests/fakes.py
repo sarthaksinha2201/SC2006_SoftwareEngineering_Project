@@ -52,3 +52,39 @@ class FakeAmenitySources(FakeSources):
 
     def amenities_meta(self):
         return {"supermarket_licences": 0, "supermarkets_unlocated": 0}
+
+
+# ---- Where to Lepak ------------------------------------------------------------------
+
+class RecordedLlm:
+    """Stands in for LlmAdapter: answers each batch from {post_id: [events]}, the way the
+    model would, numbering events by their post's position in the batch. Records every
+    prompt it was sent. `fail_on` post ids make the whole call fail, like an outage."""
+
+    def __init__(self, replies, fail_on=()):
+        self.replies, self.fail_on, self.calls = replies, set(fail_on), []
+
+    def call_tool(self, system, user, tool):
+        import re
+        from gowhere.adapters.llm import LlmError
+        self.calls.append({"system": system, "user": user, "tool": tool})
+        ids = re.findall(r'<post number="(\d+)" id="([^"]+)"', user)
+        if self.fail_on & {pid for _, pid in ids}:
+            raise LlmError("simulated outage")
+        return {"events": [{"post": int(n), **e} for n, pid in ids
+                           for e in self.replies.get(pid, [])]}
+
+
+class RecordedSearch:
+    """Stands in for OneMapAdapter.search from {query: response}; unknown queries return
+    no results. Counts calls."""
+
+    def __init__(self, responses, fail=False):
+        self.responses, self.fail, self.queries = responses, fail, []
+
+    def search(self, query, page=1, redact=False):
+        from gowhere.adapters.http import HttpError
+        self.queries.append(query)
+        if self.fail:
+            raise HttpError("simulated outage")
+        return self.responses.get(query, {"found": 0, "results": []})

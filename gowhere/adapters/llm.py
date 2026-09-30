@@ -47,3 +47,24 @@ class LlmAdapter:
             if getattr(block, "type", None) == "tool_use" and block.name == tool["name"]:
                 return block.input
         raise LlmError("reply contained no tool call")
+
+
+class ReplayLlm:
+    """Stands in for LlmAdapter without calling any model: answers each batch from
+    {post_id: [events]}, numbering events by their post's position in the batch, as the
+    model does. For tests and for rehearsing without ANTHROPIC_API_KEY
+    (python -m gowhere.ingest.run --replay-replies FILE). The replies in
+    tests/fixtures/lepak/extractions.json are hand-written, not model output.
+    Records every prompt; `fail_on` post ids make the whole call fail like an outage."""
+
+    def __init__(self, replies, fail_on=()):
+        self.replies, self.fail_on, self.calls = replies, set(fail_on), []
+
+    def call_tool(self, system, user, tool):
+        import re
+        self.calls.append({"system": system, "user": user, "tool": tool})
+        ids = re.findall(r'<post number="(\d+)" id="([^"]+)"', user)
+        if self.fail_on & {pid for _, pid in ids}:
+            raise LlmError("simulated outage")
+        return {"events": [{"post": int(n), **e} for n, pid in ids
+                           for e in self.replies.get(pid, [])]}

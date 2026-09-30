@@ -5,6 +5,8 @@ resolution -> merge and store. Runs every 6 hours; one run also purges ended eve
     python -m gowhere.ingest.run --every-hours 6      # keep running, on the always-on host
     python -m gowhere.ingest.run --posts-file tests/fixtures/lepak/posts.json
     python -m gowhere.ingest.run --report             # yield rate of the recent runs
+    python -m gowhere.ingest.run --posts-file tests/fixtures/lepak/posts.json \
+        --replay-replies tests/fixtures/lepak/extractions.json   # rehearsal, no API key
 
 Posts arrive in the S2 post-record contract (Sarthak.md), oldest first, newer than the
 channel's marker. The marker only moves past a post once that post has been fully
@@ -24,7 +26,7 @@ from pathlib import Path
 
 from gowhere import config
 from gowhere.adapters.http import HttpError
-from gowhere.adapters.llm import LlmAdapter, LlmError
+from gowhere.adapters.llm import LlmAdapter, LlmError, ReplayLlm
 from gowhere.etl.geocode import SearchCache
 from gowhere.etl.reference import load_venue_aliases
 from gowhere.ingest.extract import Discard, extract_batch, validate
@@ -158,6 +160,8 @@ def main(argv=None):
     ap.add_argument("--channel", action="append", help="only these channels")
     ap.add_argument("--every-hours", type=float, help="repeat forever at this interval")
     ap.add_argument("--report", action="store_true", help="print recent runs' yield")
+    ap.add_argument("--replay-replies", help="answer from this {post_id: events} JSON instead "
+                                              "of calling the LLM (rehearsal only)")
     args = ap.parse_args(argv)
     config.LOG_DIR.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s",
@@ -167,7 +171,12 @@ def main(argv=None):
         report(store)
         return
     source = FilePostSource(args.posts_file) if args.posts_file else TelegramPostSource()
-    ingestor = Ingestor(store, LlmAdapter(),
+    if args.replay_replies:
+        log.warning("replaying recorded replies from %s: no LLM is called", args.replay_replies)
+        llm = ReplayLlm(json.loads(Path(args.replay_replies).read_text(encoding="utf-8")))
+    else:
+        llm = LlmAdapter()
+    ingestor = Ingestor(store, llm,
                         LocationService(cache=SearchCache(config.CACHE_DIR / "onemap_search.sqlite"),
                                         aliases=load_venue_aliases()))
     channels = args.channel or config.LEPAK_CHANNELS

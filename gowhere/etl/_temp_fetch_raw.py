@@ -12,7 +12,7 @@ Delete this module once S1 lands.
 """
 import argparse
 import json
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from gowhere import config
 from gowhere.adapters.datagov import DataGovAdapter
@@ -25,6 +25,7 @@ PARKS_ID = "d_77d7ec97be83d44f61b85454f844382f"            # NParks Parks and Na
 PARK_CONNECTORS_ID = "d_a69ef89737379f231d2ae93fd1c5707f"  # NParks Park Connector Loop (built network)
 CHAS_CLINICS_ID = "d_548c33ea2d99e29ec63a7cc9edcccedc"     # MOH CHAS Clinics
 HOSPITALS_THEME = "moh_hospitals"   # no data.gov.sg dataset; MOH publishes it as a OneMap theme
+RESALE_ID = "d_8b84c4ee58e3cfc0ece0d773c8ca6abc"            # resale prices, registration date, 2017+
 
 DATASETS = {
     # name: (dataset id, kind)
@@ -35,11 +36,21 @@ DATASETS = {
     config.RAW_PARK_CONNECTORS: (PARK_CONNECTORS_ID, "file"),
     config.RAW_CHAS_CLINICS: (CHAS_CLINICS_ID, "file"),
     config.RAW_HOSPITALS: (HOSPITALS_THEME, "onemap_theme"),
+    config.RAW_RESALE: (RESALE_ID, "datastore_window"),
 }
 
 
+def window_months(today, n=config.RESALE_WINDOW_MONTHS):
+    """The n complete calendar months before today's month, oldest first, as 'YYYY-MM'."""
+    months, y, m = [], today.year, today.month
+    for _ in range(n):
+        y, m = (y, m - 1) if m > 1 else (y - 1, 12)
+        months.append(f"{y:04d}-{m:02d}")
+    return months[::-1]
+
+
 def record_count(payload, kind):
-    if kind == "datastore":
+    if kind in ("datastore", "datastore_window"):
         # A paginated dataset is stored as the list of page responses, unmodified.
         return sum(len(p["result"]["records"]) for p in payload)
     if kind == "onemap_theme":
@@ -53,7 +64,7 @@ def source_url(dataset_id, kind):
     return f"https://data.gov.sg/datasets/{dataset_id}/view"
 
 
-def fetch(names=None, force=False, adapter=None, onemap=None, raw_dir=None):
+def fetch(names=None, force=False, adapter=None, onemap=None, raw_dir=None, today=None):
     adapter = adapter or DataGovAdapter()
     raw_dir = raw_dir or config.RAW_DIR
     raw_dir.mkdir(parents=True, exist_ok=True)
@@ -66,8 +77,14 @@ def fetch(names=None, force=False, adapter=None, onemap=None, raw_dir=None):
         if out.exists() and name in manifest and not force:
             print(f"cached   {name} ({manifest[name]['record_count']} records)")
             continue
+        window = None
         if kind == "datastore":
             payload = adapter.datastore_pages(dataset_id)
+        elif kind == "datastore_window":
+            # The one filter S1 allows on download: the resale 12-month window.
+            window = window_months(today or date.today())
+            payload = [page for month in window
+                       for page in adapter.datastore_pages(dataset_id, filters={"month": month})]
         elif kind == "onemap_theme":
             if onemap is None:
                 config.load_dotenv()
@@ -82,6 +99,8 @@ def fetch(names=None, force=False, adapter=None, onemap=None, raw_dir=None):
             "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "record_count": record_count(payload, kind),
         }
+        if window:
+            manifest[name]["window"] = [window[0], window[-1]]
         manifest_path.write_text(json.dumps(manifest, indent=2))
         print(f"fetched  {name} ({manifest[name]['record_count']} records)")
     return manifest

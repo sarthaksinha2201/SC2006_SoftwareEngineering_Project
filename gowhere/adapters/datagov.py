@@ -1,4 +1,5 @@
 """Adapter for data.gov.sg: tabular datastore_search and the poll-based file download."""
+import json
 import time
 
 import requests
@@ -24,12 +25,17 @@ class DataGovAdapter:
         return get_json(self.session, url, params=params, limiter=self.limiter,
                         backoff_s=self.BACKOFF_S, sleep=self._sleep)
 
-    def datastore_pages(self, resource_id, page_size=1000):
-        """Return every page response for a tabular dataset, unmodified, in order."""
+    def datastore_pages(self, resource_id, page_size=1000, filters=None):
+        """Return every page response for a tabular dataset, unmodified, in order.
+
+        filters: optional exact-match filters, e.g. {"month": "2026-08"}.
+        """
         pages, offset = [], 0
         while True:
-            page = self._get(DATASTORE_URL, params={"resource_id": resource_id,
-                                                    "limit": page_size, "offset": offset})
+            params = {"resource_id": resource_id, "limit": page_size, "offset": offset}
+            if filters:
+                params["filters"] = json.dumps(filters)
+            page = self._get(DATASTORE_URL, params=params)
             if not page.get("success"):
                 raise HttpError(f"datastore_search failed for {resource_id}: {page}")
             pages.append(page)

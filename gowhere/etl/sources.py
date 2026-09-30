@@ -27,6 +27,10 @@ class RawSources:
     def park_connectors(self):
         return self._get("park_connectors", lambda: raw.load_park_connectors(self.raw_dir))
 
+    def resale(self):
+        """(window [first, last month], [transaction]) of HDB resale transactions."""
+        return self._get("resale", lambda: raw.load_resale(self.raw_dir))
+
     def polyclinics(self):
         """Reference-list polyclinics placed by their postal code's OneMap geocode."""
         def load():

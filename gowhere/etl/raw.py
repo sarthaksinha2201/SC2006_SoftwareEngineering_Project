@@ -116,3 +116,51 @@ def load_hospitals(classification, raw_dir=None):
 
 def hospitals_as_of(raw_dir=None):
     return _read(config.RAW_HOSPITALS, raw_dir)["SrchResults"][0]["DateTime"][:10]
+
+
+def parse_remaining_lease(text):
+    """'61 years 04 months' -> 736 months. Also accepts '61 years'."""
+    m = re.fullmatch(r"\s*(\d+)\s+years?(?:\s+(\d+)\s+months?)?\s*", text)
+    if not m:
+        raise ValueError(f"unrecognised remaining_lease {text!r}")
+    return int(m.group(1)) * 12 + int(m.group(2) or 0)
+
+
+def load_resale(raw_dir=None):
+    """(window [first month, last month], [transaction]) from the resale download.
+
+    Every month in the window must be present, so a partial download cannot pass as a
+    quiet month.
+    """
+    manifest = json.loads(((raw_dir or config.RAW_DIR) / "_manifest.json").read_text())
+    start, end = manifest[config.RAW_RESALE]["window"]
+    pages = _read(config.RAW_RESALE, raw_dir)
+    # Each month was downloaded with its own filter, so every page reports that month's
+    # total: the records held for a month must add up to it.
+    expected_count, held = {}, {}
+    for page in pages:
+        for rec in page["result"]["records"]:
+            expected_count[rec["month"]] = page["result"]["total"]
+            held[rec["month"]] = held.get(rec["month"], 0) + 1
+    short = {m: (held[m], n) for m, n in expected_count.items() if held[m] != n}
+    if short:
+        raise ValueError(f"resale download incomplete (held, expected): {short}")
+    transactions = []
+    for rec in _datastore_records(pages):
+        if not start <= rec["month"] <= end:
+            continue
+        transactions.append({
+            "month": rec["month"], "flat_type": rec["flat_type"].strip().upper(),
+            "blk_no": rec["block"].strip(), "street": rec["street_name"].strip(),
+            "resale_price": int(float(rec["resale_price"])),
+            "remaining_lease_months": parse_remaining_lease(rec["remaining_lease"]),
+        })
+    months = {t["month"] for t in transactions}
+    y, m = int(start[:4]), int(start[5:])
+    expected = set()
+    while f"{y:04d}-{m:02d}" <= end:
+        expected.add(f"{y:04d}-{m:02d}")
+        y, m = (y, m + 1) if m < 12 else (y + 1, 1)
+    if months != expected:
+        raise ValueError(f"resale data missing months: {sorted(expected - months)}")
+    return [start, end], transactions

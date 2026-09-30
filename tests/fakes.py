@@ -28,3 +28,12 @@ class FakeSources:
 
     def facilities_as_of(self):
         return self._facilities_as_of
+
+
+class FakeResaleSources(FakeSources):
+    def __init__(self, window, transactions, **kw):
+        super().__init__(**kw)
+        self._resale = (window, transactions)
+
+    def resale(self):
+        return self._resale

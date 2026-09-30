@@ -19,6 +19,7 @@ RAW_PARKS = "nparks_parks"                        # park and nature reserve boun
 RAW_PARK_CONNECTORS = "nparks_park_connectors"    # built park connector network (lines)
 RAW_CHAS_CLINICS = "moh_chas_clinics"
 RAW_HOSPITALS = "moh_hospitals"                   # MOH layer served as a OneMap theme
+RAW_RESALE = "hdb_resale_prices"                  # last 12 complete months only
 
 # Walking model (DECISIONS.md section 4). The detour factor is the median ratio of
 # OneMap walking-route distance to straight-line distance over 200 sampled blocks;
@@ -63,3 +64,9 @@ REFERENCE_CLASSIFIED_ON = "2026-09-30"   # date both reference files were compil
 # exceeds this is flagged far_from_rail, so the UI can say which stations the score
 # reflects (e.g. Tengah before the Jurong Region Line opens).
 FAR_FROM_RAIL_M = 1500.0
+
+# Housing Affordability (DECISIONS.md section 2): resale transactions from the 12 complete
+# calendar months before the resale data was fetched. The window is fixed in the snapshot,
+# so the same snapshot always gives the same answer, whatever today's date.
+RESALE_WINDOW_MONTHS = 12
+HOUSING_MIN_TRANSACTIONS = 10    # fewer matching transactions -> no data for the area

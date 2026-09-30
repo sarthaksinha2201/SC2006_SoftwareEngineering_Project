@@ -2,8 +2,10 @@
 list it here; the ETL build and the ScoringEngine pick it up without changes."""
 from gowhere.scoring.greenery import GreeneryScorer
 from gowhere.scoring.healthcare import HealthcareScorer
+from gowhere.scoring.housing import HousingAffordabilityScorer
 from gowhere.scoring.public_transport import PublicTransportScorer
 
 
 def default_strategies():
-    return [PublicTransportScorer(), GreeneryScorer(), HealthcareScorer()]
+    return [PublicTransportScorer(), HousingAffordabilityScorer(), GreeneryScorer(),
+            HealthcareScorer()]

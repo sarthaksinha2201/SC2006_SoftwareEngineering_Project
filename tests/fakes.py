@@ -37,3 +37,18 @@ class FakeResaleSources(FakeSources):
 
     def resale(self):
         return self._resale
+
+
+class FakeAmenitySources(FakeSources):
+    def __init__(self, amenities, **kw):
+        super().__init__(**kw)
+        self._amenities = amenities
+
+    def amenities(self):
+        return self._amenities
+
+    def amenities_as_of(self):
+        return {"supermarket": "2024-06-06", "osm": "2026-09-30"}
+
+    def amenities_meta(self):
+        return {"supermarket_licences": 0, "supermarkets_unlocated": 0}

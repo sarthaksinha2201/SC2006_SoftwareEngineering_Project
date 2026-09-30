@@ -38,6 +38,16 @@ class TextPattern:
         return isinstance(value, str) and re.fullmatch(self.pattern, value) is not None
 
 
+@dataclass(frozen=True)
+class SubsetOf:
+    """An option taking a non-empty list of distinct values from `choices`."""
+    choices: tuple
+
+    def __contains__(self, value):
+        return (isinstance(value, list) and len(value) > 0 and len(set(value)) == len(value)
+                and all(v in self.choices for v in value))
+
+
 class ScoringStrategy(ABC):
     key = ""     # identifier in code, JSON and CSS, e.g. "public_transport"
     label = ""   # name shown to users, e.g. "Public Transport"
@@ -65,7 +75,7 @@ class ScoringStrategy(ABC):
 
     def options(self, snapshot):
         """{option name: allowed values} the user must supply: a list of choices, a
-        NumberRange or a TextPattern. Every option must be present in a request (use None in a list for
+        NumberRange, a TextPattern or a SubsetOf. Every option must be present in a request (use None in a list for
         "no preference")."""
         return {}
 

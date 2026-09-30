@@ -17,6 +17,7 @@ from datetime import date, datetime, timezone
 from gowhere import config
 from gowhere.adapters.datagov import DataGovAdapter
 from gowhere.adapters.onemap import OneMapAdapter
+from gowhere.adapters.overpass import OverpassAdapter
 
 HDB_PROPERTY_ID = "d_17f5382f26140b1fdae0ba2ef6239d2f"
 MRT_EXITS_ID = "d_b39d3a0871985372d7e1637193335da5"
@@ -26,6 +27,10 @@ PARK_CONNECTORS_ID = "d_a69ef89737379f231d2ae93fd1c5707f"  # NParks Park Connect
 CHAS_CLINICS_ID = "d_548c33ea2d99e29ec63a7cc9edcccedc"     # MOH CHAS Clinics
 HOSPITALS_THEME = "moh_hospitals"   # no data.gov.sg dataset; MOH publishes it as a OneMap theme
 RESALE_ID = "d_8b84c4ee58e3cfc0ece0d773c8ca6abc"            # resale prices, registration date, 2017+
+HAWKER_CENTRES_ID = "d_4a086da0a5553be1d89383cd90d07ecd"   # NEA Hawker Centres (GEOJSON)
+LIBRARIES_THEME = "libraries"   # NLB via OneMap: updated Aug 2026; data.gov.sg's copy dates from 2019
+SUPERMARKETS_ID = "d_11edd0117280c5776651d7891114c88c"     # SFA List of Supermarket Licences
+OSM_AMENITIES = "overpass"      # malls, gyms, cafes: config.OSM_AMENITY_TAGS
 
 DATASETS = {
     # name: (dataset id, kind)
@@ -37,6 +42,10 @@ DATASETS = {
     config.RAW_CHAS_CLINICS: (CHAS_CLINICS_ID, "file"),
     config.RAW_HOSPITALS: (HOSPITALS_THEME, "onemap_theme"),
     config.RAW_RESALE: (RESALE_ID, "datastore_window"),
+    config.RAW_HAWKER_CENTRES: (HAWKER_CENTRES_ID, "file"),
+    config.RAW_LIBRARIES: (LIBRARIES_THEME, "onemap_theme"),
+    config.RAW_SUPERMARKETS: (SUPERMARKETS_ID, "datastore"),
+    config.RAW_OSM_AMENITIES: (OSM_AMENITIES, "overpass"),
 }
 
 
@@ -55,12 +64,16 @@ def record_count(payload, kind):
         return sum(len(p["result"]["records"]) for p in payload)
     if kind == "onemap_theme":
         return len(payload["SrchResults"]) - 1   # first entry is the theme's own metadata
+    if kind == "overpass":
+        return len(payload["elements"])
     return len(payload.get("features", []))
 
 
 def source_url(dataset_id, kind):
     if kind == "onemap_theme":
         return f"https://www.onemap.gov.sg/api/public/themesvc/retrieveTheme?queryName={dataset_id}"
+    if kind == "overpass":
+        return "https://overpass-api.de/api/interpreter"
     return f"https://data.gov.sg/datasets/{dataset_id}/view"
 
 
@@ -85,6 +98,8 @@ def fetch(names=None, force=False, adapter=None, onemap=None, raw_dir=None, toda
             window = window_months(today or date.today())
             payload = [page for month in window
                        for page in adapter.datastore_pages(dataset_id, filters={"month": month})]
+        elif kind == "overpass":
+            payload = OverpassAdapter().amenities(list(config.OSM_AMENITY_TAGS.values()))
         elif kind == "onemap_theme":
             if onemap is None:
                 config.load_dotenv()

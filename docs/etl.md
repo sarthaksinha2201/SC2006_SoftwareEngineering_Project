@@ -9,7 +9,7 @@ python3.13 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 python -m gowhere.etl._temp_fetch_raw   # TEMPORARY until S1 (gowhere.etl.fetch_raw) lands
 python -m gowhere.etl.geocode           # ~3.3 h without a OneMap token, ~1 h with one; resumable
-python -m gowhere.etl.geocode --reference   # polyclinic postal codes from data/reference/
+python -m gowhere.etl.geocode --postal-codes   # polyclinic and supermarket postal codes
 python -m gowhere.etl.build_snapshot    # offline; replaces the snapshot only if validation passes
 python -m gowhere.etl.calibrate         # needs ONEMAP_TOKEN; writes docs/detour-calibration.md
 pytest                                  # no network access needed
@@ -81,6 +81,14 @@ Core tables are defined in `CORE_SCHEMA` in `gowhere/etl/build_snapshot.py`. Eac
   - The download is checked month by month against the API's own totals.
   - Options: `flat_type`, `budget_min`, `budget_max`, `min_remaining_lease_years` (None/60/70/80).
   - Score = % of matching sales within budget ÷ 10 (absolute). Fewer than 10 matching sales means no data. Worked example: [golden-housing.md](golden-housing.md).
+- Amenities (`AmenitiesScorer`), with the types chosen by the user as option `amenity_types` (one or more of supermarket, hawker_centre, library, mall, gym, cafe):
+  - `amenity_block`: uncapped count of each type within 800 m of each block.
+  - `amenity_area`: for all 63 combinations, the flat-weighted median of the capped sum and its percentile-rank score.
+  - Sources: SFA supermarket licences (placed by postal code), NEA hawker centres (under construction excluded), NLB libraries (OneMap theme, current, in place of data.gov.sg's 2019 copy), and OpenStreetMap malls, gyms and cafes (points outside Singapore's planning areas dropped).
+  - Worked example: [golden-amenities.md](golden-amenities.md).
+- Commute (`CommuteScorer`):
+  - `commute_origin`: one representative block per area, the block nearest the flat-weighted centroid.
+  - At request time, OneMap routes it to the user's destination postal code by public transport (next weekday 08:30) or car, through a per-session, memory-only `CommuteRouter`.
 - Greenery (`GreeneryScorer`):
   - `greenery_block`: distance to the nearest park, nature reserve or park connector, measured to its boundary.
   - `greenery_area`: % of flats within `meta.green_space_radius_m` (400 m), median distance, 0–10 score.
@@ -96,4 +104,4 @@ Core tables are defined in `CORE_SCHEMA` in `gowhere/etl/build_snapshot.py`. Eac
 
 Write a `ScoringStrategy` subclass (`gowhere/scoring/base.py`) that implements `schema`, `precompute` and `category_scores`, plus optionally `meta`, `options`, `raw_values` and `notes`. Then add it to `default_strategies()` in `gowhere/scoring/registry.py`. The build and the engine need no changes.
 
-Scoring definitions and worked examples: [golden-public-transport.md](golden-public-transport.md), [golden-housing.md](golden-housing.md). Hospital definition: [hospital-rule.md](hospital-rule.md).
+Scoring definitions and worked examples: [golden-public-transport.md](golden-public-transport.md), [golden-housing.md](golden-housing.md), [golden-amenities.md](golden-amenities.md). Hospital definition: [hospital-rule.md](hospital-rule.md).

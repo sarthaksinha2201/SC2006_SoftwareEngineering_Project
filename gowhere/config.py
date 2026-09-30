@@ -20,6 +20,10 @@ RAW_PARK_CONNECTORS = "nparks_park_connectors"    # built park connector network
 RAW_CHAS_CLINICS = "moh_chas_clinics"
 RAW_HOSPITALS = "moh_hospitals"                   # MOH layer served as a OneMap theme
 RAW_RESALE = "hdb_resale_prices"                  # last 12 complete months only
+RAW_HAWKER_CENTRES = "nea_hawker_centres"
+RAW_LIBRARIES = "nlb_libraries"                   # NLB layer served as a OneMap theme
+RAW_SUPERMARKETS = "sfa_supermarkets"             # licence list: addresses, no coordinates
+RAW_OSM_AMENITIES = "osm_amenities"               # malls, gyms, cafes (Overpass)
 
 # Walking model (DECISIONS.md section 4). The detour factor is the median ratio of
 # OneMap walking-route distance to straight-line distance over 200 sampled blocks;
@@ -70,3 +74,12 @@ FAR_FROM_RAIL_M = 1500.0
 # so the same snapshot always gives the same answer, whatever today's date.
 RESALE_WINDOW_MONTHS = 12
 HOUSING_MIN_TRANSACTIONS = 10    # fewer matching transactions -> no data for the area
+
+# Amenities (DECISIONS.md section 2): per block, count each selected amenity type within
+# 800 m (straight line), capping each type at 3 so twenty cafes cannot outweigh having no
+# supermarket; per area, the flat-weighted median of the sum; scored by percentile rank.
+AMENITY_RADIUS_M = 800.0
+AMENITY_CAP = 3
+# OpenStreetMap tags for the amenity types that have no government dataset.
+OSM_AMENITY_TAGS = {"mall": '["shop"="mall"]', "gym": '["leisure"="fitness_centre"]',
+                    "cafe": '["amenity"="cafe"]'}

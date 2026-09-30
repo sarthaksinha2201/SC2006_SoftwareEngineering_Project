@@ -164,3 +164,69 @@ def load_resale(raw_dir=None):
     if months != expected:
         raise ValueError(f"resale data missing months: {sorted(expected - months)}")
     return [start, end], transactions
+
+
+def _geojson_attributes(properties):
+    """Attributes of a data.gov.sg feature: plain properties, or KML's HTML Description."""
+    if "Description" in properties:
+        return _kml_attributes(properties["Description"])
+    return properties
+
+
+def load_hawker_centres(raw_dir=None):
+    """NEA hawker centres that are open (anything but 'Under Construction')."""
+    centres = []
+    for f in _read(config.RAW_HAWKER_CENTRES, raw_dir)["features"]:
+        attrs = _geojson_attributes(f["properties"])
+        if attrs.get("STATUS", "").strip().lower() == "under construction":
+            continue
+        lon, lat = f["geometry"]["coordinates"][:2]
+        centres.append({"name": attrs["NAME"].strip(), "lat": float(lat), "lon": float(lon)})
+    return centres
+
+
+def hawker_centres_as_of(raw_dir=None):
+    return _fmel_date(_geojson_attributes(f["properties"]).get("FMEL_UPD_D")
+                      for f in _read(config.RAW_HAWKER_CENTRES, raw_dir)["features"])
+
+
+def load_libraries(raw_dir=None):
+    """NLB public libraries from the OneMap theme."""
+    libraries = []
+    for item in _read(config.RAW_LIBRARIES, raw_dir)["SrchResults"][1:]:
+        lat, lon = (float(v) for v in item["LatLng"].split(","))
+        libraries.append({"name": item["NAME"].strip(), "lat": lat, "lon": lon})
+    return libraries
+
+
+def libraries_as_of(raw_dir=None):
+    return _read(config.RAW_LIBRARIES, raw_dir)["SrchResults"][0]["DateTime"][:10]
+
+
+def load_supermarket_licences(raw_dir=None):
+    """SFA supermarket licences: [{name, postal_code}]. Located later by postal code."""
+    return [{"name": r["licensee_name"].strip(), "postal_code": r["postal_code"].strip().zfill(6)}
+            for r in _datastore_records(_read(config.RAW_SUPERMARKETS, raw_dir))]
+
+
+def load_osm_amenities(raw_dir=None):
+    """{amenity type: [{name, lat, lon}]} from the Overpass download, by config.OSM_AMENITY_TAGS."""
+    tag_of = {}
+    for kind, selector in config.OSM_AMENITY_TAGS.items():
+        key, value = re.fullmatch(r'\["(.+)"="(.+)"\]', selector).groups()
+        tag_of[(key, value)] = kind
+    out = {kind: [] for kind in config.OSM_AMENITY_TAGS}
+    payload = _read(config.RAW_OSM_AMENITIES, raw_dir)
+    for e in payload["elements"]:
+        tags = e.get("tags", {})
+        kind = next((k for (key, value), k in tag_of.items() if tags.get(key) == value), None)
+        point = e if "lat" in e else e.get("center")
+        if kind is None or not point:
+            continue
+        out[kind].append({"name": tags.get("name", f"unnamed {kind}"),
+                          "lat": float(point["lat"]), "lon": float(point["lon"])})
+    return out
+
+
+def osm_as_of(raw_dir=None):
+    return _read(config.RAW_OSM_AMENITIES, raw_dir)["osm3s"]["timestamp_osm_base"][:10]

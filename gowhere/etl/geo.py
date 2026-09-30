@@ -75,6 +75,19 @@ class LocalProjection:
                          shape(geojson))
 
 
+class CountIndex:
+    """How many point features lie within a straight-line radius (metres) of a point."""
+
+    def __init__(self, points, projection=None):
+        self.proj = projection or LocalProjection()
+        self.tree = STRtree([Point(self.proj.xy(p["lat"], p["lon"])) for p in points])
+
+    def count_within(self, lat, lon, radius_m):
+        """Points at distance <= radius_m (boundary inclusive)."""
+        return len(self.tree.query(Point(self.proj.xy(lat, lon)), predicate="dwithin",
+                                   distance=radius_m))
+
+
 class NearestIndex:
     """Distance in metres from a point to the nearest of many features (points, lines,
     polygons). A point inside a polygon is at distance 0."""

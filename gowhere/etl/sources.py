@@ -31,6 +31,40 @@ class RawSources:
         """(window [first, last month], [transaction]) of HDB resale transactions."""
         return self._get("resale", lambda: raw.load_resale(self.raw_dir))
 
+    def amenities(self):
+        """{amenity type: [{name, lat, lon}]} for the six Amenities types.
+
+        OSM points outside every planning area (Johor Bahru falls inside the download's
+        bounding box) are dropped. Supermarkets are placed by postal code; licences at a
+        postal code OneMap cannot find are left out and counted in amenities_meta().
+        """
+        def load():
+            from gowhere.etl.geo import PlanningAreaIndex
+            index = PlanningAreaIndex(raw.load_planning_areas(self.raw_dir))
+            osm = {kind: [p for p in points if index.area_of(p["lat"], p["lon"])]
+                   for kind, points in raw.load_osm_amenities(self.raw_dir).items()}
+            licences = {(s["name"], s["postal_code"]) for s in raw.load_supermarket_licences(self.raw_dir)}
+            located = load_postal_geocodes(sorted({pc for _, pc in licences}))
+            supermarkets = [{"name": n, **located[pc]} for n, pc in sorted(licences) if located.get(pc)]
+            self._cache["amenities_meta"] = {
+                "supermarket_licences": len(licences),
+                "supermarkets_unlocated": len(licences) - len(supermarkets)}
+            return {"supermarket": supermarkets,
+                    "hawker_centre": raw.load_hawker_centres(self.raw_dir),
+                    "library": raw.load_libraries(self.raw_dir), **osm}
+        return self._get("amenities", load)
+
+    def amenities_meta(self):
+        self.amenities()
+        return self._cache["amenities_meta"]
+
+    def amenities_as_of(self):
+        return self._get("amenities_as_of", lambda: {
+            "supermarket": "2024-06-06",   # data.gov.sg listing date; records carry no date
+            "hawker_centre": raw.hawker_centres_as_of(self.raw_dir),
+            "library": raw.libraries_as_of(self.raw_dir),
+            "osm": raw.osm_as_of(self.raw_dir)})
+
     def polyclinics(self):
         """Reference-list polyclinics placed by their postal code's OneMap geocode."""
         def load():
@@ -39,7 +73,7 @@ class RawSources:
             missing = [c["name"] for c in clinics if located.get(c["postal_code"]) is None]
             if missing:
                 raise ValueError(f"polyclinic postal codes not geocoded: {missing}; "
-                                 f"run python -m gowhere.etl.geocode --reference")
+                                 f"run python -m gowhere.etl.geocode --postal-codes")
             return [{"name": c["name"], **located[c["postal_code"]]} for c in clinics]
         return self._get("polyclinics", load)
 

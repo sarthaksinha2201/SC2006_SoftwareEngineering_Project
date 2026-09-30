@@ -44,6 +44,7 @@ def test_summary_ratio_and_threshold_agreement():
     s = summarise(sample, current_factor=1.3, speed=80, threshold=10)
     assert s["median"] == pytest.approx(1.5) and s["calibrated_factor"] == 1.5
     assert (s["n_ok"], s["n_failed"]) == (3, 1)
+    assert s["onemap_speed_m_per_min"] is None   # no route times in this sample
     # route minutes 8.1, 11.25, 10.6 -> within: T, F, F
     # model @1.3 minutes: 8.1, 9.75, 8.1 -> T, T, T  -> agrees 1/3
     # model @1.5 minutes: 9.4, 11.25, 9.4 -> T, F, T  -> agrees 2/3
@@ -123,3 +124,9 @@ def test_limitation_always_stated_and_area_gap_flagged():
     assert "stated modelling limitation" in text and "Future work" in text
     assert "differ noticeably" in text and "1.20 (B)" in text
     assert "close" in limitation_text({"areas": [("A", 6, 1.35), ("B", 5, 1.3)]})
+
+
+def test_onemap_implied_speed():
+    sample = [dict(block(1.1, 500), route_status="ok", route_distance_m=800, route_time_s=600),
+              dict(block(1.2, 500), route_status="ok", route_distance_m=900, route_time_s=600)]
+    assert summarise(sample)["onemap_speed_m_per_min"] == pytest.approx((80 + 90) / 2)

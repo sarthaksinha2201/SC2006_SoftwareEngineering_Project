@@ -155,6 +155,10 @@ def summarise(sample, current_factor=config.DETOUR_FACTOR,
         "mae_current_min": mean_abs_error_min(current_factor),
         "mae_calibrated_min": mean_abs_error_min(round(calibrated, 2)),
         "bands": bands, "areas": areas,
+        # OneMap's own walking speed, as a check on the 80 m/min assumption
+        "onemap_speed_m_per_min": statistics.median(
+            b["route_distance_m"] / (b["route_time_s"] / 60) for b in ok if b.get("route_time_s")
+        ) if any(b.get("route_time_s") for b in ok) else None,
     }
 
 
@@ -179,7 +183,7 @@ Raw per-block results: [detour-calibration-sample.csv](detour-calibration-sample
 
 ## Method
 
-The snapshot estimates walking time as straight-line (Haversine) distance to the nearest MRT/LRT exit × detour factor ÷ 80 m/min. To check the detour factor, {s['n_sampled']} HDB residential blocks were drawn by stratified random sample (seed {seed}): each planning area received a share of the sample equal to its share of HDB dwelling units, and blocks within an area were drawn at random. The median therefore describes Singapore's flats as a whole, not whichever areas happen to come first in the dataset. The OneMap walking route from each block's geocoded point to the same exit was then fetched, and the OneMap walking route from each block's geocoded point to the same exit was fetched. For each block, **ratio = OneMap route distance ÷ straight-line distance**. Only distances are compared; the 80 m/min walking speed is a separate assumption.
+The snapshot estimates walking time as straight-line (Haversine) distance to the nearest MRT/LRT exit × detour factor ÷ 80 m/min. To check the detour factor, {s['n_sampled']} HDB residential blocks were drawn by stratified random sample (seed {seed}): each planning area received a share of the sample equal to its share of HDB dwelling units, and blocks within an area were drawn at random. The median therefore describes Singapore's flats as a whole, not whichever areas happen to come first in the dataset. The OneMap walking route from each block's geocoded point to the same exit was then fetched, and the OneMap walking route from each block's geocoded point to the same exit was fetched. For each block, **ratio = OneMap route distance ÷ straight-line distance**. Only distances are compared; the 80 m/min walking speed is a separate assumption{speed_note(s)}.
 
 {s['n_ok']} routes succeeded; {s['n_failed']} failed and are listed in the CSV with the reason.
 
@@ -248,6 +252,11 @@ def spread_text(s):
                  f"{iqr / 2 * 800 / 80:.1f} min or more on an 800 m trip. Area-level figures "
                  f"average over many blocks and are much less affected than any one block.")
     return text
+
+
+def speed_note(s):
+    v = s.get("onemap_speed_m_per_min")
+    return "" if v is None else f" (for reference, OneMap's own routes imply a median of {v:.0f} m/min)"
 
 
 def limitation_text(s):

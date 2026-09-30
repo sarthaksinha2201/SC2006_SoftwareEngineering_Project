@@ -1,7 +1,8 @@
 import pytest
 
 from gowhere.adapters.http import HttpError
-from gowhere.etl.calibrate import RouteCache, fetch_routes, summarise
+from gowhere.etl.calibrate import (RouteCache, allocate, fetch_routes, limitation_text,
+                                    stratified_sample, summarise)
 
 
 class FakeRouter:
@@ -18,7 +19,7 @@ class FakeRouter:
 
 def block(lat, straight_m):
     return {"lat": lat, "lon": 103.8, "exit_lat": 1.0, "exit_lon": 103.9,
-            "exit_distance_m": straight_m}
+            "exit_distance_m": straight_m, "planning_area": "X"}
 
 
 def test_fetch_is_cached_and_failures_kept(tmp_path):
@@ -55,7 +56,8 @@ def stats_with(median, p25, p75):
             "p10": p25 - 0.1, "p25": p25, "p75": p75, "p90": p75 + 0.1, "min": 1.0, "max": 3.0,
             "current_factor": 1.3, "calibrated_factor": round(median, 2),
             "agreement_current": 0.9, "agreement_calibrated": 0.92,
-            "mae_current_min": 1.0, "mae_calibrated_min": 0.9, "bands": [(0, 400, 3, median)]}
+            "mae_current_min": 1.0, "mae_calibrated_min": 0.9, "bands": [(0, 400, 3, median)],
+            "areas": [("A", 6, median + 0.3), ("B", 5, median - 0.1)]}
 
 
 def test_close_median_keeps_factor_and_narrow_spread_not_flagged():
@@ -83,3 +85,41 @@ def test_report_renders(tmp_path, monkeypatch):
     calibrate.write_outputs([block(1.1, 500)], stats_with(1.35, 1.25, 1.45), seed=1)
     report = (tmp_path / "r.md").read_text()
     assert "## Spread" in report and "## Recommendation" in report and "{" not in report
+
+
+def test_allocate_is_proportional_and_sums_to_n():
+    # exact shares 7 / 2.5 / 0.5; the tied 0.5 remainders go to "mid" (alphabetical)
+    assert allocate(10, {"big": 700, "mid": 250, "tiny": 50}) == {"big": 7, "mid": 3, "tiny": 0}
+
+
+def test_allocate_largest_remainder():
+    # exact shares 3.33 / 3.33 / 3.33 -> one extra sample to the first name alphabetically
+    assert allocate(10, {"b": 1, "a": 1, "c": 1}) == {"a": 4, "b": 3, "c": 3}
+
+
+def test_stratified_sample_follows_flat_share_not_row_order():
+    # Area "EARLY" comes first in row order with many blocks but few flats.
+    rows = ([{"planning_area": "EARLY", "total_dwelling_units": 10, "i": i} for i in range(100)]
+            + [{"planning_area": "LATE", "total_dwelling_units": 90, "i": i} for i in range(100)])
+    sample = stratified_sample(rows, 20, seed=1)
+    by_area = {a: sum(r["planning_area"] == a for r in sample) for a in ("EARLY", "LATE")}
+    assert by_area == {"EARLY": 2, "LATE": 18}
+    assert sample == stratified_sample(rows, 20, seed=1)
+
+
+def test_summary_reports_per_area_medians_for_areas_with_enough_samples():
+    sample = ([dict(block(1.1, 100), planning_area="A", route_status="ok", route_distance_m=150)
+               for _ in range(5)]
+              + [dict(block(1.1, 100), planning_area="B", route_status="ok", route_distance_m=120)
+                 for _ in range(5)]
+              + [dict(block(1.1, 100), planning_area="C", route_status="ok", route_distance_m=300)])
+    s = summarise(sample)
+    assert s["areas"] == [("A", 5, 1.5), ("B", 5, 1.2)]   # C has too few samples
+
+
+def test_limitation_always_stated_and_area_gap_flagged():
+    s = {"areas": [("A", 6, 1.7), ("B", 5, 1.2)]}
+    text = limitation_text(s)
+    assert "stated modelling limitation" in text and "Future work" in text
+    assert "differ noticeably" in text and "1.20 (B)" in text
+    assert "close" in limitation_text({"areas": [("A", 6, 1.35), ("B", 5, 1.3)]})

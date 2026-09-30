@@ -45,8 +45,40 @@ class RouteCache:
         self.db.commit()
 
 
+def allocate(n, weights):
+    """Split n samples across strata in proportion to weight (largest-remainder method).
+
+    Ties in the remainder go to the alphabetically first stratum, so the result is
+    deterministic. Strata too small to earn a whole sample get none.
+    """
+    total = sum(weights.values())
+    exact = {k: n * w / total for k, w in weights.items()}
+    counts = {k: int(v) for k, v in exact.items()}
+    leftover = n - sum(counts.values())
+    for k in sorted(exact, key=lambda k: (-(exact[k] - counts[k]), k))[:leftover]:
+        counts[k] += 1
+    return counts
+
+
+def stratified_sample(rows, n, seed):
+    """Sample blocks so each planning area's share of the sample matches its share of flats.
+
+    Within an area, blocks are drawn by simple random sample. Reproducible from the seed.
+    """
+    by_area = {}
+    for r in rows:
+        by_area.setdefault(r["planning_area"], []).append(r)
+    counts = allocate(min(n, len(rows)),
+                      {a: sum(r["total_dwelling_units"] for r in rs) for a, rs in by_area.items()})
+    rng = Random(seed)
+    sample = []
+    for area in sorted(by_area):
+        sample += rng.sample(by_area[area], min(counts[area], len(by_area[area])))
+    return sample
+
+
 def sample_blocks(snapshot_path, n, seed):
-    """Simple random sample of placed blocks, reproducible from the seed."""
+    """Placed blocks from the snapshot, stratified by planning area in proportion to flats."""
     db = sqlite3.connect(snapshot_path)
     db.row_factory = sqlite3.Row
     rows = [dict(r) for r in db.execute(
@@ -56,7 +88,7 @@ def sample_blocks(snapshot_path, n, seed):
         " FROM hdb_block b JOIN mrt_exit e"
         "   ON e.station = b.nearest_station AND e.exit_code = b.nearest_exit_code"
         " GROUP BY b.id ORDER BY b.id")]
-    return Random(seed).sample(rows, min(n, len(rows)))
+    return stratified_sample(rows, n, seed)
 
 
 def fetch_routes(sample, adapter, cache):
@@ -105,6 +137,11 @@ def summarise(sample, current_factor=config.DETOUR_FACTOR,
         rs = [b["route_distance_m"] / b["exit_distance_m"] for b in ok if lo <= b["exit_distance_m"] < hi]
         if rs:
             bands.append((lo, hi, len(rs), statistics.median(rs)))
+    by_area = {}
+    for b in ok:
+        by_area.setdefault(b["planning_area"], []).append(b["route_distance_m"] / b["exit_distance_m"])
+    areas = sorted(((a, len(rs), statistics.median(rs)) for a, rs in by_area.items()
+                    if len(rs) >= MIN_AREA_SAMPLE), key=lambda t: -t[2])
     return {
         "n_sampled": len(sample), "n_ok": len(ok),
         "n_failed": len(sample) - len(ok),
@@ -117,7 +154,7 @@ def summarise(sample, current_factor=config.DETOUR_FACTOR,
         "agreement_calibrated": agreement(round(calibrated, 2)),
         "mae_current_min": mean_abs_error_min(current_factor),
         "mae_calibrated_min": mean_abs_error_min(round(calibrated, 2)),
-        "bands": bands,
+        "bands": bands, "areas": areas,
     }
 
 
@@ -131,6 +168,7 @@ def write_outputs(sample, s, seed):
         w.writeheader()
         w.writerows(sample)
 
+    area_rows = "\n".join(f"| {a} | {n} | {med:.2f} |" for a, n, med in s["areas"])
     band_rows = "\n".join(
         f"| {lo:.0f}–{'' if hi == float('inf') else f'{hi:.0f}'} m | {n} | {med:.2f} |"
         for lo, hi, n, med in s["bands"])
@@ -141,7 +179,7 @@ Raw per-block results: [detour-calibration-sample.csv](detour-calibration-sample
 
 ## Method
 
-The snapshot estimates walking time as straight-line (Haversine) distance to the nearest MRT/LRT exit × detour factor ÷ 80 m/min. To check the detour factor, {s['n_sampled']} HDB residential blocks were drawn by simple random sample (seed {seed}), and the OneMap walking route from each block's geocoded point to the same exit was fetched. For each block, **ratio = OneMap route distance ÷ straight-line distance**. Only distances are compared; the 80 m/min walking speed is a separate assumption.
+The snapshot estimates walking time as straight-line (Haversine) distance to the nearest MRT/LRT exit × detour factor ÷ 80 m/min. To check the detour factor, {s['n_sampled']} HDB residential blocks were drawn by stratified random sample (seed {seed}): each planning area received a share of the sample equal to its share of HDB dwelling units, and blocks within an area were drawn at random. The median therefore describes Singapore's flats as a whole, not whichever areas happen to come first in the dataset. The OneMap walking route from each block's geocoded point to the same exit was then fetched, and the OneMap walking route from each block's geocoded point to the same exit was fetched. For each block, **ratio = OneMap route distance ÷ straight-line distance**. Only distances are compared; the 80 m/min walking speed is a separate assumption.
 
 {s['n_ok']} routes succeeded; {s['n_failed']} failed and are listed in the CSV with the reason.
 
@@ -174,12 +212,26 @@ By straight-line distance:
 
 {spread_text(s)}
 
+## By planning area
+
+Areas with at least {MIN_AREA_SAMPLE} sampled blocks, highest median first:
+
+| Planning area | Blocks | Median ratio |
+|---|---|---|
+{area_rows}
+
+## Limitation: one national factor
+
+{limitation_text(s)}
+
 ## Recommendation
 
 {recommendation_text(s)}
 """)
 
 
+MIN_AREA_SAMPLE = 5        # fewer sampled blocks than this gives no usable area median
+AREA_SPREAD_NOTICEABLE = 0.2  # gap between highest and lowest area median
 WIDE_IQR = 0.3            # middle half of blocks spans more than ±0.15 around the median
 MATERIAL_DIFFERENCE = 0.1  # a factor 0.1 off moves a 10-minute walk by ~0.8 min
 
@@ -195,6 +247,28 @@ def spread_text(s):
                  f"individual block the modelled walk can be off by "
                  f"{iqr / 2 * 800 / 80:.1f} min or more on an 800 m trip. Area-level figures "
                  f"average over many blocks and are much less affected than any one block.")
+    return text
+
+
+def limitation_text(s):
+    text = ("The detour ratio varies with geography, not at random. Blocks separated from "
+            "their nearest station by an expressway, canal or rail line have to walk around "
+            "it, so they sit in the upper tail. That is a real property of those places. "
+            "Applying one national factor is therefore a stated modelling limitation: it "
+            "understates walking time for such blocks and overstates it for blocks with a "
+            "direct path.")
+    if len(s["areas"]) >= 2:
+        hi, lo = s["areas"][0], s["areas"][-1]
+        gap = hi[2] - lo[2]
+        if gap > AREA_SPREAD_NOTICEABLE:
+            text += (f"\n\nThe per-area medians differ noticeably: from {lo[2]:.2f} ({lo[0]}) to "
+                     f"{hi[2]:.2f} ({hi[0]}), a gap of {gap:.2f}. Per-area samples are small "
+                     f"(at least {MIN_AREA_SAMPLE} blocks), so individual area medians are indicative only.")
+        else:
+            text += (f"\n\nIn this sample the per-area medians are close (within {gap:.2f} of each "
+                     f"other), so the national factor fits the areas sampled reasonably well.")
+    text += ("\n\n**Future work:** a per-area detour factor, calibrated with a larger sample "
+             "per area. Not built for this project.")
     return text
 
 

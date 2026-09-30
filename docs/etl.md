@@ -9,6 +9,7 @@ python3.13 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 python -m gowhere.etl._temp_fetch_raw   # TEMPORARY until S1 (gowhere.etl.fetch_raw) lands
 python -m gowhere.etl.geocode           # ~3.3 h without a OneMap token, ~1 h with one; resumable
+python -m gowhere.etl.geocode --reference   # polyclinic postal codes from data/reference/
 python -m gowhere.etl.build_snapshot    # offline; replaces the snapshot only if validation passes
 python -m gowhere.etl.calibrate         # needs ONEMAP_TOKEN; writes docs/detour-calibration.md
 pytest                                  # no network access needed
@@ -25,6 +26,8 @@ Put `ONEMAP_TOKEN=...` in `.env` at the repo root (gitignored). Search works wit
 | `data/cache/onemap_route.sqlite` | OneMap walking routes used for calibration | no |
 | `data/logs/geocode_failures.csv` | Every block that did not geocode, with the candidates OneMap returned | no |
 | `data/logs/unplaced_blocks.csv` | Every residential block left out of the snapshot, with the reason | no |
+| `data/reference/polyclinics.csv` | Hand-compiled polyclinic list, one source per row | **yes** |
+| `data/reference/hospitals.csv` | Every MOH-licensed hospital classified by type and 24-hour care, one source per row | **yes** |
 | `data/snapshot.db` | The only file the web app reads | no |
 
 Raw dataset names (S1 must use these): `hdb_property_information`, `lta_mrt_station_exits`, `ura_mp2019_planning_areas`. A paginated `datastore_search` dataset is stored as a JSON list of the page responses, unmodified.
@@ -35,6 +38,20 @@ Raw dataset names (S1 must use these): `hdb_property_information`, `lta_mrt_stat
 - **All 10,796 geocoded (100%)** after two matching fixes applied offline. The first pass resolved 99.71%; the 31 failures were 26 blocks on St George's Road/Lane (HDB's "ST." means Saint, not Street) and 5 long slab blocks that OneMap indexes as two points sharing one postal code.
 - All 10,796 fall inside a planning area. **32 of the 55 planning areas are in scope.**
 - 613 MRT/LRT exits at 190 stations (41 LRT). Tengah's Jurong Region Line stations are not open yet and are not in the dataset, so Tengah's nearest exit is Chinese Garden.
+
+## Hand-maintained reference data
+
+`data/reference/` holds the project's only hand-compiled data. It exists because no government dataset gives polyclinic locations or says which hospitals offer 24-hour emergency care. Every row cites its source and retrieval date, and tests check that every row has one.
+
+- **Polyclinics (28):**
+  - Membership and cluster come from each cluster's own list: SingHealth and NUP from their websites, NHG from the Singapore Government Directory.
+  - Addresses come from maps.gov.sg (updated 7 Dec 2025), plus the cluster sites for Tengah and Serangoon, which opened after that.
+  - Locations come from OneMap, geocoded by postal code. All 26 that maps.gov.sg also places are within 45 m of its location.
+- **Hospitals (31, every hospital in MOH's OneMap theme):**
+  - Category comes from CPF's list of medical institutions (21 Jul 2026).
+  - 24-hour care type comes from MOH's emergency department statistics or each hospital's own site.
+  - `config.HOSPITAL_CATEGORIES` and `config.HOSPITAL_CARE_24H` choose which hospitals count.
+  - A newly licensed hospital missing from the file stops the build until it is classified.
 
 ## Geocoding rules
 
@@ -57,6 +74,15 @@ Core tables are defined in `CORE_SCHEMA` in `gowhere/etl/build_snapshot.py`. Eac
   - `mrt_exit`: every MRT **and LRT** exit, one set: "nearest exit" means the nearest MRT or LRT exit.
   - `public_transport_block`: nearest exit, straight-line distance and modelled walk time per block.
   - `public_transport_area`: % of flats within 10 min, median and P90 walk, the median distance to an exit, `far_from_rail` (median distance above `meta.far_from_rail_m`), both percentile ranks, and the 0–10 score.
+
+- Greenery (`GreeneryScorer`):
+  - `greenery_block`: distance to the nearest park, nature reserve or park connector, measured to its boundary.
+  - `greenery_area`: % of flats within `meta.green_space_radius_m` (400 m), median distance, 0–10 score.
+- Healthcare (`HealthcareScorer`), with the facility type chosen by the user as option `facility_type`:
+  - `healthcare_facility`: every facility counted, by type.
+  - `healthcare_block`: distance from each block to its nearest facility of each type (`gp`, `polyclinic`, `hospital`).
+  - `healthcare_area`: flat-weighted median distance and 0–10 score per area and type.
+  - `meta` records each source's date: `gp_data_as_of` (when the CHAS records last changed) and the reference files' compilation date.
 
 **Web app access:** read the snapshot only through `gowhere.snapshot.Snapshot` (read-only) and `gowhere.scoring.engine.ScoringEngine`. `engine.compare(areas, {factor_key: FactorChoice(weight, options)})` returns a JSON-ready dict: ranked areas with overall and category scores, `_display` values rounded half-up, raw figures, `notes`, dropped factors, `close_call`, and the marginal-contribution explanation. All user-facing note wording is in `gowhere/scoring/notes.py`.
 

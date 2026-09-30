@@ -88,3 +88,15 @@ def _one_building(matches):
 def _block_postal_suffix(blk_no):
     digits = "".join(c for c in blk_no if c.isdigit())
     return digits[-3:].zfill(3)
+
+
+def match_postal(postal, results):
+    """{lat, lon} for a postal code: the midpoint of results carrying exactly that code.
+
+    A Singapore postal code identifies one building, so all matches are the same place.
+    """
+    matches = [r for r in results if (r.get("POSTAL") or "").strip() == postal]
+    if not matches:
+        return None
+    m = _midpoint(matches)
+    return {"lat": float(m["LATITUDE"]), "lon": float(m["LONGITUDE"])}

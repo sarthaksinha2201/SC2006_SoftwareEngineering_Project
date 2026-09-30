@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from gowhere import config
 from gowhere.adapters.http import HttpError
 from gowhere.adapters.onemap import OneMapAdapter
-from gowhere.etl.addresses import match_block, query_for
+from gowhere.etl.addresses import match_postal, match_block, query_for
 from gowhere.etl.raw import load_hdb_residential
 
 CACHE_PATH = config.CACHE_DIR / "onemap_search.sqlite"
@@ -117,12 +117,48 @@ def load_geocodes(cache_path=CACHE_PATH, blocks=None):
     return results
 
 
+def geocode_postal(postal, adapter, cache):
+    """{lat, lon} for a postal code (cached like block queries), or None if OneMap has none."""
+    response = cache.get(postal)
+    if response is None:
+        response = adapter.search(postal)
+        cache.put(postal, response)
+    return match_postal(postal, response.get("results", []))
+
+
+def load_postal_geocodes(postals, cache_path=CACHE_PATH):
+    """Offline: {postal: {lat, lon} or None}; a postal code never searched maps to None."""
+    cache = SearchCache(cache_path)
+    return {p: (match_postal(p, cache.get(p).get("results", [])) if cache.get(p) else None)
+            for p in postals}
+
+
+def geocode_reference(adapter, cache):
+    """Geocode every postal code in data/reference/polyclinics.csv. Failures are printed."""
+    from gowhere.etl.reference import load_polyclinic_list
+    failures = []
+    for clinic in load_polyclinic_list():
+        try:
+            if geocode_postal(clinic["postal_code"], adapter, cache) is None:
+                failures.append(f"{clinic['name']} ({clinic['postal_code']}): no OneMap match")
+        except HttpError as e:
+            failures.append(f"{clinic['name']} ({clinic['postal_code']}): {e}")
+    return failures
+
+
 def main():
     parser = argparse.ArgumentParser(description="Geocode HDB residential blocks via OneMap")
     parser.add_argument("--limit", type=int, help="only the first N blocks (for testing)")
+    parser.add_argument("--reference", action="store_true",
+                        help="geocode the postal codes in data/reference/ instead of HDB blocks")
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
     config.load_dotenv()   # a token lifts the search rate limit
+
+    if args.reference:
+        failures = geocode_reference(OneMapAdapter(), SearchCache(CACHE_PATH))
+        print("\n".join(failures) or "all reference postal codes geocoded")
+        raise SystemExit(1 if failures else 0)
 
     blocks = load_hdb_residential()[:args.limit]
     cache = SearchCache(CACHE_PATH)

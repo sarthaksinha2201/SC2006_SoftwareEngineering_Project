@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"            # unmodified API responses (S1 contract)
+REFERENCE_DIR = DATA_DIR / "reference"  # hand-compiled, sourced reference files (in git)
 CACHE_DIR = DATA_DIR / "cache"        # resumable API caches (geocoding, routing)
 LOG_DIR = DATA_DIR / "logs"
 SNAPSHOT_PATH = DATA_DIR / "snapshot.db"   # the only file the web app reads
@@ -48,8 +49,13 @@ def load_dotenv(path=ROOT / ".env"):
 # park, nature reserve or park connector (DECISIONS.md section 2).
 GREEN_SPACE_RADIUS_M = 400.0
 
-# Hospitals left out of the Healthcare factor: not open to the public.
-HOSPITAL_EXCLUDE = {"Changi Medical Facility"}   # prison medical facility
+# Healthcare: which hospitals count, by their classification in
+# data/reference/hospitals.csv (every MOH-licensed hospital, with a source per row).
+# Provisional (30 Sep 2026): acute and private hospitals with 24-hour emergency or urgent
+# care. Community, psychiatric and specialty hospitals and the prison facility never count.
+HOSPITAL_CATEGORIES = {"public_acute", "private"}
+HOSPITAL_CARE_24H = {"emergency_department", "urgent_care_centre"}
+REFERENCE_CLASSIFIED_ON = "2026-09-30"   # date both reference files were compiled
 
 # Public Transport: an area whose flat-weighted median distance to the nearest rail exit
 # exceeds this is flagged far_from_rail, so the UI can say which stations the score

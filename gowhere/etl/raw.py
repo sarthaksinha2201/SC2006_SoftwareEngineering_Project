@@ -95,51 +95,24 @@ def chas_clinics_as_of(raw_dir=None):
                       for f in _read(config.RAW_CHAS_CLINICS, raw_dir)["features"])
 
 
-def load_hospitals(raw_dir=None, exclude=None):
-    """MOH-licensed hospitals from the OneMap theme, minus config.HOSPITAL_EXCLUDE."""
-    exclude = {n.upper() for n in (config.HOSPITAL_EXCLUDE if exclude is None else exclude)}
+def load_hospitals(classification, raw_dir=None):
+    """Hospitals from the OneMap moh_hospitals theme that the classification counts.
+
+    Every theme hospital must appear in the classification, so a newly licensed hospital
+    stops the build until someone classifies it, rather than being silently included.
+    """
+    from gowhere.etl.reference import hospital_counts
     hospitals = []
     for item in _read(config.RAW_HOSPITALS, raw_dir)["SrchResults"][1:]:
-        if item["NAME"].strip().upper() in exclude:
+        name = item["NAME"].strip()
+        if name not in classification:
+            raise ValueError(f"hospital {name!r} is not in data/reference/hospitals.csv; classify it")
+        if not hospital_counts(classification[name]):
             continue
         lat, lon = (float(v) for v in item["LatLng"].split(","))
-        hospitals.append({"name": item["NAME"].strip(), "lat": lat, "lon": lon})
+        hospitals.append({"name": name, "lat": lat, "lon": lon})
     return hospitals
 
 
 def hospitals_as_of(raw_dir=None):
     return _read(config.RAW_HOSPITALS, raw_dir)["SrchResults"][0]["DateTime"][:10]
-
-
-class RawSources:
-    """Lazy, cached access to the raw datasets a scoring strategy may need."""
-
-    def __init__(self, raw_dir=None):
-        self.raw_dir = raw_dir
-        self._cache = {}
-
-    def _get(self, key, loader):
-        if key not in self._cache:
-            self._cache[key] = loader(self.raw_dir)
-        return self._cache[key]
-
-    def mrt_exits(self):
-        return self._get("mrt_exits", load_mrt_exits)
-
-    def mrt_exits_as_of(self):
-        return self._get("mrt_exits_as_of", mrt_exits_as_of)
-
-    def parks(self):
-        return self._get("parks", load_parks)
-
-    def park_connectors(self):
-        return self._get("park_connectors", load_park_connectors)
-
-    def facilities(self):
-        """{facility type: [{name, lat, lon}]} for every type with a source."""
-        return self._get("facilities", lambda d: {"gp": load_gp_clinics(d),
-                                                  "hospital": load_hospitals(d)})
-
-    def facilities_as_of(self):
-        return self._get("facilities_as_of", lambda d: {"gp": chas_clinics_as_of(d),
-                                                        "hospital": hospitals_as_of(d)})

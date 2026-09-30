@@ -17,7 +17,8 @@ from datetime import datetime, timezone
 from gowhere import config
 from gowhere.etl.geo import PlanningAreaIndex
 from gowhere.etl.geocode import load_geocodes
-from gowhere.etl.raw import RawSources, load_hdb_residential, load_planning_areas
+from gowhere.etl.raw import load_hdb_residential, load_planning_areas
+from gowhere.etl.sources import RawSources
 from gowhere.etl.spatial import place_blocks
 from gowhere.scoring.base import group_by_area
 from gowhere.scoring.registry import default_strategies

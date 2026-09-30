@@ -17,10 +17,6 @@ def rail_data_note(as_of_iso):
             f"data as of {_day_month_year(as_of_iso)}.")
 
 
-def source_date_note(source, as_of_iso):
-    return f"{source} data as of {_day_month_year(as_of_iso)}."
-
-
 def _day_month_year(iso):
     d = date.fromisoformat(iso)
     return f"{d.day} {d:%b %Y}"

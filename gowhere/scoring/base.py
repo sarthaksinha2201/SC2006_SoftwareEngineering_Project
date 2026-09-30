@@ -27,6 +27,17 @@ class NumberRange:
                 and self.minimum <= value <= self.maximum)
 
 
+@dataclass(frozen=True)
+class TextPattern:
+    """An option taking any text matching a regular expression, e.g. a postal code."""
+    pattern: str
+    description: str
+
+    def __contains__(self, value):
+        import re
+        return isinstance(value, str) and re.fullmatch(self.pattern, value) is not None
+
+
 class ScoringStrategy(ABC):
     key = ""     # identifier in code, JSON and CSS, e.g. "public_transport"
     label = ""   # name shown to users, e.g. "Public Transport"
@@ -53,8 +64,8 @@ class ScoringStrategy(ABC):
     # ---- request time (web app, reads the snapshot only) ------------------------
 
     def options(self, snapshot):
-        """{option name: allowed values} the user must supply: a list of choices, or a
-        NumberRange. Every option must be present in a request (use None in a list for
+        """{option name: allowed values} the user must supply: a list of choices, a
+        NumberRange or a TextPattern. Every option must be present in a request (use None in a list for
         "no preference")."""
         return {}
 

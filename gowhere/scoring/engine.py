@@ -11,7 +11,7 @@ category scores and applies the rules in DECISIONS.md section 2:
 from dataclasses import dataclass, field
 
 from gowhere.scoring import notes as notes_text
-from gowhere.scoring.base import InvalidRequest, NumberRange
+from gowhere.scoring.base import InvalidRequest, NumberRange, TextPattern
 from gowhere.scoring.stats import round1, tenths
 
 MIN_AREAS, MAX_AREAS = 2, 4
@@ -43,6 +43,8 @@ class ScoringEngine:
         def describe(allowed):
             if isinstance(allowed, NumberRange):
                 return {"min": allowed.minimum, "max": allowed.maximum}
+            if isinstance(allowed, TextPattern):
+                return {"pattern": allowed.pattern, "description": allowed.description}
             return list(allowed)
         return [{"key": s.key, "label": s.label,
                  "options": {k: describe(v) for k, v in s.options(self.snapshot).items()}}
@@ -127,6 +129,8 @@ class ScoringEngine:
                 raise InvalidRequest(f"{key}: options must be exactly {sorted(allowed)}")
             for name, value in choice.options.items():
                 if value not in allowed[name]:
+                    if isinstance(allowed[name], TextPattern):
+                        raise InvalidRequest(f"{key}: {name} must be {allowed[name].description}")
                     if isinstance(allowed[name], NumberRange):
                         raise InvalidRequest(f"{key}: {name} must be a number from "
                                              f"{allowed[name].minimum:g} to {allowed[name].maximum:g}")

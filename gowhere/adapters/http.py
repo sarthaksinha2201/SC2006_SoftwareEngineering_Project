@@ -35,8 +35,13 @@ class HttpError(Exception):
 
 
 def get_json(session, url, params=None, headers=None, limiter=None,
-             retries=4, backoff_s=2.0, timeout_s=30, sleep=time.sleep):
-    """GET a JSON document, retrying transient failures with exponential backoff."""
+             retries=4, backoff_s=2.0, timeout_s=30, sleep=time.sleep, redact=False):
+    """GET a JSON document, retrying transient failures with exponential backoff.
+
+    redact=True for requests carrying personal data (a user's destination): errors and
+    log lines then name only the failure type and status, never the exception text or
+    response body, which can contain the full query string.
+    """
     last_error = None
     for attempt in range(retries + 1):
         if limiter:
@@ -44,14 +49,15 @@ def get_json(session, url, params=None, headers=None, limiter=None,
         try:
             resp = session.get(url, params=params, headers=headers, timeout=timeout_s)
         except requests.RequestException as e:
-            last_error = HttpError(f"{type(e).__name__}: {e}")
+            last_error = HttpError(type(e).__name__ if redact else f"{type(e).__name__}: {e}")
         else:
             if 200 <= resp.status_code < 300:
                 try:
                     return resp.json()
                 except ValueError:
                     raise HttpError("response was not JSON", status=resp.status_code)
-            last_error = HttpError(f"HTTP {resp.status_code}: {resp.text[:200]}",
+            last_error = HttpError(f"HTTP {resp.status_code}" if redact
+                                   else f"HTTP {resp.status_code}: {resp.text[:200]}",
                                    status=resp.status_code)
             if resp.status_code not in RETRYABLE_STATUS:
                 raise last_error

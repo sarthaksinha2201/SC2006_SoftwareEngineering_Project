@@ -150,6 +150,7 @@ def summarise(sample, current_factor=config.DETOUR_FACTOR,
         "p75": statistics.quantiles(ratios, n=4, method="inclusive")[2], "p90": q[8],
         "min": ratios[0], "max": ratios[-1],
         "current_factor": current_factor, "calibrated_factor": round(calibrated, 2),
+        "share_above_current": sum(r > current_factor for r in ratios) / len(ratios),
         "agreement_current": agreement(current_factor),
         "agreement_calibrated": agreement(round(calibrated, 2)),
         "mae_current_min": mean_abs_error_min(current_factor),
@@ -183,9 +184,9 @@ Raw per-block results: [detour-calibration-sample.csv](detour-calibration-sample
 
 ## Method
 
-The snapshot estimates walking time as straight-line (Haversine) distance to the nearest MRT/LRT exit × detour factor ÷ 80 m/min. To check the detour factor, {s['n_sampled']} HDB residential blocks were drawn by stratified random sample (seed {seed}): each planning area received a share of the sample equal to its share of HDB dwelling units, and blocks within an area were drawn at random. The median therefore describes Singapore's flats as a whole, not whichever areas happen to come first in the dataset. The OneMap walking route from each block's geocoded point to the same exit was then fetched, and the OneMap walking route from each block's geocoded point to the same exit was fetched. For each block, **ratio = OneMap route distance ÷ straight-line distance**. Only distances are compared; the 80 m/min walking speed is a separate assumption{speed_note(s)}.
+The snapshot estimates walking time as straight-line (Haversine) distance to the nearest MRT/LRT exit × detour factor ÷ 80 m/min. To check the detour factor, {s['n_sampled']} HDB residential blocks were drawn by stratified random sample (seed {seed}): each planning area received a share of the sample equal to its share of HDB dwelling units, and blocks within an area were drawn at random. The median therefore describes Singapore's flats as a whole, not whichever areas happen to come first in the dataset. The OneMap walking route from each block's geocoded point to its nearest exit was then fetched. For each block, **ratio = OneMap route distance ÷ straight-line distance**. Only distances are compared; the 80 m/min walking speed is a separate assumption{speed_note(s)}.
 
-{s['n_ok']} routes succeeded; {s['n_failed']} failed and are listed in the CSV with the reason.
+{s['n_ok']} of {s['n_sampled']} routes succeeded{'' if not s['n_failed'] else '; the failures are listed in the CSV with the reason'}.
 
 ## Result
 
@@ -237,7 +238,11 @@ Areas with at least {MIN_AREA_SAMPLE} sampled blocks, highest median first:
 MIN_AREA_SAMPLE = 5        # fewer sampled blocks than this gives no usable area median
 AREA_SPREAD_NOTICEABLE = 0.2  # gap between highest and lowest area median
 WIDE_IQR = 0.3            # middle half of blocks spans more than ±0.15 around the median
-MATERIAL_DIFFERENCE = 0.1  # a factor 0.1 off moves a 10-minute walk by ~0.8 min
+# Propose the sample median when it gets the 10-minute verdict right for at least this
+# many more sampled blocks than the current factor does. The 10-minute share is the only
+# place the factor changes rankings: scaling every walk by the same factor leaves the
+# median-walk ranking untouched.
+MATERIAL_AGREEMENT_GAIN = 0.01
 
 
 def spread_text(s):
@@ -282,12 +287,14 @@ def limitation_text(s):
 
 
 def recommendation_text(s):
-    if abs(s["median"] - s["current_factor"]) <= MATERIAL_DIFFERENCE:
-        return (f"The sample median ({s['median']:.2f}) is within {MATERIAL_DIFFERENCE} of the "
-                f"current factor, so **{s['current_factor']} is kept**, now backed by this sample.")
-    return (f"The sample median ({s['median']:.2f}) differs materially from the current factor "
-            f"({s['current_factor']}). **Proposed new factor: {s['calibrated_factor']}.** Pending "
-            f"team decision; `config.DETOUR_FACTOR` has not been changed.")
+    facts = (f"{s['share_above_current']:.0%} of sampled blocks walk further than a factor of "
+             f"{s['current_factor']} assumes. The sample median ({s['median']:.2f}) gives the same "
+             f"10-minute verdict as the real route for {s['agreement_calibrated']:.1%} of blocks, "
+             f"against {s['agreement_current']:.1%} for {s['current_factor']}.")
+    if s["agreement_calibrated"] - s["agreement_current"] < MATERIAL_AGREEMENT_GAIN:
+        return (f"{facts} The difference is immaterial, so **{s['current_factor']} is kept**.")
+    return (f"{facts} **Proposed new factor: {s['calibrated_factor']}.** Pending team decision; "
+            f"`config.DETOUR_FACTOR` has not been changed.")
 
 
 def main():

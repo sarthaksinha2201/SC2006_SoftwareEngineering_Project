@@ -52,26 +52,27 @@ def test_summary_ratio_and_threshold_agreement():
     assert s["agreement_calibrated"] == pytest.approx(2 / 3)
 
 
-def stats_with(median, p25, p75):
+def stats_with(median, p25, p75, agreement_gain=0.0):
     return {"n_sampled": 3, "n_ok": 3, "n_failed": 0, "median": median, "mean": median + 0.1,
             "p10": p25 - 0.1, "p25": p25, "p75": p75, "p90": p75 + 0.1, "min": 1.0, "max": 3.0,
             "current_factor": 1.3, "calibrated_factor": round(median, 2),
-            "agreement_current": 0.9, "agreement_calibrated": 0.92,
+            "share_above_current": 0.6, "agreement_current": 0.9,
+            "agreement_calibrated": 0.9 + agreement_gain,
             "mae_current_min": 1.0, "mae_calibrated_min": 0.9, "bands": [(0, 400, 3, median)],
             "areas": [("A", 6, median + 0.3), ("B", 5, median - 0.1)]}
 
 
 def test_close_median_keeps_factor_and_narrow_spread_not_flagged():
     from gowhere.etl.calibrate import recommendation_text, spread_text
-    s = stats_with(1.35, 1.25, 1.45)
-    assert "1.3 is kept" in recommendation_text(s)
+    s = stats_with(1.35, 1.25, 1.45, agreement_gain=0.005)
+    assert "1.3 is kept" in recommendation_text(s) and "60% of sampled blocks" in recommendation_text(s)
     assert "spread is wide" not in spread_text(s)
 
 
 def test_far_median_is_proposed_not_applied_and_wide_spread_flagged():
     from gowhere import config
     from gowhere.etl.calibrate import recommendation_text, spread_text
-    s = stats_with(1.6, 1.3, 1.9)
+    s = stats_with(1.6, 1.3, 1.9, agreement_gain=0.035)
     text = recommendation_text(s)
     assert "Proposed new factor: 1.6" in text and "has not been changed" in text
     assert "spread is wide" in spread_text(s)

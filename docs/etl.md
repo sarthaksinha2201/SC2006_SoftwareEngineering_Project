@@ -29,10 +29,18 @@ Put `ONEMAP_TOKEN=...` in `.env` at the repo root (gitignored). Search works wit
 
 Raw dataset names (S1 must use these): `hdb_property_information`, `lta_mrt_station_exits`, `ura_mp2019_planning_areas`. A paginated `datastore_search` dataset is stored as a JSON list of the page responses, unmodified.
 
+## Coverage (snapshot of 30 Sep 2026)
+
+- HDB Property Information has 13,357 blocks. **10,796 are residential** (`residential = 'Y'`) and are the only ones used. They hold 1,175,956 dwelling units.
+- **All 10,796 geocoded (100%)** after two matching fixes applied offline. The first pass resolved 99.71%; the 31 failures were 26 blocks on St George's Road/Lane (HDB's "ST." means Saint, not Street) and 5 long slab blocks that OneMap indexes as two points sharing one postal code.
+- All 10,796 fall inside a planning area. **32 of the 55 planning areas are in scope.**
+- 613 MRT/LRT exits at 190 stations (41 LRT). Tengah's Jurong Region Line stations are not open yet and are not in the dataset, so Tengah's nearest exit is Chinese Garden.
+
 ## Geocoding rules
 
 - Query `"<blk_no> <street>"` as HDB writes it. If there is no match, retry once with abbreviations expanded (`BT` → `BUKIT`, `C'WEALTH` → `COMMONWEALTH`, …).
 - A result is accepted only if its block number **and** full road name match. If matches for the same block are more than 50 m apart, keep the ones whose postal code ends in the block number (HDB convention). If that doesn't settle it, the block is logged as `ambiguous`, not guessed.
+- `ST.` with a full stop expands to SAINT. Matches more than 50 m apart that share a single postal code are one long block, placed at the midpoint of its points.
 - A query already in the cache is never re-sent. HTTP/network errors are not cached, so they are retried on the next run.
 
 ## Snapshot contract (`data/snapshot.db`)

@@ -20,7 +20,8 @@ SAME_BUILDING_M = 50.0
 
 
 def expand_street(street):
-    words = street.upper().replace(".", " ").split()
+    # "ST." with a full stop is Saint (HDB: "ST. GEORGE'S RD"); plain "ST" is Street.
+    words = street.upper().replace("ST.", "SAINT ").replace(".", " ").split()
     return " ".join(ABBREVIATIONS.get(w, w) for w in words)
 
 
@@ -59,11 +60,23 @@ def match_block(blk_no, street, results):
         # end in the block number (Blk 1 -> 190001), so keep the candidates that do.
         suffix = _block_postal_suffix(target_blk)
         matches = [m for m in matches if (m.get("POSTAL") or "").endswith(suffix)]
-        if not matches or not _one_building(matches):
+        if not matches:
             return "ambiguous", None
+        if not _one_building(matches):
+            # A Singapore postal code identifies one building, so points that share one
+            # are the same (long) block that OneMap indexes twice: use their midpoint.
+            if len({m["POSTAL"] for m in matches}) != 1:
+                return "ambiguous", None
+            return "ok", _midpoint(matches)
     # Prefer a result that carries a real postal code.
     best = next((m for m in matches if (m.get("POSTAL") or "NIL") != "NIL"), matches[0])
     return "ok", best
+
+
+def _midpoint(matches):
+    lat = sum(float(m["LATITUDE"]) for m in matches) / len(matches)
+    lon = sum(float(m["LONGITUDE"]) for m in matches) / len(matches)
+    return {**matches[0], "LATITUDE": str(lat), "LONGITUDE": str(lon)}
 
 
 def _one_building(matches):

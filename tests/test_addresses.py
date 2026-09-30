@@ -14,6 +14,8 @@ def result(blk, road, lat, lon, postal="NIL", building="NIL"):
     ("UPP BOON KENG RD", "UPPER BOON KENG ROAD"),
     ("BEDOK STH AVE 1", "BEDOK SOUTH AVENUE 1"),
     ("TAMPINES ST 71", "TAMPINES STREET 71"),
+    ("ST. GEORGE'S RD", "SAINT GEORGE'S ROAD"),
+    ("ST. GEORGE'S LANE", "SAINT GEORGE'S LANE"),
 ])
 def test_expand_street(hdb, onemap):
     assert expand_street(hdb) == onemap
@@ -55,3 +57,19 @@ def test_far_apart_matches_without_postal_evidence_are_ambiguous():
     results = [result("5", "SOME ROAD", 1.30, 103.80, "111111"),
                result("5", "SOME ROAD", 1.35, 103.85, "222222")]
     assert match_block("5", "SOME RD", results) == ("ambiguous", None)
+
+
+def test_saint_matches_onemap_spelling():
+    status, _ = match_block("1", "ST. GEORGE'S RD",
+                            [result("1", "SAINT GEORGE'S ROAD", 1.3234, 103.8616, "320001")])
+    assert status == "ok"
+
+
+def test_one_postal_code_far_apart_is_one_long_block_at_midpoint():
+    # Real case: 186 Boon Lay Ave, two OneMap points ~65 m apart, both postal 640186.
+    results = [result("186", "BOON LAY AVENUE", 1.3457272, 103.711027, "640186"),
+               result("186", "BOON LAY AVENUE", 1.3456197, 103.711613, "640186", "BOON LAY VISTA")]
+    status, m = match_block("186", "BOON LAY AVE", results)
+    assert status == "ok"
+    assert float(m["LATITUDE"]) == pytest.approx((1.3457272 + 1.3456197) / 2)
+    assert float(m["LONGITUDE"]) == pytest.approx((103.711027 + 103.711613) / 2)

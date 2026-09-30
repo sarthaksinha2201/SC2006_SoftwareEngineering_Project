@@ -1,6 +1,6 @@
-# Golden test — transport score, calculated by hand
+# Golden test — Public Transport score, calculated by hand
 
-This is the manual recalculation behind `tests/test_golden_transport.py`. The system must agree with it to 1 decimal place (Accuracy NFR).
+This is the manual recalculation behind `tests/test_golden_public_transport.py`. The system must agree with it to 1 decimal place (Accuracy NFR).
 
 ## Definitions
 

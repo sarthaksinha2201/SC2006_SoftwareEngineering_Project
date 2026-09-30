@@ -210,7 +210,7 @@ By straight-line distance:
 | {s['current_factor']} (current) | {s['agreement_current']:.1%} | {s['mae_current_min']:.1f} min |
 | {s['calibrated_factor']} (sample median) | {s['agreement_calibrated']:.1%} | {s['mae_calibrated_min']:.1f} min |
 
-"Same verdict" means the model and the real route agree on whether the block is within a 10-minute walk, which is the figure the transport score depends on most.
+"Same verdict" means the model and the real route agree on whether the block is within a 10-minute walk, which is the figure the Public Transport score depends on most.
 
 ## Spread
 

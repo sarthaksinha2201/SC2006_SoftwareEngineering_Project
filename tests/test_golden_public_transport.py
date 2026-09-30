@@ -1,6 +1,6 @@
-"""Golden test: transport scores for a fixed mini-dataset, calculated by hand.
+"""Golden test: Public Transport scores for a fixed mini-dataset, calculated by hand.
 
-The hand calculation is written out in docs/golden-transport.md. If this test fails,
+The hand calculation is written out in docs/golden-public-transport.md. If this test fails,
 either the scoring code or the documented definition changed; both must agree to
 1 decimal place (Accuracy NFR).
 """
@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from gowhere.scoring.stats import round1
-from gowhere.scoring.transport import area_metrics, transport_scores
+from gowhere.scoring.public_transport import area_metrics, public_transport_scores
 
 # area -> [(walk minutes, flats)]
 GOLDEN_INPUT = {
@@ -38,7 +38,7 @@ EXPECTED_DISPLAY = {"A": 3.4, "B": 8.3, "C": 0.0, "D": 8.5, "E": 4.9}
 def results():
     metrics = {a: area_metrics([w for w, _ in blocks], [f for _, f in blocks])
                for a, blocks in GOLDEN_INPUT.items()}
-    return metrics, transport_scores(metrics)
+    return metrics, public_transport_scores(metrics)
 
 
 @pytest.mark.parametrize("area", sorted(EXPECTED))

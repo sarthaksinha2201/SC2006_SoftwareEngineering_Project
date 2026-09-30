@@ -18,9 +18,9 @@ from gowhere.etl.geo import PlanningAreaIndex
 from gowhere.etl.geocode import load_geocodes
 from gowhere.etl.raw import load_hdb_residential, load_mrt_exits, load_planning_areas
 from gowhere.etl.spatial import enrich_blocks
-from gowhere.scoring.transport import area_metrics, transport_scores
+from gowhere.scoring.public_transport import area_metrics, public_transport_scores
 
-SCHEMA_VERSION = "1"
+SCHEMA_VERSION = "2"   # 2: transport -> public_transport, planning_area.small_sample
 UNPLACED_LOG = config.LOG_DIR / "unplaced_blocks.csv"
 
 SCHEMA = """
@@ -29,6 +29,7 @@ CREATE TABLE planning_area (
     name TEXT PRIMARY KEY, region TEXT NOT NULL,
     in_scope INTEGER NOT NULL,            -- 1 if it contains >= 1 HDB residential block
     n_blocks INTEGER NOT NULL, n_flats INTEGER NOT NULL,
+    small_sample INTEGER NOT NULL,        -- 1 if in scope with < meta.small_area_blocks blocks
     geometry_geojson TEXT NOT NULL);
 CREATE TABLE mrt_exit (station TEXT NOT NULL, exit_code TEXT NOT NULL,
     lat REAL NOT NULL, lon REAL NOT NULL);
@@ -42,7 +43,7 @@ CREATE TABLE hdb_block (
     walk_min REAL NOT NULL,               -- exit_distance_m x detour / walk speed
     UNIQUE (blk_no, street));
 CREATE INDEX hdb_block_area ON hdb_block(planning_area);
-CREATE TABLE transport_area (
+CREATE TABLE public_transport_area (
     planning_area TEXT PRIMARY KEY REFERENCES planning_area(name),
     n_blocks INTEGER NOT NULL, n_flats INTEGER NOT NULL,
     pct_within_10 REAL NOT NULL, median_walk_min REAL NOT NULL, p90_walk_min REAL NOT NULL,
@@ -63,7 +64,7 @@ def compute(blocks, geocodes, areas, exits, detour=config.DETOUR_FACTOR):
         by_area[b["planning_area"]].append(b)
     metrics = {a: area_metrics([b["walk_min"] for b in bs], [b["total_dwelling_units"] for b in bs])
                for a, bs in by_area.items()}
-    scores = transport_scores(metrics)
+    scores = public_transport_scores(metrics)
     return {"placed": placed, "unplaced": unplaced, "metrics": metrics, "scores": scores}
 
 
@@ -83,6 +84,11 @@ def validate(result, n_residential, min_geocode_coverage):
     return coverage
 
 
+def is_small_sample(n_blocks, threshold=config.SMALL_AREA_BLOCKS):
+    """True for an in-scope area whose scores rest on too few blocks to be stable."""
+    return 0 < n_blocks < threshold
+
+
 def write_snapshot(path, result, areas, exits, meta):
     if path.exists():
         path.unlink()
@@ -91,9 +97,10 @@ def write_snapshot(path, result, areas, exits, meta):
     db.executemany("INSERT INTO meta VALUES (?, ?)", sorted(meta.items()))
     for a in areas:
         m = result["metrics"].get(a["name"])
-        db.execute("INSERT INTO planning_area VALUES (?, ?, ?, ?, ?, ?)",
-                   (a["name"], a["region"], int(m is not None),
-                    m["n_blocks"] if m else 0, m["n_flats"] if m else 0,
+        n_blocks = m["n_blocks"] if m else 0
+        db.execute("INSERT INTO planning_area VALUES (?, ?, ?, ?, ?, ?, ?)",
+                   (a["name"], a["region"], int(m is not None), n_blocks,
+                    m["n_flats"] if m else 0, int(is_small_sample(n_blocks)),
                     json.dumps(a["geometry"])))
     db.executemany("INSERT INTO mrt_exit VALUES (?, ?, ?, ?)",
                    [(e["station"], e["exit_code"], e["lat"], e["lon"]) for e in exits])
@@ -106,7 +113,7 @@ def write_snapshot(path, result, areas, exits, meta):
           b["exit_distance_m"], b["walk_min"]) for b in result["placed"]])
     for area, m in result["metrics"].items():
         s = result["scores"][area]
-        db.execute("INSERT INTO transport_area VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        db.execute("INSERT INTO public_transport_area VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                    (area, m["n_blocks"], m["n_flats"], m["pct_within_10"], m["median_walk_min"],
                     m["p90_walk_min"], s["pr_pct_within_10"], s["pr_median_walk"], s["score"]))
     db.commit()
@@ -138,6 +145,7 @@ def build(snapshot_path=config.SNAPSHOT_PATH, min_geocode_coverage=0.98,
         "detour_factor": str(detour),
         "walk_speed_m_per_min": str(config.WALK_SPEED_M_PER_MIN),
         "walk_threshold_min": str(config.WALK_THRESHOLD_MIN),
+        "small_area_blocks": str(config.SMALL_AREA_BLOCKS),
         "residential_blocks": str(len(blocks)),
         "placed_blocks": str(len(result["placed"])),
         "geocode_coverage": f"{coverage:.4f}",

@@ -1,4 +1,4 @@
-"""Transport category score (DECISIONS.md section 2).
+"""Public Transport category score (DECISIONS.md section 2).
 
 Per area, flat-weighted over its HDB blocks (weight = total_dwelling_units):
   - % of flats within a 10-minute walk of an MRT/LRT exit
@@ -25,7 +25,7 @@ def area_metrics(walk_minutes, flats, threshold=config.WALK_THRESHOLD_MIN):
     }
 
 
-def transport_scores(metrics):
+def public_transport_scores(metrics):
     """metrics: {area: area_metrics(...)} -> {area: {"pr_pct_within_10", "pr_median_walk", "score"}}"""
     pr_pct = percentile_ranks({a: m["pct_within_10"] for a, m in metrics.items()},
                               higher_is_better=True)

@@ -20,6 +20,11 @@ DETOUR_FACTOR = 1.3
 WALK_SPEED_M_PER_MIN = 80.0
 WALK_THRESHOLD_MIN = 10.0
 
+# An in-scope area with fewer HDB blocks than this is flagged small_sample in the
+# snapshot, so the UI can say its scores rest on few blocks. Areas are never excluded
+# for being small (DECISIONS.md section 1).
+SMALL_AREA_BLOCKS = 10
+
 
 def load_dotenv(path=ROOT / ".env"):
     """Load KEY=VALUE lines from .env into os.environ without overriding what is set."""

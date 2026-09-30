@@ -1,6 +1,6 @@
 """TEMPORARY stand-in for S1 (gowhere.etl.fetch_raw, owned by Sarthak).
 
-Fetches only the three datasets the transport pipeline needs, following the S1 output
+Fetches only the three datasets the Public Transport pipeline needs, following the S1 output
 contract so it can be deleted without touching anything downstream:
 
     data/raw/<dataset_name>.json   exactly what the API returned

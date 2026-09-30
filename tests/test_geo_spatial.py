@@ -63,3 +63,25 @@ def test_compute_places_blocks_and_logs_unplaced():
     # EMPTY has no HDB blocks, so it is out of scope and gets no score
     assert set(out["scores"]) == {"WEST", "EAST"}
     assert out["metrics"]["EAST"]["n_flats"] == 300
+
+
+def test_snapshot_flags_small_areas_but_keeps_them_in_scope(tmp_path):
+    import sqlite3
+
+    from gowhere.etl.build_snapshot import is_small_sample, write_snapshot
+
+    blocks = [{"blk_no": str(i), "street": "W", "total_dwelling_units": 100} for i in range(12)]
+    blocks.append({"blk_no": "1", "street": "E", "total_dwelling_units": 55})
+    geocodes = ([{"blk_no": str(i), "street": "W", "status": "ok", "lat": 1.35, "lon": 103.75,
+                  "detail": ""} for i in range(12)]
+                + [{"blk_no": "1", "street": "E", "status": "ok", "lat": 1.35, "lon": 103.85,
+                    "detail": ""}])
+    exits = [{"station": "S", "exit_code": "A", "lat": 1.355, "lon": 103.75}]
+    out = compute(blocks, geocodes, AREAS, exits)
+    path = tmp_path / "s.db"
+    write_snapshot(path, out, AREAS, exits, {"small_area_blocks": "10"})
+
+    rows = {r[0]: r[1:] for r in sqlite3.connect(path).execute(
+        "SELECT name, in_scope, n_blocks, n_flats, small_sample FROM planning_area")}
+    assert rows == {"WEST": (1, 12, 1200, 0), "EAST": (1, 1, 55, 1), "EMPTY": (0, 0, 0, 0)}
+    assert (is_small_sample(9), is_small_sample(10), is_small_sample(0)) == (True, False, False)

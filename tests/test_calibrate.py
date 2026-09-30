@@ -48,3 +48,38 @@ def test_summary_ratio_and_threshold_agreement():
     # model @1.5 minutes: 9.4, 11.25, 9.4 -> T, F, T  -> agrees 2/3
     assert s["agreement_current"] == pytest.approx(1 / 3)
     assert s["agreement_calibrated"] == pytest.approx(2 / 3)
+
+
+def stats_with(median, p25, p75):
+    return {"n_sampled": 3, "n_ok": 3, "n_failed": 0, "median": median, "mean": median + 0.1,
+            "p10": p25 - 0.1, "p25": p25, "p75": p75, "p90": p75 + 0.1, "min": 1.0, "max": 3.0,
+            "current_factor": 1.3, "calibrated_factor": round(median, 2),
+            "agreement_current": 0.9, "agreement_calibrated": 0.92,
+            "mae_current_min": 1.0, "mae_calibrated_min": 0.9, "bands": [(0, 400, 3, median)]}
+
+
+def test_close_median_keeps_factor_and_narrow_spread_not_flagged():
+    from gowhere.etl.calibrate import recommendation_text, spread_text
+    s = stats_with(1.35, 1.25, 1.45)
+    assert "1.3 is kept" in recommendation_text(s)
+    assert "spread is wide" not in spread_text(s)
+
+
+def test_far_median_is_proposed_not_applied_and_wide_spread_flagged():
+    from gowhere import config
+    from gowhere.etl.calibrate import recommendation_text, spread_text
+    s = stats_with(1.6, 1.3, 1.9)
+    text = recommendation_text(s)
+    assert "Proposed new factor: 1.6" in text and "has not been changed" in text
+    assert "spread is wide" in spread_text(s)
+    assert config.DETOUR_FACTOR == 1.3
+
+
+def test_report_renders(tmp_path, monkeypatch):
+    from gowhere.etl import calibrate
+    monkeypatch.setattr(calibrate.config, "DOCS_DIR", tmp_path)
+    monkeypatch.setattr(calibrate, "REPORT_PATH", tmp_path / "r.md")
+    monkeypatch.setattr(calibrate, "SAMPLE_CSV_PATH", tmp_path / "s.csv")
+    calibrate.write_outputs([block(1.1, 500)], stats_with(1.35, 1.25, 1.45), seed=1)
+    report = (tmp_path / "r.md").read_text()
+    assert "## Spread" in report and "## Recommendation" in report and "{" not in report

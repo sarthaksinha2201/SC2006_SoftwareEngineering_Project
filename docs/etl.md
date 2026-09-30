@@ -42,7 +42,7 @@ Schema: `SCHEMA` in `gowhere/etl/build_snapshot.py`.
 - `meta`: `generated_at`, `schema_version`, model constants, geocode coverage, the raw manifest
 - `planning_area`: all 55 areas; `in_scope = 1` when it contains at least one placed HDB residential block; boundary GeoJSON
 - `hdb_block`: one row per placed block: planning area, nearest exit, straight-line distance, modelled walk time
-- `mrt_exit`: every MRT/LRT exit point
+- `mrt_exit`: every MRT **and LRT** exit point (LTA dataset: 613 exits, 190 stations, 41 of them LRT). The two are one set: "nearest exit" means the nearest MRT or LRT exit, matching the MRT/LRT wording in DECISIONS.md
 - `transport_area`: per in-scope area: % of flats within 10 min, median and P90 walk, both percentile ranks, 0–10 score
 
 Scoring definitions and a worked example: [golden-transport.md](golden-transport.md).

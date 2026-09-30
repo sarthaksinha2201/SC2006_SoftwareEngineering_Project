@@ -141,6 +141,10 @@ def build(snapshot_path=config.SNAPSHOT_PATH, min_geocode_coverage=0.98,
         "residential_blocks": str(len(blocks)),
         "placed_blocks": str(len(result["placed"])),
         "geocode_coverage": f"{coverage:.4f}",
+        # MRT and LRT exits are one set: "nearest exit" means nearest MRT or LRT exit.
+        "rail_exits": str(len(exits)),
+        "rail_stations": str(len({e["station"] for e in exits})),
+        "lrt_stations": str(len({e["station"] for e in exits if "LRT" in e["station"]})),
         "raw_manifest": manifest_path.read_text() if manifest_path.exists() else "{}",
     }
     tmp = snapshot_path.with_suffix(".db.tmp")

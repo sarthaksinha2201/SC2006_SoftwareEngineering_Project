@@ -4,6 +4,9 @@ The hand calculation is written out in docs/golden-transport.md. If this test fa
 either the scoring code or the documented definition changed; both must agree to
 1 decimal place (Accuracy NFR).
 """
+import ast
+from pathlib import Path
+
 import pytest
 
 from gowhere.scoring.stats import round1
@@ -54,3 +57,35 @@ def test_golden_metrics_and_scores(results, area):
 def test_golden_display_matches_hand_rounding(results, area):
     _, scores = results
     assert round1(scores[area]["score"]) == EXPECTED_DISPLAY[area]
+
+
+def test_x5_boundary_rounds_half_up(results):
+    """Area B scores exactly 8.25. By hand that displays as 8.3; Python's round() gives 8.2.
+
+    This is the case that breaks the Accuracy NFR while the scoring maths is entirely
+    correct, so the mismatch would be hunted for in the wrong place.
+    """
+    _, scores = results
+    assert scores["B"]["score"] == pytest.approx(8.25)
+    assert round(scores["B"]["score"], 1) == 8.2      # why round() must not be used
+    assert round1(scores["B"]["score"]) == 8.3
+
+
+def test_no_builtin_round_outside_round1():
+    """Anything that rounds a score for display or ranking must use round1, not round().
+
+    ETL internals are exempt: they never produce a user-visible score.
+    """
+    pkg = Path(__file__).resolve().parent.parent / "gowhere"
+    offenders = []
+    for path in pkg.rglob("*.py"):
+        if path.is_relative_to(pkg / "etl"):
+            continue
+        tree = ast.parse(path.read_text())
+        allowed = {id(n) for f in ast.walk(tree)
+                   if isinstance(f, ast.FunctionDef) and f.name == "round1" for n in ast.walk(f)}
+        offenders += [f"{path.relative_to(pkg.parent)}:{n.lineno}"
+                      for n in ast.walk(tree)
+                      if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                      and n.func.id == "round" and id(n) not in allowed]
+    assert offenders == [], "use gowhere.scoring.stats.round1 at: " + ", ".join(offenders)

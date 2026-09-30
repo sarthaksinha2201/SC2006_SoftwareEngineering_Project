@@ -169,7 +169,42 @@ By straight-line distance:
 | {s['calibrated_factor']} (sample median) | {s['agreement_calibrated']:.1%} | {s['mae_calibrated_min']:.1f} min |
 
 "Same verdict" means the model and the real route agree on whether the block is within a 10-minute walk, which is the figure the transport score depends on most.
+
+## Spread
+
+{spread_text(s)}
+
+## Recommendation
+
+{recommendation_text(s)}
 """)
+
+
+WIDE_IQR = 0.3            # middle half of blocks spans more than ±0.15 around the median
+MATERIAL_DIFFERENCE = 0.1  # a factor 0.1 off moves a 10-minute walk by ~0.8 min
+
+
+def spread_text(s):
+    iqr = s["p75"] - s["p25"]
+    text = (f"The middle half of blocks have ratios between {s['p25']:.2f} and {s['p75']:.2f} "
+            f"(interquartile range {iqr:.2f}); 80% lie between {s['p10']:.2f} and {s['p90']:.2f}. "
+            f"The mean ({s['mean']:.2f}) is reported for completeness only: long detours such as "
+            f"expressway or canal crossings pull it up, so the median is the calibrated value.")
+    if iqr > WIDE_IQR:
+        text += (f"\n\n**The spread is wide.** A single factor fits the typical block, but for an "
+                 f"individual block the modelled walk can be off by "
+                 f"{iqr / 2 * 800 / 80:.1f} min or more on an 800 m trip. Area-level figures "
+                 f"average over many blocks and are much less affected than any one block.")
+    return text
+
+
+def recommendation_text(s):
+    if abs(s["median"] - s["current_factor"]) <= MATERIAL_DIFFERENCE:
+        return (f"The sample median ({s['median']:.2f}) is within {MATERIAL_DIFFERENCE} of the "
+                f"current factor, so **{s['current_factor']} is kept**, now backed by this sample.")
+    return (f"The sample median ({s['median']:.2f}) differs materially from the current factor "
+            f"({s['current_factor']}). **Proposed new factor: {s['calibrated_factor']}.** Pending "
+            f"team decision; `config.DETOUR_FACTOR` has not been changed.")
 
 
 def main():

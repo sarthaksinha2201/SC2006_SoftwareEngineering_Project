@@ -397,3 +397,8 @@ Target is 6–10 usable channels; 2 confirmed so far.
 
 **Decision:** Add an **offline fallback for postal-code lookup**, using the ~11,000 HDB postal codes already geocoded in the snapshot.
 **Reason:** It is the last thing that fails completely offline — a Lepak search by postal code cannot resolve at all, leaving only "Use my location", which may itself be denied on a demo machine. The data is already in hand, so the fallback is nearly free. It covers HDB addresses only; a non-HDB postal code still needs the network, and says so.
+
+## 15. Known gap (1 Oct 2026)
+
+**Open:** The Public Transport factor is **rail-only**. `PublicTransportScorer` has no `options()`, so the MRT/LRT · Bus · Either choice promised by FR 1.2.4 and the Data Dictionary does not exist yet.
+**Reason:** Bus stop and service data comes from LTA DataMall, which needs an account key nobody has registered for. Everything else in the factor — the qualifying-bus-stop rule (3+ services), the per-block distances, the 0.7/0.3 blend — is specified and ready. **Either register for the key and build the option, or amend FR 1.2.4 to describe a rail-only factor before the deliverable is recompiled.** What must not happen is the document promising a control the product doesn't have.

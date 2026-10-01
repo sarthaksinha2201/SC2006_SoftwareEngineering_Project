@@ -22,3 +22,10 @@ class Snapshot:
         rows = self.query("SELECT name, region, in_scope, n_blocks, n_flats, small_sample "
                           "FROM planning_area ORDER BY name")
         return {r.pop("name"): r for r in rows if names is None or r["name"] in names}
+
+    def postal_location(self, postal):
+        """(lat, lon) of the HDB block with this postal code, or None. The offline
+        fallback for looking up a user's postal code when OneMap is unreachable."""
+        row = self.db.execute("SELECT lat, lon FROM hdb_block WHERE postal = ?",
+                              (postal,)).fetchone()
+        return (row["lat"], row["lon"]) if row else None

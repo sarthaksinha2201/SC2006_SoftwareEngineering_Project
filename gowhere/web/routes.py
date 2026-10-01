@@ -9,6 +9,7 @@ from gowhere.lepak.search import InvalidSearch, TooManyEvents, search
 from gowhere.lepak.store import EventStore
 from gowhere.scoring.engine import InvalidRequest, NoFactorsLeft, ScoringEngine
 from gowhere.scoring.registry import default_strategies
+from gowhere.services.location import OfflinePostalNotFound
 from gowhere.web.forms import FormError, parse_live_form
 from gowhere.web import lepak_views
 from gowhere.web.view_models import dropped_messages, results_view, setup_view
@@ -140,6 +141,11 @@ def lepak_submit():
         return _lepak_error(form, str(e))
     except TooManyEvents as e:
         return _lepak_error(form, lepak_views.too_many_message(e.count))
+    except OfflinePostalNotFound:
+        return _lepak_error(form, "OneMap can't be reached right now. Without it we can only "
+                                  "look up HDB block postal codes, and this one isn't one, so "
+                                  "it couldn't be checked. Try the postal code of a nearby HDB "
+                                  "block, use your location, or try again shortly.")
     except HttpError:
         return _lepak_error(form, "OneMap can't be reached right now, so we can't look up "
                                   "your starting point. Please try again shortly.")

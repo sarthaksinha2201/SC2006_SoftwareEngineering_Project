@@ -33,14 +33,19 @@ def create_app(overrides=None):
         SESSION_COOKIE_SECURE=os.getenv("GOWHERE_HTTPS") == "1",
         ROUTER_FACTORY=CommuteRouter,
         EVENTS_PATH=config.EVENTS_PATH,
-        LOCATION_FACTORY=LocationService.for_session,   # per session: postal lookups in memory only
+        LOCATION_FACTORY=None,                # per session; default: LocationService.for_session
         EVENT_ROUTER_FACTORY=EventRouter,     # per session
         PARKING_FACTORY=ParkingService,       # one per app: public data, shared cache
         NOW=sgt_now,
     )
     app.config.update(overrides or {})
+    snapshot = Snapshot(app.config["SNAPSHOT_PATH"])
+    if app.config["LOCATION_FACTORY"] is None:
+        # Postal lookups in session memory only; HDB postal codes still resolve offline.
+        app.config["LOCATION_FACTORY"] = lambda: LocationService.for_session(
+            offline_postal=snapshot.postal_location)
     app.extensions["gowhere"] = {
-        "snapshot": Snapshot(app.config["SNAPSHOT_PATH"]),
+        "snapshot": snapshot,
         "store": SessionStore(router_factory=app.config["ROUTER_FACTORY"]),
         "parking": app.config["PARKING_FACTORY"](),
     }

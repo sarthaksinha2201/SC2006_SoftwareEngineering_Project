@@ -136,6 +136,22 @@ def test_too_many_asks_to_narrow_without_routing(app, client, monkeypatch):
     assert all(router.calls == 0 for router in app.routers)
 
 
+@pytest.mark.parametrize("postal, status, text", [
+    ("560123", 303, None),
+    ("238801", 400, "we can only look up HDB block postal codes, and this one isn&#39;t one"),
+])
+def test_offline_postal_codes(app, client, postal, status, text):
+    from gowhere.services.location import LocationService
+    from tests.fakes import RecordedSearch
+    app.config["LOCATION_FACTORY"] = lambda: LocationService(
+        RecordedSearch({}, fail=True), offline_postal={"560123": (1.37, 103.85)}.get)
+    r = client.post("/lepak", data=form(postal=postal))
+    assert r.status_code == status
+    if text:
+        page = r.get_data(as_text=True)
+        assert text in page and "couldn&#39;t find that postal code" not in page
+
+
 def test_device_location(client):
     r = client.post("/lepak", data=form(origin="here", lat="1.3521", lon="103.8198", postal=""))
     assert r.status_code == 303 and FakeLocations.calls == []

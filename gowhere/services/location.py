@@ -2,9 +2,12 @@
 
 Two kinds of input, handled very differently:
 
-* A user's postal code (Where to Lepak's starting point). Personal data under the
-  Security NFR: looked up with redact=True, held in this object's memory only, never
-  written to the search cache or a log. Create one service per user session for this.
+* A user's postal code (Where to Lepak's starting point, the Commute destination).
+  Personal data under the Security NFR: looked up with redact=True, held in this
+  object's memory only, never written to the search cache or a log. Create one service
+  per user session for this. When OneMap cannot be reached, HDB postal codes are still
+  found offline, from the snapshot's own blocks (DECISIONS.md section 14); any other
+  code raises OfflinePostalNotFound, which is not the same as "no such postal code".
 * An event venue (a public place named in a public post). Its OneMap responses are
   public data and go through the on-disk search cache, so re-running ingestion does not
   repeat searches.
@@ -36,6 +39,11 @@ MIN_TRIMMED_WORDS = 2
 FAILURE_MEMORY_S = 60
 
 
+class OfflinePostalNotFound(HttpError):
+    """OneMap is unreachable and the code is not an HDB block's, so it could not be
+    checked at all. It may well be a valid postal code."""
+
+
 def _clean(text):
     return " ".join(_NOISE.sub(" ", text).replace(" ,", ",").split()).strip(" ,-")
 
@@ -61,32 +69,44 @@ def candidate_queries(venue, address):
 
 
 class LocationService:
-    def __init__(self, adapter=None, cache=None, aliases=None, clock=time.monotonic):
+    def __init__(self, adapter=None, cache=None, aliases=None, clock=time.monotonic,
+                 offline_postal=None):
         self.adapter = adapter or OneMapAdapter()
         self.cache = cache                   # SearchCache for public venue queries, or None
         self.aliases = {normalise_place(k): v for k, v in (aliases or {}).items()}
         self._postal = {}                    # this session's postal lookups, memory only
         self._postal_failed = {}             # postal -> when OneMap last failed, memory only
         self._clock = clock
+        self.offline_postal = offline_postal  # postal -> (lat, lon) or None, local data only
 
     @classmethod
-    def for_session(cls):
-        """One user's service in the web app: request-time OneMap settings."""
-        return cls(OneMapAdapter(**REQUEST_TIME))
+    def for_session(cls, offline_postal=None):
+        """One user's service in the web app: request-time OneMap settings, and the
+        snapshot's HDB postal codes as the offline fallback."""
+        return cls(OneMapAdapter(**REQUEST_TIME), offline_postal=offline_postal)
 
     # -- a user's own postal code: memory only ----------------------------------------
     def postal(self, postal):
-        """(lat, lon) of a postal code, or None if OneMap has no such code.
-        Raises HttpError if OneMap cannot be reached."""
+        """(lat, lon) of a postal code, or None if OneMap has no such code. If OneMap
+        cannot be reached: an HDB postal code is found offline; anything else raises
+        OfflinePostalNotFound (or HttpError when there is no offline fallback)."""
         if postal not in self._postal:
             failed = self._postal_failed.get(postal)
-            if failed is not None and self._clock() - failed < FAILURE_MEMORY_S:
-                raise HttpError("OneMap was unreachable moments ago")
             try:
-                response = self.adapter.search(postal, redact=True)
+                if failed is not None and self._clock() - failed < FAILURE_MEMORY_S:
+                    raise HttpError("OneMap was unreachable moments ago")
+                try:
+                    response = self.adapter.search(postal, redact=True)
+                except HttpError:
+                    self._postal_failed[postal] = self._clock()
+                    raise
             except HttpError:
-                self._postal_failed[postal] = self._clock()
-                raise
+                if self.offline_postal is None:
+                    raise
+                found = self.offline_postal(postal)
+                if found is None:
+                    raise OfflinePostalNotFound("OneMap unreachable; not an HDB postal code")
+                return found       # not cached: OneMap is asked again once it is back
             match = match_postal(postal, response.get("results", []))
             self._postal[postal] = (match["lat"], match["lon"]) if match else None
         return self._postal[postal]

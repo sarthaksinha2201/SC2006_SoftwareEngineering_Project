@@ -523,3 +523,37 @@ def test_request_time_onemap_gives_up_after_one_retry():
         OneMapAdapter(Dead(), token="t", min_interval_s=0, sleep=lambda s: None,
                       **REQUEST_TIME).search("048583", redact=True)
     assert Dead.calls == 2
+
+
+# ---- offline fallback for a user's postal code (DECISIONS.md section 14) ----
+
+def test_offline_an_hdb_postal_code_is_still_found():
+    from gowhere.services.location import OfflinePostalNotFound
+    hdb = {"560123": (1.37, 103.85)}
+    service = LocationService(RecordedSearch({}, fail=True), offline_postal=hdb.get)
+    assert service.postal("560123") == (1.37, 103.85)
+    with pytest.raises(OfflinePostalNotFound):        # not "no such code": unchecked
+        service.postal("238801")
+    with pytest.raises(HttpError):
+        LocationService(RecordedSearch({}, fail=True)).postal("560123")   # no fallback
+
+
+def test_online_the_offline_table_is_not_consulted():
+    asked = []
+    search = RecordedSearch({"238801": {"results": [_r("ION", 1.304, 103.832, "238801")]}})
+    service = LocationService(search, offline_postal=lambda p: asked.append(p))
+    assert service.postal("238801") == (1.304, 103.832)
+    assert service.postal("999999") is None          # OneMap answered: genuinely unknown
+    assert asked == []
+
+
+def test_snapshot_postal_location(tmp_path):
+    from gowhere.snapshot import Snapshot
+    db = sqlite3.connect(tmp_path / "s.db")
+    db.execute("CREATE TABLE hdb_block (postal TEXT, lat REAL, lon REAL)")
+    db.execute("INSERT INTO hdb_block VALUES ('560123', 1.37, 103.85), ('NIL', 1.0, 103.0)")
+    db.commit()
+    db.close()
+    snap = Snapshot(tmp_path / "s.db")
+    assert snap.postal_location("560123") == (1.37, 103.85)
+    assert snap.postal_location("238801") is None

@@ -20,6 +20,7 @@ root, mode = sys.argv[1], sys.argv[2]
 PORT = 5055 if mode == "online" else 5056
 LOG = f"{root}/data/logs/rehearsal_{mode}.log"
 DEST, START = "119077", "238801"            # NUS Kent Ridge (commute), ION Orchard (Lepak)
+HDB = "140051"                              # Blk 51 Strathmore Avenue (Queenstown): HDB
 env = {**os.environ, "GOWHERE_SECRET_KEY": "rehearsal"}
 if mode == "offline":   # every outbound connection fails, as with wifi off
     env.update(HTTP_PROXY="http://127.0.0.1:9", HTTPS_PROXY="http://127.0.0.1:9",
@@ -79,10 +80,13 @@ if first:
     show(t2, r"<h1>(.*?)</h1>", r"<p>([^<]*(?:min |About )[^<]*)</p>")
 t = step("Lepak search, drive", "post", "/lepak", data={**lepak, "mode": "drive"})
 show(t, r"<h1>(.*?)</h1>", r'role="alert">(.*?)<', r"<p>(Parking[^<]*|[\d,]+ car lots[^<]*)</p>")
+t = step("Lepak search from an HDB postal code (140051)", "post", "/lepak",
+         data={**lepak, "postal": HDB})
+show(t, r"<h1>(.*?)</h1>", r'role="alert">(.*?)<', r"<h2><a[^>]*>(.*?)</a></h2>.*?<p>([^<]*(?:min |About )[^<]*)</p>")
 t = step("Lepak search, use my location", "post", "/lepak",
          data={**lepak, "origin": "here", "lat": "1.3040", "lon": "103.8318", "postal": ""})
 show(t, r"<h1>(.*?)</h1>", r'role="alert">(.*?)<', r"<h2><a[^>]*>(.*?)</a></h2>.*?<p>([^<]*(?:min |About )[^<]*)</p>")
 server.terminate(); server.wait()
 log = open(LOG).read()
 print(f"\n## Server log: {len(log.splitlines())} lines; '{DEST}' x{log.count(DEST)}, '{START}' x{log.count(START)}, "
-      f"'1.3040' x{log.count('1.3040')}; tracebacks x{log.count('Traceback')}")
+      f"'{HDB}' x{log.count(HDB)}, '1.3040' x{log.count('1.3040')}; tracebacks x{log.count('Traceback')}")

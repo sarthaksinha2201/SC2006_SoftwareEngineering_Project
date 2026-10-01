@@ -11,9 +11,6 @@ git clone <repo> gowhere && cd gowhere && git checkout feat/etl-transport
 python3.13 -m venv .venv
 .venv/bin/pip install -r requirements.txt           # needs network; ~10 s
 
-# The snapshot is not in git (11 MB, generated). Copy it in from the hand-over folder.
-cp <hand-over>/snapshot.db data/snapshot.db
-
 # .env in the repo root. See section 2 for what each key is for.
 cat > .env <<'EOF'
 ONEMAP_TOKEN=...
@@ -28,10 +25,13 @@ GOWHERE_SECRET_KEY=$(openssl rand -hex 32) .venv/bin/flask --app "gowhere.web:cr
 # open http://127.0.0.1:5000
 ```
 
-- **Checks:** `.venv/bin/python -m pytest -q` should report 318 passed. It needs no
+- **Checks:** `.venv/bin/python -m pytest -q` should report 323 passed. It needs no
   network and no keys.
-- **Rebuilding the snapshot** instead of copying it takes about an hour, because it
-  geocodes 10,796 blocks, and it needs the network. Don't do this on demo day.
+- **The snapshot** (`data/snapshot.db`, 11 MB, built 30 Sep 2026) is committed, so a
+  clean clone runs as it is (DECISIONS §14).
+- **Regenerating the snapshot:** `python -m gowhere.etl.build_snapshot`, after the raw
+  data has been fetched and geocoded. It needs the network and takes about an hour,
+  mostly geocoding 10,796 blocks. Don't do this on demo day.
 - **Run one server process.** Sessions live in memory.
 - **The Flask tip** "Install python-dotenv" is harmless. `.env` is read by GoWhere
   itself.
@@ -141,7 +141,7 @@ This is the Reliability NFR. A grader may test it by unplugging the wifi.
 
 | Service down | What still works | What the user sees |
 |---|---|---|
-| **OneMap** (network off) | All of Where to Live except Commute, from the local snapshot. Lepak with "Use my location". Sorting, chips, paging and event details. | Where to Live: *"Commute was left out because Queenstown, Tampines, Punggol and Bedok could not be routed to your destination"*, and the other five factors ranked. Lepak by postal code: *"OneMap can't be reached right now, so we can't look up your starting point."* Lepak by location: every event with *"About 2.4 km away (straight-line estimate, no route available)"*. |
+| **OneMap** (network off) | All of Where to Live except Commute, from the local snapshot. Lepak from any **HDB** postal code: the 10,786 in the snapshot resolve offline. Lepak with "Use my location". Sorting, chips, paging and event details. | Where to Live: *"Commute was left out because Queenstown, Tampines, Punggol and Bedok could not be routed to your destination"*, and the other five factors ranked. Lepak: every event with *"About 2.4 km away (straight-line estimate, no route available)"*. A postal code that isn't an HDB block's: *"OneMap can't be reached right now. Without it we can only look up HDB block postal codes, and this one isn't one, so it couldn't be checked."* It is never reported as an invalid code. |
 | **LTA DataMall** | Everything | Drive mode: *"Parking information unavailable"* on each result. |
 | **LLM** (Anthropic) | Everything in the web app | Nothing. Ingestion stores no events that run and keeps each channel's marker, so no post is lost; the next run catches up. The app serves the events it already has. |
 | **Telegram** | Everything in the web app | Nothing; as for the LLM. |
@@ -167,12 +167,17 @@ now use 1 retry and an 8 s timeout. A failed postal lookup is also remembered fo
 so a reload or slider change doesn't wait on a dead network again. The numbers above are
 after the fix.
 
-**Still broken offline:**
+**Also added after the rehearsal: an offline postal-code fallback.** A Lepak search
+by postal code used to be the last complete failure offline. "Use my location" isn't a
+reliable fallback on a demo machine, where geolocation may be denied. Now, when OneMap
+can't be reached, a postal code is looked up among the snapshot's HDB blocks. That
+covers HDB postal codes only (10,786 of them). Any other code gets a message saying it
+couldn't be checked offline, never that it doesn't exist.
 
-1. **Lepak by postal code.** A postal code can't be resolved without OneMap. The
-   workaround is "Use my location". A proposed fix, not built: a local lookup of the
-   ~11,000 HDB postal codes already geocoded for the snapshot, which covers most home
-   addresses.
+**Still imperfect offline:**
+
+1. **Non-HDB starting points** (condos, landed homes, offices) can't be looked up
+   without OneMap. The user is told so, and "Use my location" still works.
 2. **The Commute wording** says the areas "could not be routed to your destination"
    even when OneMap itself was unreachable. It's true, but not the most useful reason.
 

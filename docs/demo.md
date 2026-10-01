@@ -147,16 +147,18 @@ This is the Reliability NFR. A grader may test it by unplugging the wifi.
 | **Telegram** | Everything in the web app | Nothing; as for the LLM. |
 | **CDN / map tiles** | Nothing today | The placeholder templates load no external files. **Sarthak's templates will:** Leaflet, Chart.js and basemap tiles. Serve Leaflet and Chart.js from `gowhere/web/static/`, not a CDN, or the charts and maps vanish offline. Basemap tiles can't be bundled. Offline, the area outlines will draw on a blank background. |
 
-**Rehearsal timings** (clean clone, real snapshot, real server):
+**Rehearsal timings** (clean clone, real snapshot, real server). The last run on 1 Oct
+was from a fresh clone with nothing copied in except `.env`:
 
 | Step | Online | Offline |
 |---|---|---|
 | Selection-time warning (Changi) | instant, warning shown | instant, warning shown |
 | Where to Live results with Commute | 0.5–3.7 s. Queenstown first. | 2.5 s. Commute left out, Punggol first. |
 | Reload results | 0.0 s | 0.0 s |
-| Lepak search by postal code | 2.2–2.5 s, 6 events | 2.2 s, "OneMap can't be reached" |
+| Lepak search by postal code 238801 (not HDB) | 2.2–5.8 s, 6 events | 1.2 s, "only HDB block postal codes can be looked up" message |
+| Lepak search by HDB postal code 140051 | 2.8 s, 5 events routed | 5.1 s, 6 events as straight-line estimates (offline fallback) |
 | Sort, chip, detail | 0.0 s | 0.0 s |
-| Lepak drive mode | 0.2–0.6 s, parking unavailable | 0.0 s, same OneMap message |
+| Lepak drive mode | 0.2–1.0 s, parking unavailable | 0.0 s, same message (238801 is not HDB) |
 | Lepak by device location | 2.0–2.4 s, 6 events routed | 2.7 s, 6 events as straight-line estimates |
 | Postal codes or coordinates in the server log | 0 | 0 |
 

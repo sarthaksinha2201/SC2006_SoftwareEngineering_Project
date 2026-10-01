@@ -1,0 +1,29 @@
+name,cluster,address,postal_code,cluster_source_url,address_source_url,address_source_date,retrieved_on
+Ang Mo Kio Polyclinic,NHG,21 Ang Mo Kio Central 2 Singapore 569666,569666,https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics/departments/nhgp,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Geylang Polyclinic,NHG,21 Geylang East Central Singapore 389707,389707,https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics/departments/nhgp,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Hougang Polyclinic,NHG,89 Hougang Avenue 4 Singapore 538829,538829,https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics/departments/nhgp,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Kallang Polyclinic,NHG,"701 Serangoon Road, Singapore 328263",328263,https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics/departments/nhgp,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Khatib Polyclinic,NHG,690 Yishun Ring Road Singapore 769567,769567,https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics/departments/nhgp,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Sembawang Polyclinic,NHG,"21 Canberra Link, #01-03 Singapore 756973",756973,https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics/departments/nhgp,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Serangoon Polyclinic,NHG,587 Upper Serangoon Rd Singapore 534564,534564,https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics/departments/nhgp,https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics/departments/nhgp,,2026-09-30
+Toa Payoh Polyclinic,NHG,2003 Toa Payoh Lorong 8 Singapore 319260,319260,https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics/departments/nhgp,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Woodlands Polyclinic,NHG,10 Woodlands Street 31 Singapore 738579,738579,https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics/departments/nhgp,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Yishun Polyclinic,NHG,2 Yishun Ave 9 Singapore 768898,768898,https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics/departments/nhgp,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Bukit Batok Polyclinic,NUP,"50 Bukit Batok West Ave 3, Singapore 659164",659164,https://www.nup.com.sg/our-clinics/all-nup-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Bukit Panjang Polyclinic,NUP,"50 Woodlands Rd, #03-02, Singapore 677726",677726,https://www.nup.com.sg/our-clinics/all-nup-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Choa Chu Kang Polyclinic,NUP,"Choa Chu Kang Polyclinic (NUP), 2 Teck Whye Cres, Singapore 688846",688846,https://www.nup.com.sg/our-clinics/all-nup-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Clementi Polyclinic,NUP,"Blk 451 Clementi Avenue 3, #02-307 Singapore 120451",120451,https://www.nup.com.sg/our-clinics/all-nup-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Jurong Polyclinic,NUP,190 Jurong East Avenue 1 Singapore 609788,609788,https://www.nup.com.sg/our-clinics/all-nup-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Pioneer Polyclinic,NUP,26 Jurong West Street 61 Singapore 648201,648201,https://www.nup.com.sg/our-clinics/all-nup-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Queenstown Polyclinic,NUP,580 Stirling Road Singapore 148958,148958,https://www.nup.com.sg/our-clinics/all-nup-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Tengah Polyclinic,NUP,"302 Tengah Park Avenue, #01-04, Singapore 690302",690302,https://www.nup.com.sg/our-clinics/all-nup-polyclinics,https://www.nup.com.sg/our-clinics-tgp,2026-06-18,2026-09-30
+Bedok Polyclinic,SingHealth,"Heartbeat @ Bedok 11 Bedok North Street 1, #02-01 / #03-01 Singapore 469662",469662,https://polyclinic.singhealth.com.sg/our-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Bukit Merah Polyclinic,SingHealth,Block 163 Bukit Merah Central #04-3565 Singapore 150163,150163,https://polyclinic.singhealth.com.sg/our-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Eunos Polyclinic,SingHealth,1 Chin Cheng Avenue Singapore 429400,429400,https://polyclinic.singhealth.com.sg/our-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Marine Parade Polyclinic,SingHealth,Block 80 Marine Parade Central #01-792 Singapore 440080,440080,https://polyclinic.singhealth.com.sg/our-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Outram Polyclinic,SingHealth,3 Second Hospital Avenue Health Promotion Board Building Level 2 Singapore 168937,168937,https://polyclinic.singhealth.com.sg/our-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Pasir Ris Polyclinic,SingHealth,6 Pasir Ris Drive 8 #1M-01 Singapore 519466,519466,https://polyclinic.singhealth.com.sg/our-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Punggol Polyclinic,SingHealth,"681 Punggol Dr., #02-01, Singapore 820681",820681,https://polyclinic.singhealth.com.sg/our-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Sengkang Polyclinic,SingHealth,SengKang Community Hub 2 SengKang Square #01-06 Singapore 545025,545025,https://polyclinic.singhealth.com.sg/our-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Tampines North Polyclinic,SingHealth,35 Tampines Street 61 Singapore 528566,528566,https://polyclinic.singhealth.com.sg/our-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30
+Tampines Polyclinic,SingHealth,1 Tampines Street 41 Singapore 529203,529203,https://polyclinic.singhealth.com.sg/our-polyclinics,https://maps.gov.sg/polyclinics-singapore,2025-12-07,2026-09-30

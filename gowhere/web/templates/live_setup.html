@@ -1,0 +1,52 @@
+{# PLACEHOLDER template (backend half). Sarthak's S3 templates replace this.
+   Context: view = view_models.setup_view(...). The warning script only shows how to call
+   POST /live/check; it sends the form without any Commute fields. #}
+{% extends "base.html" %}
+{% block title %}Where to Live · GoWhere{% endblock %}
+{% block content %}
+<h1>Where to Live</h1>
+<p>Data as of {{ view.snapshot_date }}.</p>
+{% if view.error %}<p role="alert"><strong>{{ view.error }}</strong></p>{% endif %}
+<form id="live-form" method="post" action="{{ url_for('web.live_submit') }}">
+  <fieldset><legend>Neighbourhoods ({{ view.min_areas }} to {{ view.max_areas }})</legend>
+    <select name="areas" multiple size="10">
+      {% for a in view.areas %}
+      <option value="{{ a.key }}" {% if a.selected %}selected{% endif %}>{{ a.name }} ({{ a.flats_text }}){% if a.small_sample %} *{% endif %}</option>
+      {% endfor %}
+    </select>
+  </fieldset>
+  {% for f in view.factors %}
+  <fieldset><legend>{{ f.label }}</legend>
+    <label><input type="checkbox" name="include_{{ f.key }}" value="1" {% if f.included %}checked{% endif %}> Include</label>
+    <label>Weight <input type="number" name="weight_{{ f.key }}" min="1" max="10" value="{{ f.weight }}"></label>
+    {% set c = f.controls %}
+    {% if f.key == "housing_affordability" %}
+      <select name="flat_type">{% for o in c.flat_types %}<option value="{{ o.value }}" {% if o.selected %}selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+      <label>Budget from <input type="number" name="budget_min" value="{{ c.budget_min }}"></label>
+      <label>to <input type="number" name="budget_max" value="{{ c.budget_max }}"></label>
+      <select name="min_remaining_lease_years">{% for o in c.lease_choices %}<option value="{{ o.value }}" {% if o.selected %}selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+    {% elif f.key == "amenities" %}
+      {% for o in c.amenity_types %}<label><input type="checkbox" name="amenity_types" value="{{ o.value }}" {% if o.checked %}checked{% endif %}> {{ o.label }}</label>{% endfor %}
+    {% elif f.key == "healthcare" %}
+      <select name="facility_type">{% for o in c.facility_types %}<option value="{{ o.value }}" {% if o.selected %}selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+    {% elif f.key == "commute" %}
+      <label>Destination postal code <input name="destination_postal" inputmode="numeric" pattern="[0-9]{6}" autocomplete="postal-code" value="{{ c.destination_postal }}"></label>
+      <select name="mode">{% for o in c.modes %}<option value="{{ o.value }}" {% if o.selected %}selected{% endif %}>{{ o.label }}</option>{% endfor %}</select>
+    {% endif %}
+  </fieldset>
+  {% endfor %}
+  <div id="warnings" aria-live="polite"></div>
+  <button type="submit">Compare</button>
+</form>
+<script>
+  // Selection-time warning: POST the form minus Commute to /live/check on every change.
+  const form = document.getElementById("live-form");
+  form.addEventListener("change", async () => {
+    const data = new FormData(form);
+    ["destination_postal", "mode", "include_commute", "weight_commute"].forEach(k => data.delete(k));
+    const r = await fetch("{{ url_for('web.live_check') }}", {method: "POST", body: data});
+    const j = await r.json();
+    document.getElementById("warnings").textContent = j.warnings.join(" ");
+  });
+</script>
+{% endblock %}

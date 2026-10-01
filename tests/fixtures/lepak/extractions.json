@@ -1,0 +1,338 @@
+{
+ "_note": "Hand-written stand-in for the LLM's replies to tests/fixtures/lepak/posts.json, in the record_events tool's shape minus the batch-relative 'post' number. Written to the extraction rules in gowhere/ingest/extract.py, not recorded from the model: no ANTHROPIC_API_KEY yet. Replace with a real recording once there is one.",
+ "sgweekend/3788": [
+  {
+   "title": "HOMEGROWN Music Festival",
+   "category": "Music & Performances",
+   "start": "2026-09-11T17:30",
+   "end": "2026-09-13T20:30",
+   "venue": "Paya Lebar Quarter Plaza",
+   "address": null,
+   "summary": "Three days of free live music by Singapore artists, with a band competition and a festival village of local brands."
+  }
+ ],
+ "sgweekend/3790": [
+  {
+   "title": "Heritage Festival",
+   "category": "Arts & Culture",
+   "start": "2026-09-10T09:00",
+   "end": "2026-09-13T17:30",
+   "venue": "Singapore Botanic Gardens",
+   "address": null,
+   "summary": "Free tours, exhibitions, talks, performances and workshops on Singapore's botanical heritage."
+  },
+  {
+   "title": "Heritage Festival",
+   "category": "Arts & Culture",
+   "start": "2026-09-10T09:00",
+   "end": "2026-09-13T17:30",
+   "venue": "Fort Canning Park",
+   "address": null,
+   "summary": "Free tours, exhibitions, talks, performances and workshops on Singapore's botanical heritage."
+  }
+ ],
+ "sgweekend/3792": [],
+ "sgweekend/3793": [
+  {
+   "title": "Jujutsu Kaisen Matsuri Square",
+   "category": "Sales & Pop-ups",
+   "start": "2026-09-07",
+   "end": "2026-09-13",
+   "venue": "City Square Mall",
+   "address": null,
+   "summary": "Jujutsu Kaisen photo spots and exclusive anime merchandise."
+  },
+  {
+   "title": "Mid-Autumn Fair",
+   "category": "Food & Markets",
+   "start": "2026-09-14",
+   "end": "2026-09-27",
+   "venue": "City Square Mall",
+   "address": null,
+   "summary": "Festive mooncakes and artisanal treats."
+  },
+  {
+   "title": "Anime Earth",
+   "category": "Arts & Culture",
+   "start": "2026-09-28",
+   "end": "2026-10-04",
+   "venue": "City Square Mall",
+   "address": null,
+   "summary": "Cosplay showcases, anime merchandise and artist booths."
+  },
+  {
+   "title": "Free Yukata Experience",
+   "category": "Family & Kids",
+   "start": "2026-10-02",
+   "end": "2026-10-04",
+   "venue": "City Square Mall",
+   "address": null,
+   "summary": "Free yukata dress-up for up to four family members with a minimum spend."
+  },
+  {
+   "title": "World Mental Health Day event",
+   "category": "Community",
+   "start": "2026-10-10",
+   "end": null,
+   "venue": "City Square Mall",
+   "address": null,
+   "summary": "Self-care tips and wellness activities for World Mental Health Day."
+  }
+ ],
+ "sgweekend/3794": [
+  {
+   "title": "Cointreau Spicy Party",
+   "category": "Food & Markets",
+   "start": "2026-09-18",
+   "end": null,
+   "venue": "Yardbird Restaurant & Bar",
+   "address": "Marina Bay Sands",
+   "summary": "A five-level hot wings challenge with spicy cocktails and a live DJ."
+  },
+  {
+   "title": "The Yardbird Sessions",
+   "category": "Music & Performances",
+   "start": "2026-09-25",
+   "end": null,
+   "venue": "Yardbird Restaurant & Bar",
+   "address": "Marina Bay Sands",
+   "summary": "Motown oldies with beer cocktails."
+  }
+ ],
+ "sgweekend/3795": [
+  {
+   "title": "THKMC Mid-Autumn Fest",
+   "category": "Arts & Culture",
+   "start": "2026-09-12",
+   "end": null,
+   "venue": null,
+   "address": null,
+   "summary": "Mid-Autumn light-up and lantern festivities."
+  },
+  {
+   "title": "Mid-Autumn Light-Up",
+   "category": "Arts & Culture",
+   "start": "2026-09-12",
+   "end": "2026-09-27",
+   "venue": "Gardens by the Bay",
+   "address": null,
+   "summary": "Free Mid-Autumn light displays and lantern trails."
+  },
+  {
+   "title": "SGCCC Mid-Autumn Family Fun",
+   "category": "Family & Kids",
+   "start": "2026-09-19",
+   "end": "2026-09-20",
+   "venue": "Singapore Chinese Cultural Centre",
+   "address": null,
+   "summary": "Free Mid-Autumn family activities."
+  },
+  {
+   "title": "Mid-Autumn Lantern Walk",
+   "category": "Arts & Culture",
+   "start": "2026-09-19",
+   "end": "2026-09-27",
+   "venue": "Jurong Lake Gardens",
+   "address": null,
+   "summary": "Free Mid-Autumn light displays and lantern trails."
+  },
+  {
+   "title": "Mid-Autumn Light-Up",
+   "category": "Arts & Culture",
+   "start": "2026-09-12",
+   "end": "2026-10-11",
+   "venue": "Chinatown Point",
+   "address": null,
+   "summary": "Free Mid-Autumn light displays and festive pop-ups."
+  }
+ ],
+ "sgwhereto/4479": [
+  {
+   "title": "Tampines North Mid-Autumn Celebration 2026",
+   "category": "Community",
+   "start": "2026-09-20T18:30",
+   "end": "2026-09-20T20:30",
+   "venue": "Tampines North CC",
+   "address": "Level 1 Multi-Purpose Court",
+   "summary": "Lanterns, games, snacks, stage performances and a movie screening; tickets are $5."
+  }
+ ],
+ "sgweekend/3796": [
+  {
+   "title": "SG River Festival 2026",
+   "category": "Arts & Culture",
+   "start": "2026-09-14",
+   "end": "2026-09-20",
+   "venue": "Clarke Quay",
+   "address": null,
+   "summary": "Free riverside festival with light displays, acrobatics, an outdoor movie and pop-up markets."
+  }
+ ],
+ "sgwhereto/4480": [
+  {
+   "title": "BHG Mooncake Fair",
+   "category": "Sales & Pop-ups",
+   "start": "2026-09-14",
+   "end": "2026-09-25",
+   "venue": "Junction 8",
+   "address": "Level 2 Atrium",
+   "summary": "Traditional and new mooncake flavours for sharing and gifting."
+  },
+  {
+   "title": "BHG Mooncake Fair",
+   "category": "Sales & Pop-ups",
+   "start": "2026-09-16",
+   "end": null,
+   "venue": "Tampines Mall",
+   "address": "Level 1 Atrium",
+   "summary": "Traditional and new mooncake flavours for sharing and gifting."
+  }
+ ],
+ "sgwhereto/4481": [
+  {
+   "title": "Halloween Horror Nights 14: Fear Unlocked",
+   "category": "Music & Performances",
+   "start": "2026-09-25T19:30",
+   "end": "2026-11-02T00:30",
+   "venue": "Universal Studios Singapore",
+   "address": "Resorts World Sentosa",
+   "summary": "Haunted houses, live shows and scare zones at Universal Studios; tickets from $63."
+  }
+ ],
+ "sgwhereto/4482": [
+  {
+   "title": "Scanteak Private Sale",
+   "category": "Sales & Pop-ups",
+   "start": "2026-09-18",
+   "end": "2026-09-20",
+   "venue": "Isetan Scotts",
+   "address": "Level 4",
+   "summary": "Up to 60% off selected furniture."
+  }
+ ],
+ "sgweekend/3797": [
+  {
+   "title": "The Story of Studio Ghibli Exhibition",
+   "category": "Arts & Culture",
+   "start": "2026-12-19",
+   "end": "2027-07-04",
+   "venue": null,
+   "address": null,
+   "summary": "An immersive exhibition of 12 scenes inspired by Studio Ghibli films."
+  }
+ ],
+ "sgweekend/3798": [],
+ "sgweekend/3799": [],
+ "sgwhereto/4494": [
+  {
+   "title": "OG 64th Anniversary Sale",
+   "category": "Sales & Pop-ups",
+   "start": "2026-09-17",
+   "end": "2026-10-04",
+   "venue": null,
+   "address": null,
+   "summary": "20% off regular-priced items and up to 70% off selected items, in store only."
+  }
+ ],
+ "sgweekend/3801": [
+  {
+   "title": "The Secret Vault Immersive Exhibition",
+   "category": "Arts & Culture",
+   "start": "2026-10-10",
+   "end": "2026-11-01",
+   "venue": "New Bahru",
+   "address": "L2 School Hall",
+   "summary": "A free six-chamber exhibition on Singapore's financial resilience, with a free shuttle from Orchard."
+  }
+ ],
+ "sgwhereto/4496": [
+  {
+   "title": "Halloween Yacht Party Singles Mixer",
+   "category": "Community",
+   "start": "2026-10-31T17:00",
+   "end": "2026-10-31T22:00",
+   "venue": "Marina at Keppel Bay",
+   "address": null,
+   "summary": "A Halloween singles mixer on a yacht with a barbecue, karaoke and water sports."
+  }
+ ],
+ "sgweekend/3803": [
+  {
+   "title": "BellyGom Summer Day Out Party",
+   "category": "Family & Kids",
+   "start": "2026-09-24",
+   "end": "2026-11-01",
+   "venue": "Waterway Point",
+   "address": null,
+   "summary": "Free themed play zones and photo spots with the BellyGom mascot."
+  }
+ ],
+ "sgweekend/3804": [
+  {
+   "title": "Haunted Toy Factory Maze",
+   "category": "Arts & Culture",
+   "start": "2026-10-17",
+   "end": "2026-11-01",
+   "venue": "Tampines 1",
+   "address": "Rooftop",
+   "summary": "A gamified horror maze; tickets are $10 or free with a minimum spend."
+  }
+ ],
+ "sgweekend/3805": [],
+ "sgweekend/3806": [
+  {
+   "title": "The Grand Circuit Fan Zone",
+   "category": "Sports & Fitness",
+   "start": "2026-10-05",
+   "end": "2026-10-11",
+   "venue": "Capitol Singapore",
+   "address": null,
+   "summary": "A Formula 1 fan zone during race week."
+  }
+ ],
+ "sgweekend/3807": [],
+ "sgwhereto/4497": [
+  {
+   "title": "Seoul Anthem K-pop Party",
+   "category": "Music & Performances",
+   "start": "2026-10-02T22:00",
+   "end": "2026-10-03T03:00",
+   "venue": "Blu Jaz",
+   "address": "Clarke Quay Central, 6 Eu Tong Sen Street",
+   "summary": "Five hours of K-pop with DJ RAW, strictly 18 and over; tickets from $25."
+  }
+ ],
+ "sgweekend/3808": [
+  {
+   "title": "JisuLife Global Brand Experience Store",
+   "category": "Sales & Pop-ups",
+   "start": "2026-09-28",
+   "end": "2026-12-26",
+   "venue": "The Heeren",
+   "address": "#01-01",
+   "summary": "Interactive installations, discounts and a lucky draw at JisuLife's first experience store."
+  }
+ ],
+ "sgwhereto/4498": [
+  {
+   "title": "Game On, Dreamers!",
+   "category": "Arts & Culture",
+   "start": "2026-12-11",
+   "end": "2026-12-13",
+   "venue": "Marina Bay Sands Convention Centre",
+   "address": "Halls D, E & F",
+   "summary": "Three days of game worlds, esports, cosplay battles and arcades."
+  }
+ ],
+ "sgwhereto/4499": [
+  {
+   "title": "MUJI Online Store Launch",
+   "category": "Sales & Pop-ups",
+   "start": "2026-10-01T09:00",
+   "end": "2026-10-05",
+   "venue": null,
+   "address": null,
+   "summary": "10% off sitewide to launch MUJI's online store."
+  }
+ ]
+}

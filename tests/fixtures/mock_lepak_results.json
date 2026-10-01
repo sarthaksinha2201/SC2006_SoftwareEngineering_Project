@@ -1,0 +1,245 @@
+{
+ "heading": "9 events within 45 min by public transport, next 30 days",
+ "empty_text": "",
+ "unroutable_note": "No route could be found for some events, so their straight-line distance is shown as an estimate and they are listed last.",
+ "sorts": [
+  {
+   "value": "travel",
+   "label": "Shortest travel time",
+   "selected": true,
+   "url": "/lepak/results?sort=travel&page=1"
+  },
+  {
+   "value": "soonest",
+   "label": "Soonest",
+   "selected": false,
+   "url": "/lepak/results?sort=soonest&page=1"
+  },
+  {
+   "value": "recent",
+   "label": "Recently added",
+   "selected": false,
+   "url": "/lepak/results?sort=recent&page=1"
+  }
+ ],
+ "chips": [
+  {
+   "label": "All",
+   "count": 9,
+   "selected": true,
+   "url": "/lepak/results?sort=travel&page=1"
+  },
+  {
+   "label": "Arts & Culture",
+   "count": 4,
+   "selected": false,
+   "url": "/lepak/results?sort=travel&category=Arts+%26+Culture&page=1"
+  },
+  {
+   "label": "Music & Performances",
+   "count": 2,
+   "selected": false,
+   "url": "/lepak/results?sort=travel&category=Music+%26+Performances&page=1"
+  },
+  {
+   "label": "Family & Kids",
+   "count": 2,
+   "selected": false,
+   "url": "/lepak/results?sort=travel&category=Family+%26+Kids&page=1"
+  },
+  {
+   "label": "Sales & Pop-ups",
+   "count": 1,
+   "selected": false,
+   "url": "/lepak/results?sort=travel&category=Sales+%26+Pop-ups&page=1"
+  }
+ ],
+ "cards": [
+  {
+   "id": 9,
+   "title": "JisuLife Global Brand Experience Store",
+   "category": "Sales & Pop-ups",
+   "when": "On now until Sat 26 Dec",
+   "venue": "The Heeren",
+   "address": "#01-01",
+   "summary": "Interactive installations, discounts and a lucky draw at JisuLife's first experience store.",
+   "travel": "9 min on foot (walking route: no public transport route was found for this short trip)",
+   "travel_estimated": false,
+   "route_summary": "Walk 5.6 km",
+   "parking": null,
+   "sources": [
+    {
+     "url": "https://t.me/sgweekend/3808",
+     "label": "t.me/sgweekend/3808"
+    }
+   ],
+   "detail_url": "/lepak/events/9"
+  },
+  {
+   "id": 12,
+   "title": "Seoul Anthem K-pop Party",
+   "category": "Music & Performances",
+   "when": "Fri 2 Oct, 10 pm – 3 am",
+   "venue": "Blu Jaz",
+   "address": "Clarke Quay Central, 6 Eu Tong Sen Street",
+   "summary": "Five hours of K-pop with DJ RAW, strictly 18 and over; tickets from $25.",
+   "travel": "19 min by public transport",
+   "travel_estimated": false,
+   "route_summary": "Walk 2 min → North South Line → Walk 2 min → Bus 141 → Walk 3 min",
+   "parking": null,
+   "sources": [
+    {
+     "url": "https://t.me/sgwhereto/4497",
+     "label": "t.me/sgwhereto/4497"
+    }
+   ],
+   "detail_url": "/lepak/events/12"
+  },
+  {
+   "id": 1,
+   "title": "Anime Earth",
+   "category": "Arts & Culture",
+   "when": "On now until Sun 4 Oct",
+   "venue": "City Square Mall",
+   "address": null,
+   "summary": "Cosplay showcases, anime merchandise and artist booths.",
+   "travel": "22 min by public transport",
+   "travel_estimated": false,
+   "route_summary": "Walk 2 min → North South Line → Walk 2 min → Bus 141 → Walk 3 min",
+   "parking": null,
+   "sources": [
+    {
+     "url": "https://t.me/sgweekend/3793",
+     "label": "t.me/sgweekend/3793"
+    }
+   ],
+   "detail_url": "/lepak/events/1"
+  },
+  {
+   "id": 2,
+   "title": "Free Yukata Experience",
+   "category": "Family & Kids",
+   "when": "Fri 2 Oct – Sun 4 Oct",
+   "venue": "City Square Mall",
+   "address": null,
+   "summary": "Free yukata dress-up for up to four family members with a minimum spend.",
+   "travel": "22 min by public transport",
+   "travel_estimated": false,
+   "route_summary": "Walk 2 min → North South Line → Walk 2 min → Bus 141 → Walk 3 min",
+   "parking": null,
+   "sources": [
+    {
+     "url": "https://t.me/sgweekend/3793",
+     "label": "t.me/sgweekend/3793"
+    }
+   ],
+   "detail_url": "/lepak/events/2"
+  },
+  {
+   "id": 4,
+   "title": "Mid-Autumn Light-Up",
+   "category": "Arts & Culture",
+   "when": "On now until Sun 11 Oct",
+   "venue": "Chinatown Point",
+   "address": null,
+   "summary": "Free Mid-Autumn light displays and festive pop-ups.",
+   "travel": "30 min by public transport",
+   "travel_estimated": false,
+   "route_summary": "Walk 2 min → North South Line → Walk 2 min → Bus 141 → Walk 3 min",
+   "parking": null,
+   "sources": [
+    {
+     "url": "https://t.me/sgweekend/3795",
+     "label": "t.me/sgweekend/3795"
+    }
+   ],
+   "detail_url": "/lepak/events/4"
+  },
+  {
+   "id": 5,
+   "title": "The Secret Vault Immersive Exhibition",
+   "category": "Arts & Culture",
+   "when": "Sat 10 Oct – Sun 1 Nov",
+   "venue": "New Bahru",
+   "address": "L2 School Hall",
+   "summary": "A free six-chamber exhibition on Singapore's financial resilience, with a free shuttle from Orchard.",
+   "travel": "30 min by public transport",
+   "travel_estimated": false,
+   "route_summary": "Walk 2 min → North South Line → Walk 2 min → Bus 141 → Walk 3 min",
+   "parking": null,
+   "sources": [
+    {
+     "url": "https://t.me/sgweekend/3801",
+     "label": "t.me/sgweekend/3801"
+    }
+   ],
+   "detail_url": "/lepak/events/5"
+  },
+  {
+   "id": 7,
+   "title": "Haunted Toy Factory Maze",
+   "category": "Arts & Culture",
+   "when": "Sat 17 Oct – Sun 1 Nov",
+   "venue": "Tampines 1",
+   "address": "Rooftop",
+   "summary": "A gamified horror maze; tickets are $10 or free with a minimum spend.",
+   "travel": "30 min by public transport",
+   "travel_estimated": false,
+   "route_summary": "Walk 2 min → North South Line → Walk 2 min → Bus 141 → Walk 3 min",
+   "parking": null,
+   "sources": [
+    {
+     "url": "https://t.me/sgweekend/3804",
+     "label": "t.me/sgweekend/3804"
+    }
+   ],
+   "detail_url": "/lepak/events/7"
+  },
+  {
+   "id": 10,
+   "title": "Halloween Horror Nights 14: Fear Unlocked",
+   "category": "Music & Performances",
+   "when": "On now until Mon 2 Nov",
+   "venue": "Universal Studios Singapore",
+   "address": "Resorts World Sentosa",
+   "summary": "Haunted houses, live shows and scare zones at Universal Studios; tickets from $63.",
+   "travel": "41 min by public transport",
+   "travel_estimated": false,
+   "route_summary": "Walk 2 min → North South Line → Walk 2 min → Bus 141 → Walk 3 min",
+   "parking": null,
+   "sources": [
+    {
+     "url": "https://t.me/sgwhereto/4481",
+     "label": "t.me/sgwhereto/4481"
+    }
+   ],
+   "detail_url": "/lepak/events/10"
+  },
+  {
+   "id": 6,
+   "title": "BellyGom Summer Day Out Party",
+   "category": "Family & Kids",
+   "when": "On now until Sun 1 Nov",
+   "venue": "Waterway Point",
+   "address": null,
+   "summary": "Free themed play zones and photo spots with the BellyGom mascot.",
+   "travel": "About 11.0 km away (straight-line estimate, no route available)",
+   "travel_estimated": true,
+   "route_summary": null,
+   "parking": null,
+   "sources": [
+    {
+     "url": "https://t.me/sgweekend/3803",
+     "label": "t.me/sgweekend/3803"
+    }
+   ],
+   "detail_url": "/lepak/events/6"
+  }
+ ],
+ "page": 1,
+ "pages": 1,
+ "total": 9,
+ "prev_url": null,
+ "next_url": null,
+ "search_url": "/lepak"
+}

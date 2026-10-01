@@ -1,0 +1,157 @@
+{
+ "_note": "OneMap route responses, Junction 8 to City Square Mall, recorded 30 Sep 2026; trimmed to the fields read, with the echoed requestParameters removed.",
+ "pt": {
+  "plan": {
+   "itineraries": [
+    {
+     "duration": 1477,
+     "legs": [
+      {
+       "mode": "WALK",
+       "route": "",
+       "routeShortName": null,
+       "routeLongName": null,
+       "duration": 96,
+       "distance": 91.78,
+       "legGeometry": {
+        "points": "qwfGk}yxRIt@CPAFGBGA?DAFe@G?BAD?DF?",
+        "length": 13
+       }
+      },
+      {
+       "mode": "SUBWAY",
+       "route": "NS",
+       "routeShortName": "NS",
+       "routeLongName": "NORTH SOUTH LINE",
+       "duration": 343,
+       "distance": 3561.54,
+       "legGeometry": {
+        "points": "syfG_zyxR|BXPB??NBPBH@F@PBPDL@@@PBPDjCb@HBz@Nr@JzMhBb@Db@FP@b@Db@Bb@@b@@b@?P?b@?zFIb@Av@?nCAb@?b@@~DJb@@??X@jBF`@Bn@Hf@J|@TbAZb@Lj@Hv@Jx@Bx@@l@Ej@Ed@Gh@Kf@MVIh@Sn@W|Aq@t@[d@Qh@Qb@Ml@Of@Il@KjC]b@G??fEk@b@GPAb@EPAPAP?PAP?P?P?P@P?P@P@PBP@\\FTDb@HNBb@JlFpAd@L\\Hb@HNBb@HPB`@Fb@FP@t@HtE`@ZDVBb@Fb@F`@Hb@HND`@HPD`@L^LPDNF^NNF^N^PNF^P\\RNHLH\\RZT\\TLJTRPLZV`FjEBB",
+        "length": 134
+       }
+      },
+      {
+       "mode": "WALK",
+       "route": "",
+       "routeShortName": null,
+       "routeLongName": null,
+       "duration": 136,
+       "distance": 142.99,
+       "legGeometry": {
+        "points": "y{`G__yxR??fAp@j@t@SX@?KPUNBBIDAA",
+        "length": 11
+       }
+      },
+      {
+       "mode": "BUS",
+       "route": "141",
+       "routeShortName": "141",
+       "routeLongName": "SBST BUS 141",
+       "duration": 452,
+       "distance": 2479.61,
+       "legGeometry": {
+        "points": "my`GyxxxR@AROz@o@nA}@v@q@xAq@tA]HAr@QfAUDAlAYNEDAPEREZG????\\ItA[~A_@REx@S`@c@N_@VaBCY{CiCk@m@??CAk@k@}@mAsA{BgAaC_@yAAk@F_@N[v@s@f@c@NO??@?|@w@xBmBTWjAmArAqAjAhBnAhBr@i@rC}BLKdB{B????tAeBuBw@sA{@}BiCrC}@^Up@_@XO",
+        "length": 67
+       }
+      },
+      {
+       "mode": "WALK",
+       "route": "",
+       "routeShortName": null,
+       "routeLongName": null,
+       "duration": 202,
+       "distance": 216.7,
+       "legGeometry": {
+        "points": "gi_Gee{xR??ACVO^SFE?A??DE@C?I@A@?DCB[@MDG?mAD?j@i@v@u@",
+        "length": 21
+       }
+      }
+     ]
+    },
+    {
+     "duration": 1578,
+     "legs": [
+      {
+       "mode": "WALK",
+       "route": "",
+       "routeShortName": null,
+       "routeLongName": null,
+       "duration": 161,
+       "distance": 160.44,
+       "legGeometry": {
+        "points": "qwfGk}yxR@KOAHy@@AQCo@KIAm@G?CCA@OACSCGC?K?CE?",
+        "length": 18
+       }
+      },
+      {
+       "mode": "SUBWAY",
+       "route": "CC",
+       "routeShortName": "CC",
+       "routeLongName": "CIRCLE LINE",
+       "duration": 245,
+       "distance": 2718.15,
+       "legGeometry": {
+        "points": "a}fGebzxR@C^wCLmAH}ALcBb@cD\\aBn@wBj@aCZoBf@iDh@oDVuBH}AAaBKaBU}Ag@gBwAeEaAkCe@gAk@iA_AmBUiAQmAMoC??Ey@QgEa@{EWqEEkACgADaARwAZmAhAwCl@sCb@}Bb@wBl@qCNi@",
+        "length": 43
+       }
+      },
+      {
+       "mode": "WALK",
+       "route": "",
+       "routeShortName": null,
+       "routeLongName": null,
+       "duration": 115,
+       "distance": 142.31,
+       "legGeometry": {
+        "points": "uxfGeu~xR??LXl@c@rBsARM??",
+        "length": 7
+       }
+      },
+      {
+       "mode": "SUBWAY",
+       "route": "NE",
+       "routeShortName": "NE",
+       "routeLongName": "NORTH EAST LINE",
+       "duration": 475,
+       "distance": 4877.97,
+       "legGeometry": {
+        "points": "{qfGmy~xRj@d@lA`ADDDBDDDBDDDBDDDBPLPLPJPLPJPJPJRJPHRJPHRHFBFBD@FBDBF@FBDBF@`JdDHBHDHBHDHBHBJDHBLDLBNDLDNBLBNBNBLBN@NBN@LBNBN@N@N?L@N@N?N?N?D?J?J?HAJ?J?H?JAJ?hFKD?D?DAD?B?D?D?D?J?^A\\?D?D?D?D?B?D?D?D?jIBN???@@d@?I?lC@@?H?F?H???F?H?F?D?B?H@F?H?F?H@F?H?F@H?F?H@F?H@F?H@F@H?F@F@H?F@H@F@H?F@H@F@F@H@F@H@F@??F@H@F@H@FBF@F@@?F@F@H@F@HBF@F@H@F@F@H@FBH@F@F@H@??F@FBH@@?D@H@F@B@B?H@FBF@H@F@H@F@F@HBF@F@H@F@F@H@FBH@F@F@H@F@FBH@F@H@F@F@H@D@@@F@H@F@H@F@??F@HBF@F@H@??F@H@F@F@H@FBF@H@F@H@F@F@H@F@HBF@F@H@F@F@H@F@H@FBF@H@F@H@F@F@H@F@F@HBF@D@B?F@@?D@D@B?F@F@H@FBH@F@XD@?B@@?B@D@F?HBH@D@@???jQnCXF\\Fd@Lb@N`A\\l@Zh@Xf@\\l@b@fAx@lBxAx@t@pAvAd@d@n@n@z@r@~@r@bAv@|@p@x@l@v@f@b@Xl@\\tAv@fBlAhA|@rAbAtDrCb@^??|C~BlBhBrBtBtBvBDDDFDDDDDFDBJLHJJLHLHLHLHLDDBFBHDFBDBFDFBFDFBFBDDFBFDFBFDFBFDFBDDFHLHLHLHLJLHJDDDFDDDFFDDFDDDDDFDD??????nF|FxEbF??z@~@GG",
+        "length": 370
+       }
+      },
+      {
+       "mode": "WALK",
+       "route": "",
+       "routeShortName": null,
+       "routeLongName": null,
+       "duration": 313,
+       "distance": 331.23,
+       "legGeometry": {
+        "points": "wj_Gw`{xRTUOMRQMM?CAC@E@CVOBCDAp@_@t@c@DC@A??EA[UCACA@A@?DCB[@MDG?mAD?j@i@v@u@",
+        "length": 31
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "drive": {
+  "route_summary": {
+   "start_point": "BISHAN PLACE",
+   "end_point": "KITCHENER ROAD",
+   "total_time": 794,
+   "total_distance": 6918
+  },
+  "route_geometry": "gufGq}yxRL}@}Eq@I_BDi@XcCFOPMn@Ud@x@`@\\^PNB|@LjAPzG~@bAiHFYZa@`DgBTORa@Nu@Jo@|@cGT_BJw@XsBN_@`@i@\\Sr@OrBEz@Cp@Ab@KTMNWB{CBeD?gB?}CEaDPq@Rk@ZWp@UhM{CzAChDs@pDe@xBIvKO|CIdSQhJGv@?L?~AHvAPhB^jBf@jBv@`C`BlDrDbGvG|F|FpGbFbAl@pA`ApCvBhEdDJDL@\\Gd@{@f@_AtDcHpCgFlAyBn@gAVSJIPOPOr@c@dBkAnAy@TQLIHGv@Gl@B|@Lt@NvAPfCb@ZFl@JdB`A|@h@|EpC|BrAuFzFq@j@g@b@"
+ },
+ "walk": {
+  "route_summary": {
+   "start_point": "",
+   "end_point": "",
+   "total_time": 4007,
+   "total_distance": 5565
+  },
+  "route_geometry": "qwfGk}yxRKt@CNLBvAR@?ADAHAB?DKz@~C`@lBXVBD?BCBBBBXDFBBAFE@ABA@????@??@@????@@???@??@??@??@??@??@??@@?????@@????@@??@????@@???@???@@????@???@@??@???nCZFBJ?D?D?D?\\FH@@?B@@?B@@?B@@?B@@@@?B@@@B?@@@@B@@?f@FXB\\DvAN~@LBAhCN^?NALE??HE@?@A@ABCDDFFXJ@LPIF?HPh@?`@AH??GAi@AWD?D?T??AN{@@?P?X@\\lAn@BZ@FAZ???@_@L?`@?JBFP`@HJ@TMJ?DDHAJ??Fd@?DAB?F?F@L?ZADC@KB?h@BDEDFFEB?`A@XFlAZf@NTFLDp@PNDXHl@PZJ@?FB@??CPa@DCJAB@\\Jx@PZDl@FJ@`@@^RB?F?NClAEJANCRC`@IJARGNC?ANEBAJCHCVOHGFERIHEVIFCRKFENGJCRGNC`@Gf@EDE@DD?h@?@BB@??N@@@D?TDB?TDF@H@ZF\\DLBHBF@H@???U?AC??q@?MF?v@MBAHALA?B?F?DpBe@tA[LAlAQJAFC@BI@?AHAHIDEDCBCDGFGLQ@CBEFKDIFIBCDIB?DCACAMGe@E[AAAKCOAMIg@?Ep@IJABCJGDCDC@I@C?MJ@H?H@F?F?F@D@@?BABAB?L??C@ExADC\\BV????`AD????RCL[FWB@AC@EDGHMVJB?x@oBXDZo@n@{AhAt@HHRNDB@BFDVRJODFJFFFDB@@Za@\\c@@@DBFFLMB@DDb@Z@BNH@BNJLJNJ\\XLD@BBCZs@Na@LUNSDG?ARMEEr@y@BCLIHK??TY`@a@FIl@k@NOB?BArAeAHIBE?A@@\\\\@@b@]BC@?LCBCJKFGh@a@HE\\O@EBA@?d@MVC@Al@EJ?DAD?j@C^AL@LAh@CLEFAVAJ???d@Fx@CN?B??IV?TCb@AL?J@B?F@FD@@BAf@UDELF@@nAX|AVPF\\LHDB?`@\\JOh@m@LK`@Qj@SHERGXIJA^KLCn@SJCFA@ETCLETGPGVGPE@A@?LEn@QVGXIPI@CB@PGBC@G@@D@DAl@S@ATIVIJE\\MNEb@ONG@A?C@?h@OB?@IF@j@Q`@MLG?AB@f@QB?@AFAVMFCRK^UVO\\UFE@A??BE@A@K??@ADCD[@MDG?mAD?h@g@x@w@"
+ }
+}

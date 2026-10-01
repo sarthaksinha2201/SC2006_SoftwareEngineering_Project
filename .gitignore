@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.pytest_cache/
+
+# Generated data: raw downloads and API caches are reproducible from the ETL and too
+# large for git. The built snapshot IS committed (DECISIONS.md section 14): a clean
+# clone must run, and rebuilding it takes about an hour of geocoding. Regenerate it
+# with python -m gowhere.etl.build_snapshot.
+data/raw/
+data/cache/
+data/logs/
+data/snapshot.db.tmp
+
+data/events.db
+data/events.db-wal
+data/events.db-shm

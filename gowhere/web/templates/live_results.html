@@ -1,29 +1,75 @@
-{# PLACEHOLDER template (backend half). Sarthak's S3 templates replace this.
-   Context: view = view_models.results_view(...); see tests/fixtures/mock_results.json. #}
 {% extends "base.html" %}
+{% from "_macros.html" import note %}
 {% block title %}Results · GoWhere{% endblock %}
 {% block content %}
 <h1>Where to Live: results</h1>
-<p>Data as of {{ view.snapshot_date }}.</p>
+<p><small>Data as of {{ view.snapshot_date }}.</small></p>
+
+{% for m in view.dropped %}{{ note(m, 'warning') }}{% endfor %}
+
 {% set rec = view.recommendation %}
-<section><h2>{{ rec.headline }}</h2>
+<section class="recommendation">
+  <h2>{{ rec.headline }}</h2>
   {% if rec.because %}<p>{{ rec.because }}</p>{% endif %}
-  {% if rec.close_call %}<p><strong>{{ rec.close_call_text }}</strong></p>{% endif %}
-  <details><summary>See how this was calculated</summary>
-    <ul>{% for r in rec.reasons %}<li>{{ r.label }}: {{ r.contribution }} points in favour of {{ r.favours }}</li>{% endfor %}</ul>
-  </details>
+  {% if rec.close_call %}{{ note(rec.close_call_text, 'warning') }}{% endif %}
+  <button type="button" class="btn-secondary link-muted" data-open-dialog="breakdown">
+    See how this was calculated
+  </button>
 </section>
-{% for m in view.dropped %}<p role="alert">{{ m }}</p>{% endfor %}
-<table>
-  <tr><th>Rank</th><th>Neighbourhood</th><th>Overall</th>{% for f in view.factors %}<th>{{ f.label }} (×{{ f.weight }})</th>{% endfor %}</tr>
+
+<dialog id="breakdown" class="modal">
+  <div class="modal-head">
+    <h2 style="margin:0">How the ranking was calculated</h2>
+    <button type="button" class="modal-close" data-close-dialog aria-label="Close">&times;</button>
+  </div>
+  <div class="chart-container">
+    <canvas id="breakdown-chart" role="img"
+            aria-label="Radar chart comparing each neighbourhood across the included factors"></canvas>
+  </div>
+  <ul>
+    {% for r in rec.reasons %}
+    <li>{{ r.label }}: {{ r.contribution }} points in favour of {{ r.favours }}</li>
+    {% endfor %}
+  </ul>
+</dialog>
+
+<h2>Map</h2>
+<div id="map" class="map-container" role="img" aria-label="Map of the compared neighbourhoods"></div>
+
+<h2>Comparison</h2>
+<div class="table-scroll">
+<table class="results">
+  <tr>
+    <th>Rank</th><th>Neighbourhood</th><th>Overall</th>
+    {% for f in view.factors %}<th>{{ f.label }} (×{{ f.weight }})</th>{% endfor %}
+  </tr>
   {% for a in view.areas %}
-  <tr><td>{{ a.rank_label }}</td><td>{{ a.name }}<br><small>{{ a.flats_text }}</small></td><td>{{ a.overall }}</td>
-    {% for c in a.categories %}<td>{{ c.score }}<br><small>{{ c.summary }}</small></td>{% endfor %}</tr>
-  {% if a.notes %}<tr><td></td><td colspan="{{ view.factors|length + 2 }}">{% for n in a.notes %}<p><small>{{ n }}</small></p>{% endfor %}</td></tr>{% endif %}
+  <tr>
+    <td><span class="rank-badge">{{ a.rank_label }}</span></td>
+    <td>{{ a.name }}<br><small>{{ a.flats_text }}</small></td>
+    <td><strong>{{ a.overall }}</strong></td>
+    {% for c in a.categories %}
+    <td>{{ c.score }}<br><small>{{ c.summary }}</small></td>
+    {% endfor %}
+  </tr>
+  {% if a.notes %}
+  <tr class="notes-row">
+    <td></td>
+    <td colspan="{{ view.factors|length + 2 }}">
+      {% for n in a.notes %}{{ note(n) }}{% endfor %}
+    </td>
+  </tr>
+  {% endif %}
   {% endfor %}
 </table>
-{% for f in view.factors %}{% for n in f.notes %}<p><small>{{ f.label }}: {{ n }}</small></p>{% endfor %}{% endfor %}
+</div>
+
+{% for f in view.factors %}
+  {% for n in f.notes %}{{ note(f.label + ": " + n) }}{% endfor %}
+{% endfor %}
+
 <script type="application/json" id="chart-data">{{ view.chart|tojson }}</script>
 <script type="application/json" id="map-data">{{ view.map|tojson }}</script>
-<p><a href="{{ url_for('web.live_setup') }}">Change the comparison</a></p>
+
+<p><a class="btn" href="{{ url_for('web.live_setup') }}">Change the comparison</a></p>
 {% endblock %}

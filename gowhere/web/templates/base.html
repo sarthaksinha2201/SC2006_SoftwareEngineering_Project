@@ -1,17 +1,26 @@
-{# PLACEHOLDER template (backend half). Sarthak's S3 templates and CSS replace this. #}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}GoWhere{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet/leaflet.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
 <body>
-  <nav><a href="{{ url_for('web.home') }}">GoWhere</a> ·
-       <a href="{{ url_for('web.live_setup') }}">Where to Live</a> ·
-       <a href="{{ url_for('web.lepak_setup') }}">Where to Lepak</a></nav>
-  <main>{% block content %}{% endblock %}</main>
-  <footer>Map and location data from OneMap (SLA) · Amenity data © OpenStreetMap contributors ·
-    Government data from data.gov.sg</footer>
+  <header class="site-header">
+    <nav>
+      <a class="brand" href="{{ url_for('web.home') }}">GoWhere</a>
+      <a class="nav-link" href="{{ url_for('web.live_setup') }}">Where to Live</a>
+      <a class="nav-link" href="{{ url_for('web.lepak_setup') }}">Where to Lepak</a>
+    </nav>
+  </header>
+  <main class="container">{% block content %}{% endblock %}</main>
+  <footer class="site-footer">Map and location data from OneMap (SLA) · Amenity data © OpenStreetMap
+    contributors · Government data from data.gov.sg</footer>
+  <script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
+  <script src="{{ url_for('static', filename='vendor/chartjs/chart.umd.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

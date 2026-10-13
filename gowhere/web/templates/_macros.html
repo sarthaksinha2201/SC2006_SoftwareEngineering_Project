@@ -1,0 +1,8 @@
+{# The one note component (Sarthak.md: "There are a lot of notes... styled ad hoc they
+   will swamp the page"), reused everywhere a note, dropped-factor message, or form
+   error appears: small-area, far-from-rail, dropped-factor, per-factor notes,
+   unroutable/parking notes, and validation errors. #}
+{% macro note(text, kind='info') %}
+<p class="note{% if kind == 'warning' %} note--warning{% endif %}"
+   {% if kind == 'warning' %}role="alert"{% endif %}>{{ text }}</p>
+{% endmacro %}

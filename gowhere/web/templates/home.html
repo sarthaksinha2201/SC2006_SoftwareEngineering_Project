@@ -1,7 +1,16 @@
-{# PLACEHOLDER template (backend half). Sarthak's S3 templates replace this. #}
 {% extends "base.html" %}
 {% block content %}
 <h1>GoWhere</h1>
-<p><a href="{{ url_for('web.live_setup') }}">Where to Live</a>: compare 2 to 4 neighbourhoods.</p>
-<p><a href="{{ url_for('web.lepak_setup') }}">Where to Lepak</a>: find events near you.</p>
+<p>Compare neighbourhoods, or find things happening near you.</p>
+<div class="home-cards">
+  <a class="home-card" href="{{ url_for('web.live_setup') }}">
+    <h2>Where to Live</h2>
+    <p>Compare 2 to 4 neighbourhoods on public transport, housing, amenities, greenery,
+      healthcare and commute.</p>
+  </a>
+  <a class="home-card" href="{{ url_for('web.lepak_setup') }}">
+    <h2>Where to Lepak</h2>
+    <p>Find events near you, sorted by how long it takes to get there.</p>
+  </a>
+</div>
 {% endblock %}

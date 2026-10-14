@@ -288,12 +288,14 @@ The median rather than the mean, because blocks separated from their station by 
 
 Seven confirmed: @sgweekend, @sgwhereto, @SGArtsChannel, @sgconcerts, @dateideas, @sgfitnesshealth, @TimeOutSG, plus @sgbestnightlife on probation. The test for any new one is whether `t.me/s/<name>` shows posts in a browser; channels say "subscribers", groups say "members".
 
-## 8. Open items
+## 8. Open items *(reviewed 14 Oct 2026)*
 
-- 4–8 more Telegram channels to source and verify.
-- Division of work between the two of us.
-- Sequence diagrams (teammate drafting) — to be reviewed.
-- Compile all decisions above into the updated FR/NFR/Data Dictionary/use case document in one pass.
+- **Recompile the deliverable** — FR, NFR, Data Dictionary and use case descriptions, against what was actually built. Several FRs are now knowingly out of date; see §17.
+- **Sarthak's S2 scraper** — still not written, and it is the only thing standing between the app and live events.
+- **Sarthak's S3 templates** — placeholders are still in place; the mock fixtures are committed and waiting.
+- **Sequence diagrams (S4)** — must match the refactored code (ScoringStrategy, ScoringEngine, adapters), not the Lab 1 design.
+- **A wifi-off rehearsal with the network genuinely down** — the one run so far used a dead proxy, and a captive portal behaves differently.
+- *Settled since the last review:* the channel list (§7, seven usable), the division of work (`Sarthak.md`), and the Where to Live review findings (§16).
 
 ## 9. Data source decisions (30 Sep 2026)
 
@@ -429,3 +431,21 @@ Seven confirmed: @sgweekend, @sgwhereto, @SGArtsChannel, @sgconcerts, @dateideas
 
 **Decision:** The stale-snapshot warning (FR 3.1.6) ships with a test that **forces an old date**.
 **Reason:** The live snapshot was built on 30 Sep 2026, so the warning cannot fire naturally for a year — it would otherwise ship untested and silently broken.
+
+
+## 17. Where to Lepak and deployment — review findings settled (14 Oct 2026)
+
+**Decision:** Build the four unimplemented Lepak requirements as specified: the **freshness line** with a 24-hour warning (FR 2.3.4), **restoring sort, chips and page** when returning from an event (FR 2.5.3), **independent category chips** that hide one category while keeping the rest (FR 2.4.2), and a route map with a **starting-point marker and step-by-step directions** (FR 2.5.2).
+**Reason:** All four were specified and simply not built. Three are visible within seconds of a grader using the app — clicking an event and losing your place is the most obvious of them — and the freshness line is what shows a demo audience the data is live rather than fixtures.
+
+**Decision:** Three FRs are **amended to match the code**, not the other way round.
+**Reason:** Each was a deliberate decision taken during implementation, and reverting the code would make the product worse. **FR 3.2.1** becomes 6-hourly ingestion, not hourly, because cost tracks post volume rather than frequency (§3). **FR 2.1.3** drops the custom date range in favour of presets, removing a date-validation surface for a case the presets already cover (§13). **FR 2.1.6** gains the 90-minute travel-time option, because Singapore-wide trips exceed 60 minutes.
+
+**Decision:** The application runs as **one process** — Waitress serving the app with the ingestion scheduler on a background thread, behind a single documented command.
+**Reason:** Session state lives in memory, so it must be single-process regardless; and one command is one thing to go wrong during a demo. Flask's development server is not something to present. Waitress is pure Python and runs on Windows, unlike gunicorn.
+
+**Decision:** The 6-hourly schedule is **off by default**, enabled by an explicit flag documented as the demo-day setting. Ingestion is run manually until then.
+**Reason:** The team is demonstrating to groupmates well before demo day; a background job polling eight channels every six hours earns nothing until the data needs to be current, and an always-on scheduler is one more thing to misbehave while the app is still changing.
+
+**Decision:** Stored event text has `<` and `>` stripped, **in addition to** escaping on output.
+**Reason:** A code review found a real stored-XSS path: a venue name containing HTML executed when the user hovered a map marker, confirmed in a headless browser. The text comes from public Telegram posts — exactly the untrusted-input case the prompt-injection rules exist for — and the marker tooltip was writing it as HTML. Escaping on output is the correct fix; stripping on input is defence in depth for the next template that forgets. **This belongs in the report's security section:** it is the third defect found by taking untrusted input seriously, after the `round()` rounding bug and the postal code leaking through OneMap's error text.

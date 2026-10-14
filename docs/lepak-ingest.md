@@ -48,6 +48,55 @@ The provider was switched from Anthropic to OpenAI on 14 Oct 2026, because that 
 the team has. The switch changed the adapter class, its own tests, the model constant
 and the dependency. Nothing else in the pipeline changed.
 
+## What the first real run discarded, and why (14 Oct 2026)
+
+The first run extracted 140 events and stored 28 (docs/demo.md section 4). To find out
+whether the two largest addressable buckets were our fault or genuine, we re-fetched the
+posts behind them and re-extracted them with the same model and prompt. The batches
+differed and the model is not deterministic, so this reproduces the discards rather
+than replaying them exactly. It cost US$0.004.
+
+**Venue not placed (21): mostly our matcher, partly fixed.** The model's venue strings
+were good. Twelve were well-known places that OneMap knows under another name, or that
+our strict matcher rejects:
+
+| Venue the model gave | Why it failed | Now |
+|---|---|---|
+| Suntec Convention Centre | OneMap: "Suntec Singapore Convention & Exhibition Centre"; not a contiguous match | alias 039593 |
+| Great World | Partial hits on the mall, the MRT station and its exits, too far apart to be one place | alias 237994 |
+| Fort Canning Park | Two exact hits, no postal code, too far apart | alias 179620 (Fort Canning Centre) |
+| Esplanade Recital Studio, Esplanade Annexe Studio | No OneMap result | alias 038981 |
+| Isetan Scotts | No OneMap result; the store is in Shaw House | alias 238868 |
+| Clarke Quay Central | No OneMap result; OneMap calls it The Central | alias 059817 |
+| F1 Pit Building | No OneMap result; OneMap calls it The Pit Building | alias 038975 |
+| KC Arts Centre | No OneMap result; it is SRT's home at 20 Merbau Road | alias 239035 |
+| SKAI (address "Swissôtel The Stamford") | OneMap does not match the accented name | alias 178882 |
+
+Each alias has its source in `data/reference/venue_aliases.csv`. The other nine are small
+galleries and studios named with no address: The Private Museum, IMBA, Supper House,
+Fever Exhibition Hall, Heartware Store & Gallery, The Fluxus House, Whitestone Gallery,
+Shop—House by DECK and Gravity by Noir. They stay unplaced. Guessing their locations is
+exactly what the matcher exists to prevent.
+
+The discard log now records the venue and address the model gave, not just the title,
+so the next unplaced venue can be judged from the log without re-running anything.
+
+**No single venue (38): genuine, prompt unchanged.** The question was whether the prompt
+makes the model collapse a roundup into one event with no venue. It does not. The model
+splits each roundup into one event per item. Where an item names a place, the model
+fills the venue in itself (MacRitchie Reservoir Park, Coney Island Park, Resorts World
+Sentosa, Marina Bay Sands). The discarded items name no place in the text:
+
+- "Free Workouts & Runs to Join This Weekend" lists give names and dates only; the
+  details are behind links.
+- F1 pop-up and appearance lists give brand names and dates only.
+- Chain-wide deals say "All outlets" or "All Donki Bars".
+
+Changing the prompt could only make the model guess venues, so it stays as it is.
+
+**Already ended (53)** is expected on a first run, which reads posts up to a few weeks
+old. Later runs read only new posts.
+
 ## The rules
 
 **Pre-filter.** A post goes to the LLM only if it contains date-like text: a day and month,

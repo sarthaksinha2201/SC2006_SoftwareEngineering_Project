@@ -1,11 +1,12 @@
 """Adapter for OneMap (SLA): address search and walking routes.
 
-Search needs no token. Routing and themes need one. OneMap tokens expire after 3 days
-(the token saved on 30 Sep stopped working on 3 Oct, taking every route down with it),
-so the adapter renews its own: with ONEMAP_EMAIL and ONEMAP_PASSWORD in .env (the
-OneMap account's login) it fetches a token, renews it shortly before it expires or when
-OneMap answers 401, and shares it across every session. ONEMAP_TOKEN alone still works,
-until it expires.
+Search needs no token. Routing and themes need one. A token's JWT says it expires after
+3 days, though on 14 Oct OneMap still accepted the 30 Sep token (DECISIONS.md section 19),
+so the claim is not reliably enforced either way. The adapter renews its own rather
+than depend on that: with ONEMAP_EMAIL and ONEMAP_PASSWORD in .env (the OneMap account's
+login) it fetches a token, renews it shortly before its stated expiry or when OneMap
+answers 401, and shares it across every session. ONEMAP_TOKEN alone still works, for as
+long as OneMap accepts it.
 OneMap documents 250 calls/min, but token-less search was measured on 30 Sep 2026 to
 return HTTP 429 at 2 req/s and none at 1 req/s, so without a token we pace at 1.1 s.
 """
@@ -191,8 +192,8 @@ class OneMapAdapter:
 
 def warn_if_all_failed(results, what):
     """One failed route is normal; every route in a request failing is not. It looks
-    exactly like ordinary degradation to the user (an expired OneMap token did this for
-    eleven days unnoticed), so say it in the log. Counts only: no places."""
+    exactly like ordinary degradation to the user, which is how a total failure can go
+    unnoticed, so say it in the log. Counts only: no places."""
     results = list(results)
     if results and all(r is None for r in results):
         log.warning("all %d %s routing calls failed in one request; is OneMap reachable "

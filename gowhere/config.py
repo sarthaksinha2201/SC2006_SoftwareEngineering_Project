@@ -94,7 +94,9 @@ EVENTS_PATH = DATA_DIR / "events.db"     # read-write event store; the snapshot 
 # Public broadcast channels with a t.me/s/ view (DECISIONS.md section 7). sgbestnightlife
 # is on probation: its yield decides whether it stays.
 LEPAK_CHANNELS = ["sgweekend", "sgwhereto", "SGArtsChannel", "sgconcerts", "dateideas",
-                  "sgfitnesshealth", "sgbestnightlife"]   # TimeOutSG dropped: dormant (section 7)
+                  "sgfitnesshealth"]
+# Dropped (DECISIONS.md section 7): TimeOutSG, dormant since June; sgbestnightlife, on
+# probation, stored 0 events from 20 posts in the first real run (14 Oct 2026).
 LLM_MODEL = "gpt-6-luna"                 # OpenAI: cheapest model for bulk structured extraction
 LLM_REASONING_EFFORT = "low"             # reasoning tokens bill as output; extraction needs little
 LLM_BATCH_SIZE = 10                      # posts per extraction call

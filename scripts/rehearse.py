@@ -14,6 +14,8 @@ import subprocess
 import sys
 import time
 
+import socket
+
 import requests
 
 root, mode = sys.argv[1], sys.argv[2]
@@ -21,6 +23,10 @@ PORT = 5055 if mode == "online" else 5056
 LOG = f"{root}/data/logs/rehearsal_{mode}.log"
 DEST, START = "119077", "238801"            # NUS Kent Ridge (commute), ION Orchard (Lepak)
 HDB = "140051"                              # Blk 51 Strathmore Avenue (Queenstown): HDB
+with socket.socket() as s:      # a stale server on the port would answer instead (14 Oct)
+    if s.connect_ex(("127.0.0.1", PORT)) == 0:
+        sys.exit(f"port {PORT} is already in use: stop the old server first "
+                 f"(lsof -nP -iTCP:{PORT} -sTCP:LISTEN)")
 env = {**os.environ, "GOWHERE_SECRET_KEY": "rehearsal"}
 if mode == "offline":   # every outbound connection fails, as with wifi off
     env.update(HTTP_PROXY="http://127.0.0.1:9", HTTPS_PROXY="http://127.0.0.1:9",

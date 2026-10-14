@@ -1,3 +1,13 @@
 alias,postal_code,place,source,checked_on
 Tampines 1,529536,"Tampines One, 10 Tampines Central 1",OneMap search for 529536 returns TAMPINES ONE at 10 Tampines Central 1; OneMap has no place named "Tampines 1",2026-09-30
 Capitol Singapore,178905,"Capitol Singapore (Capitol Piazza), 13 Stamford Road",OneMap search for 178905 returns CAPITOL PIAZZA at 13 Stamford Road; OneMap knows the complex only as Capitol Piazza and Eden Residences Capitol,2026-09-30
+Fort Canning Park,179620,"Fort Canning Centre, 5 Cox Terrace",OneMap search for 179620 returns FORT CANNING CENTRE at 5 Cox Terrace inside the park; OneMap's two FORT CANNING PARK points have no postal code and lie too far apart to count as one place,2026-10-14
+Great World,237994,"Great World City, 1 Kim Seng Promenade",OneMap search for 237994 returns GREAT WORLD CITY at 1 Kim Seng Promenade; "Great World" alone also hits the MRT station and its exits,2026-10-14
+Suntec Convention Centre,039593,"Suntec Singapore Convention & Exhibition Centre, 1 Raffles Boulevard",OneMap search for 039593 returns SUNTEC SINGAPORE CONVENTION & EXHIBITION CENTRE at 1 Raffles Boulevard,2026-10-14
+Isetan Scotts,238868,"Shaw House, 350 Orchard Road",OneMap search for 238868 returns SHAW HOUSE at 350 Orchard Road; Isetan Scotts is the department store in Shaw House (foursquare.com/v/isetan-scotts; en.wikipedia.org/wiki/Shaw_House_and_Centre),2026-10-14
+Esplanade Recital Studio,038981,"Esplanade - Theatres on the Bay, 1 Esplanade Drive",OneMap search for 038981 returns ESPLANADE - THEATRES ON THE BAY at 1 Esplanade Drive; the Recital Studio is one of its venues,2026-10-14
+Esplanade Annexe Studio,038981,"Esplanade - Theatres on the Bay, 1 Esplanade Drive",OneMap search for 038981 returns ESPLANADE - THEATRES ON THE BAY at 1 Esplanade Drive; the Annexe Studio is part of the Esplanade complex,2026-10-14
+Clarke Quay Central,059817,"The Central, 6 Eu Tong Sen Street",OneMap search for 059817 returns THE CENTRAL at 6 Eu Tong Sen Street; Clarke Quay Central is the mall's current name (estate.sg/about-clarke-quay-central.html),2026-10-14
+F1 Pit Building,038975,"The Pit Building, 1 Republic Boulevard",OneMap search for 038975 returns THE PIT BUILDING at 1 Republic Boulevard,2026-10-14
+KC Arts Centre,239035,"Singapore Repertory Theatre, 20 Merbau Road",OneMap search for 239035 returns SINGAPORE REPERTORY THEATRE at 20 Merbau Road; KC Arts Centre is SRT's home there (srt.com.sg/contact),2026-10-14
+Swissôtel The Stamford,178882,"Swissôtel The Stamford, 2 Stamford Road",OneMap search for 178882 returns SWISSOTEL THE STAMFORD SINGAPORE at 2 Stamford Road; OneMap does not match the name with its accent,2026-10-14

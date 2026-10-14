@@ -135,7 +135,11 @@ class Ingestor:
                     raise Discard("venue could not be placed on the map")
             except Discard as d:
                 discards[str(d)] += 1
-                log.info("discard %s: %s (%r)", where, d, str(item.get("title"))[:80])
+                # the venue and address as the model gave them: what an alias would need
+                short = lambda v: v[:80] if isinstance(v, str) else v
+                log.info("discard %s: %s (%r; venue %r; address %r)", where, d,
+                         short(item.get("title")), short(item.get("venue")),
+                         short(item.get("address")))
                 continue
             except HttpError as e:
                 counts["onemap_failures"] += 1

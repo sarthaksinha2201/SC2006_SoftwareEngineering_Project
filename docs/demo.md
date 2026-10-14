@@ -158,7 +158,7 @@ posts. Later runs read only posts newer than the channel's marker.
 | sgconcerts | 20 | 20 | 10 | 11 | 0 | 4 |
 | dateideas | 20 | 15 | 3 | 9 | 0 | 3 |
 | sgfitnesshealth | 20 | 16 | 1 | 5 | 21 | 2 |
-| sgbestnightlife | 20 | 6 | 0 | 4 | 1 | 0 |
+| sgbestnightlife (since dropped) | 20 | 6 | 0 | 4 | 1 | 0 |
 | **Total** | **135** | **110** | **28** | **53** | **38** | **21** |
 
 The run in numbers:
@@ -174,7 +174,7 @@ The run in numbers:
 "Already ended" is high because a first run reads posts up to a few weeks old.
 "No single venue" is mostly fitness and weekend roundups that list several runs with no
 one place, which the rules discard on purpose. sgbestnightlife stored nothing from 20
-posts.
+posts and has been dropped from `config.LEPAK_CHANNELS` (DECISIONS §7).
 
 TimeOutSG was measured on 14 Oct before this run (8 of its 40 newest posts passed the
 pre-filter, newest post 19 Jun). It is dormant and has been removed from
@@ -199,15 +199,30 @@ This is the Reliability NFR. A grader may test it by unplugging the wifi.
 |---|---|---|
 | **OneMap** (network off) | All of Where to Live except Commute, from the local snapshot. Lepak from any **HDB** postal code: the 10,786 in the snapshot resolve offline. Lepak with "Use my location". Sorting, chips, paging and event details. | Where to Live: *"Commute was left out because Queenstown, Tampines, Punggol and Bedok could not be routed to your destination"*, and the other five factors ranked. Lepak: every event with *"About 2.4 km away (straight-line estimate, no route available)"*. A postal code that isn't an HDB block's: *"OneMap can't be reached right now. Without it we can only look up HDB block postal codes, and this one isn't one, so it couldn't be checked."* It is never reported as an invalid code. |
 | **LTA DataMall** | Everything | Drive mode: *"Parking information unavailable"* on each result. |
-| **LLM** (Anthropic) | Everything in the web app | Nothing. Ingestion stores no events that run and keeps each channel's marker, so no post is lost; the next run catches up. The app serves the events it already has. |
+| **LLM** (OpenAI) | Everything in the web app | Nothing. Ingestion stores no events that run and keeps each channel's marker, so no post is lost; the next run catches up. The app serves the events it already has. |
 | **Telegram** | Everything in the web app | Nothing; as for the LLM. |
 | **CDN / map tiles** | Nothing today | The placeholder templates load no external files. **Sarthak's templates will:** Leaflet, Chart.js and basemap tiles. Serve Leaflet and Chart.js from `gowhere/web/static/`, not a CDN, or the charts and maps vanish offline. Basemap tiles can't be bundled. Offline, the area outlines will draw on a blank background. |
 
+**Before any rehearsal or demo, check that the port is free:** `lsof -nP -iTCP:8000
+-sTCP:LISTEN` (or the rehearsal's 5055) must print nothing. On 14 Oct a server left over
+from an earlier rehearsal still held port 5055. The new server failed with "Address
+already in use", the rehearsal script talked to the old server instead, and the result
+looked like total routing failure. `scripts/rehearse.py` now refuses to start when its
+port is taken.
+
+**The expired-token retraction (14 Oct).** These docs used to say OneMap routing was down
+from 3 to 14 Oct because the 30 Sep token expired on 3 Oct. That was inferred, not tested,
+and it is wrong. On 14 Oct, OneMap answered a route request carrying that same token
+with **HTTP 200** and a route. A garbage token and no token both got HTTP 401. Whatever
+made routing fail earlier, the token's `exp` claim was not it, or at least is not
+enforced now (DECISIONS §19). Self-renewal stays, because nothing guarantees how long an
+old token is accepted.
+
 **Rehearsal timings** (clean clone, real snapshot, real server). The last full run was
 on 1 Oct, from a fresh clone with nothing copied in except `.env`. It predates the
-14 Oct changes (bus data, Waitress, new defaults), and OneMap routing has been down
-since the token expired on 3 Oct. Repeat it once `ONEMAP_EMAIL` and `ONEMAP_PASSWORD`
-are in `.env`.
+14 Oct changes (bus data, Waitress, new defaults). The 14 Oct online rehearsal, on the
+working tree with every key in `.env`, passed every step (section 3 numbers, real routes,
+live parking). Repeat the clean-clone run before demo day.
 
 | Step | Online | Offline |
 |---|---|---|

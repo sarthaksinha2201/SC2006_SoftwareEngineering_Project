@@ -392,6 +392,7 @@ def test_logs_carry_reasons_not_post_text(caplog):
     caplog.set_level(logging.DEBUG)
     ingestor().run(FilePostSource(FIXTURES / "posts.json"), CHANNELS, now=NOW)
     assert "discard sgweekend/3797: missing location" in caplog.text
+    assert "venue None; address None)" in caplog.text        # what an alias would need
     for p in POSTS:
         for line in p["text"].splitlines():
             if len(line.strip()) > 30:

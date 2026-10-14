@@ -33,7 +33,7 @@ GOWHERE_SECRET_KEY=$(openssl rand -hex 32) .venv/bin/python -m gowhere.serve
 - **Demo day:** add `--ingest-every-hours 6`. The server then fetches events at start
   and every 6 hours on a background thread, in the same single process.
   `--host 0.0.0.0` lets a phone on the same Wi-Fi open it.
-- **Checks:** `.venv/bin/python -m pytest -q` should report 373 passed. It needs no
+- **Checks:** `.venv/bin/python -m pytest -q` should report 380 passed. It needs no
   network and no keys.
 - **The snapshot** (`data/snapshot.db`, rebuilt 14 Oct 2026 with bus data) is
   committed, so a clean clone runs as it is (DECISIONS §14).
@@ -148,25 +148,41 @@ fetches every channel in `config.LEPAK_CHANNELS` using Sarthak's scraper, extrac
 events with the LLM and stores them. It needs `OPENAI_API_KEY`; without it the run
 stores nothing and keeps each channel's place.
 
-**Measured 14 Oct, before the LLM step:** the scraper read the 40 newest posts from
-each channel. TimeOutSG was measured too, then dropped (DECISIONS §7).
 
-| Channel | Posts | Pass the date pre-filter | Newest post |
-|---|---|---|---|
-| sgweekend | 40 | 37 | 14 Oct |
-| sgwhereto | 40 | 37 | 14 Oct |
-| SGArtsChannel | 40 | 39 | 14 Oct |
-| sgconcerts | 40 | 40 | 13 Oct |
-| dateideas | 40 | 25 | 14 Oct |
-| sgfitnesshealth | 40 | 31 | 12 Oct |
-| TimeOutSG | 40 | 8 | **19 Jun** |
-| sgbestnightlife | 40 | 17 | 9 Oct |
+**First real ingestion, 14 Oct 2026, 23:07–23:10 SGT** (`gpt-6-luna`, `data/events.db`
+committed). On a channel's first run the scraper reads one page, about its 20 newest
+posts. Later runs read only posts newer than the channel's marker.
 
-TimeOutSG has not posted since June, so it is dormant and has been removed from
+| Channel | Posts fetched | Sent to the LLM | Stored | Already ended | No single venue | Venue not placed |
+|---|---|---|---|---|---|---|
+| sgweekend | 20 | 19 | 6 | 9 | 16 | 2 |
+| sgwhereto | 15 | 14 | 5 | 5 | 0 | 2 |
+| SGArtsChannel | 20 | 20 | 3 | 10 | 0 | 8 |
+| sgconcerts | 20 | 20 | 10 | 11 | 0 | 4 |
+| dateideas | 20 | 15 | 3 | 9 | 0 | 3 |
+| sgfitnesshealth | 20 | 16 | 1 | 5 | 21 | 2 |
+| sgbestnightlife | 20 | 6 | 0 | 4 | 1 | 0 |
+| **Total** | **135** | **110** | **28** | **53** | **38** | **21** |
+
+The run in numbers:
+
+- **Posts:** 25 were dropped by the pre-filter before reaching the LLM. Of the 110 sent, 11
+  held no event.
+- **Events:** the model extracted 140, and 28 were stored after validation and venue
+  placement. None were merged as duplicates.
+- **Cost:** 13 LLM calls used 28,095 input tokens (none cached) and 14,424 output tokens,
+  of which 4,561 were reasoning. That is **US$0.0100** at list price, about US$0.04 a day
+  at four runs a day, and less once the markers mean only new posts are sent.
+
+"Already ended" is high because a first run reads posts up to a few weeks old.
+"No single venue" is mostly fitness and weekend roundups that list several runs with no
+one place, which the rules discard on purpose. sgbestnightlife stored nothing from 20
+posts.
+
+TimeOutSG was measured on 14 Oct before this run (8 of its 40 newest posts passed the
+pre-filter, newest post 19 Jun). It is dormant and has been removed from
 `config.LEPAK_CHANNELS`. The web preview shows no dates, so a channel's posting rate
 cannot be read from it; only the newest post's date and the post-ID range are reliable.
-sgbestnightlife stays on probation until the yield numbers decide. Extraction, storage
-and the true yield need the API key.
 
 For rehearsal only, the fixture posts can be replayed through the real pipeline with
 hand-written stand-in replies. This calls no model and still places venues on OneMap:

@@ -13,6 +13,5 @@ data/cache/
 data/logs/
 data/snapshot.db.tmp
 
-data/events.db
 data/events.db-wal
 data/events.db-shm

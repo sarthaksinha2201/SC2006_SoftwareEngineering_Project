@@ -279,7 +279,14 @@ The median rather than the mean, because blocks separated from their station by 
 | @SGClubbing | **Reject** *(14 Oct)* | A 20k-member group, not a channel; no feed |
 | @LiteracyEventsSG, @SGGreenChat | **Reject** *(14 Oct)* | No feed at `t.me/s/` — either no such channel, or the web preview is disabled, which puts them out of reach without the Telegram API we rejected |
 
-Three confirmed: @sgweekend, @sgwhereto, @SGArtsChannel. The test for any new one is whether `t.me/s/<name>` shows posts in a browser; channels say "subscribers", groups say "members".
+| @sgconcerts | **Use** *(14 Oct)* | 94.9k subscribers; every recent post carries an event date, named venue and start time. The highest-quality source found |
+| @dateideas | **Use** *(14 Oct)* | 60.1k subscribers, Singapore-specific; most posts name a venue and many give dates and opening times |
+| @sgfitnesshealth | **Use** *(14 Oct)* | 24.3k subscribers, ~5–8 posts/week; a mix of dated events and undated guides |
+| @TimeOutSG | **Use** *(14 Oct)* | ~14 posts/week, but many are listicles without event dates — high volume, lower yield per post |
+| @sgbestnightlife | **Use, on probation** *(14 Oct)* | A real channel, but posts are weekly roundups with no per-item dates. Kept because discards are logged, so the yield data can justify dropping it |
+| @singaporeruncalendar | **Reject** *(14 Oct)* | Dormant — the two newest posts are admin notices about 17 months of owner inactivity, and some events are overseas (Bali) |
+
+Seven confirmed: @sgweekend, @sgwhereto, @SGArtsChannel, @sgconcerts, @dateideas, @sgfitnesshealth, @TimeOutSG, plus @sgbestnightlife on probation. The test for any new one is whether `t.me/s/<name>` shows posts in a browser; channels say "subscribers", groups say "members".
 
 ## 8. Open items
 

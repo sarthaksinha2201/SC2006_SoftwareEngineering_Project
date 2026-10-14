@@ -33,7 +33,7 @@ GOWHERE_SECRET_KEY=$(openssl rand -hex 32) .venv/bin/python -m gowhere.serve
 - **Demo day:** add `--ingest-every-hours 6`. The server then fetches events at start
   and every 6 hours on a background thread, in the same single process.
   `--host 0.0.0.0` lets a phone on the same Wi-Fi open it.
-- **Checks:** `.venv/bin/python -m pytest -q` should report 380 passed. It needs no
+- **Checks:** `.venv/bin/python -m pytest -q` should report 382 passed. It needs no
   network and no keys.
 - **The snapshot** (`data/snapshot.db`, rebuilt 14 Oct 2026 with bus data) is
   committed, so a clean clone runs as it is (DECISIONS §14).
@@ -219,30 +219,51 @@ made routing fail earlier, the token's `exp` claim was not it, or at least is no
 enforced now (DECISIONS §19). Self-renewal stays, because nothing guarantees how long an
 old token is accepted.
 
-**Rehearsal timings** (clean clone, real snapshot, real server). The last full run was
-on 1 Oct, from a fresh clone with nothing copied in except `.env`. It predates the
-14 Oct changes (bus data, Waitress, new defaults). The 14 Oct online rehearsal, on the
-working tree with every key in `.env`, passed every step (section 3 numbers, real routes,
-live parking). Repeat the clean-clone run before demo day.
+**Browser rehearsal, 14–15 Oct 2026.** A clean clone of `c7a4f88` from GitHub, with
+nothing copied in but `.env`: setup took 14 s and 382 tests passed. The run used
+headless Chrome (Puppeteer) at desktop width (1366 px) and phone width (390 px), online
+and with outside network blocked. Offline means the server went through a dead proxy and
+the browser aborted every non-local request. The run followed section 3 step by step,
+covering all six screens plus the error and empty states.
 
-| Step | Online | Offline |
+| Check | Online | Offline |
 |---|---|---|
-| Selection-time warning (Changi) | instant, warning shown | instant, warning shown |
-| Where to Live results with Commute | 0.5–3.7 s. Queenstown first. | 2.5 s. Commute left out, Punggol first. |
-| Reload results | 0.0 s | 0.0 s |
-| Lepak search by postal code 238801 (not HDB) | 2.2–5.8 s, 6 events | 1.2 s, "only HDB block postal codes can be looked up" message |
-| Lepak search by HDB postal code 140051 | 2.8 s, 5 events routed | 5.1 s, 6 events as straight-line estimates (offline fallback) |
-| Sort, chip, detail | 0.0 s | 0.0 s |
-| Lepak drive mode | 0.2–1.0 s, parking unavailable | 0.0 s, same message (238801 is not HDB) |
-| Lepak by device location | 2.0–2.4 s, 6 events routed | 2.7 s, 6 events as straight-line estimates |
-| Postal codes or coordinates in the server log | 0 | 0 |
+| Section 3 numbers on screen | All match: steps 5, 6, 7 and 8 exactly | Step 5: Commute left out, **Queenstown 5.1, Punggol 5.0**, flagged as a close call. Steps 6–8 match. |
+| Unexpected console or page errors (22 screens × 2 widths) | 0 | 0. Only the blocked map tiles, as expected. |
+| Sideways scroll at phone width | 0 screens | 0 screens |
+| Bar chart (vendored Chart.js) | Renders | Renders |
+| Area map (vendored Leaflet) | Outlines and tiles | Outlines on a blank background |
+| Event map | Start point, route and venue, with 7 direction steps | Venue pin only (no route, so no start point) |
+| Selection-time warning (Changi) | 107 ms | 3 ms |
+| Where to Live results with Commute | 1.1 s | 0.7 s |
+| Lepak search, public transport | 6.0–7.0 s (238801) | 0.7–1.2 s (140051, straight-line estimates) |
+| Lepak, use my location | 5.7–8.1 s | 0.8 s |
+| Lepak drive with parking | 3.7–4.2 s, live lot counts | 0.7–3.9 s, "Parking information unavailable" |
+| Sort, chips, paging, detail, back | under 1.3 s each; Back restores sort, hidden chips and page | same |
+| Postal code in any URL, the cookie or the server log | 0 (the cookie holds only `sid`) | 0 |
 
-**Fixed during the rehearsal:** the first offline run took **63 s** to show Where to
+These times are wall-clock, from click until the network had been idle for 0.5 s. They
+include that 0.5 s idle wait.
+
+**Fixed during the browser rehearsal:**
+- **Shared database connection:** the snapshot shared one SQLite connection across
+  Waitress threads. Overlapping selection-time checks from the setup form raised a 500
+  ("bad parameter or other API misuse"). Each thread now gets its own read-only
+  connection, and a test reproduces the failure.
+- **Validation messages:** they now read as sentences ("Select 2 to 4
+  neighbourhoods.").
+- **OneMap connections:** OneMap's connection pool now fits the 16 routing workers.
+  Before, Lepak searches logged "Connection pool is full" warnings.
+
+**Use offline postal codes that are HDB blocks:** offline, only the HDB postal codes in
+the snapshot resolve. 238801 (ION Orchard) gets the "only HDB block postal codes"
+message, so the offline demo uses 140051.
+
+**Fixed during the 1 Oct rehearsal:** the first offline run took **63 s** to show Where to
 Live results with Commute. A reload took 32 s, and a Lepak postal lookup took 33 s.
 Request-time OneMap calls were inheriting the ETL's 4 retries with long backoff. They
 now use 1 retry and an 8 s timeout. A failed postal lookup is also remembered for 60 s,
-so a reload or slider change doesn't wait on a dead network again. The numbers above are
-after the fix.
+so a reload or slider change doesn't wait on a dead network again.
 
 **Also added after the rehearsal: an offline postal-code fallback.** A Lepak search
 by postal code used to be the last complete failure offline. "Use my location" isn't a

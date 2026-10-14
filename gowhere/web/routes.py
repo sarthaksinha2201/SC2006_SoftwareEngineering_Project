@@ -72,7 +72,8 @@ def live_results():
         return render_template("error.html", title="Nothing left to compare",
                                messages=dropped_messages(e.dropped)
                                + ["Every included factor was left out, so there is no ranking."]), 200
-    return render_template("live_results.html", view=results_view(result, snapshot))
+    return render_template("live_results.html",
+                           view=results_view(result, snapshot, all_factors=engine.factors()))
 
 
 @bp.post("/live/check")

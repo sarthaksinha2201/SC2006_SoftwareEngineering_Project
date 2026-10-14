@@ -1,5 +1,79 @@
 {
  "snapshot_date": "30 Sep 2026",
+ "stale_warning": "",
+ "breakdown": {
+  "winner": "Punggol",
+  "runner_up": "Bedok",
+  "rows": [
+   {
+    "label": "Public Transport",
+    "weight": 8,
+    "winner_score": "7.9",
+    "runner_up_score": "3.5",
+    "winner_raw": "97.7% of flats are within a 10-minute walk of an MRT/LRT exit; median walk 4.4 min",
+    "runner_up_raw": "49.2% of flats are within a 10-minute walk of an MRT/LRT exit; median walk 10.1 min",
+    "contribution": "+35.1",
+    "favours": "Punggol"
+   },
+   {
+    "label": "Housing Affordability",
+    "weight": 7,
+    "winner_score": "5.9",
+    "runner_up_score": "1.9",
+    "winner_raw": "59.2% of 4-room resales with at least 60 years of lease left in the last 12 months (504 of 852) were within your budget",
+    "runner_up_raw": "18.6% of 4-room resales with at least 60 years of lease left in the last 12 months (46 of 247) were within your budget",
+    "contribution": "+28.4",
+    "favours": "Punggol"
+   },
+   {
+    "label": "Commute",
+    "weight": 6,
+    "winner_score": "4.2",
+    "runner_up_score": "6.7",
+    "winner_raw": "54.7 min by public transport from Blk 301A Punggol Central",
+    "runner_up_raw": "39.6 min by public transport from Blk 427 Bedok North Road",
+    "contribution": "−15.1",
+    "favours": "Bedok"
+   },
+   {
+    "label": "Amenities",
+    "weight": 5,
+    "winner_score": "4.5",
+    "runner_up_score": "6.5",
+    "winner_raw": "Flats here have on average 5.8 of the selected amenities within 800 m (each type counted up to 3)",
+    "runner_up_raw": "Flats here have on average 6.8 of the selected amenities within 800 m (each type counted up to 3)",
+    "contribution": "−9.7",
+    "favours": "Bedok"
+   },
+   {
+    "label": "Greenery",
+    "weight": 4,
+    "winner_score": "1.3",
+    "runner_up_score": "3.5",
+    "winner_raw": "60.1% of flats are within 400 m of a park or park connector",
+    "runner_up_raw": "73.4% of flats are within 400 m of a park or park connector",
+    "contribution": "−9.0",
+    "favours": "Bedok"
+   },
+   {
+    "label": "Healthcare",
+    "weight": 5,
+    "winner_score": "4.8",
+    "runner_up_score": "6.5",
+    "winner_raw": "Half of flats are within 1,044 m of a polyclinic",
+    "runner_up_raw": "Half of flats are within 1,017 m of a polyclinic",
+    "contribution": "−8.1",
+    "favours": "Bedok"
+   }
+  ],
+  "formula": "Overall score = (8 × Public Transport + 7 × Housing Affordability + 5 × Amenities + 4 × Greenery + 5 × Healthcare + 6 × Commute) ÷ 35",
+  "formula_examples": [
+   "Punggol = (8 × 7.9 + 7 × 5.9 + 5 × 4.5 + 4 × 1.3 + 5 × 4.8 + 6 × 4.2) ÷ 35 = 5.2",
+   "Bedok = (8 × 3.5 + 7 × 1.9 + 5 × 6.5 + 4 × 3.5 + 5 × 6.5 + 6 × 6.7) ÷ 35 = 4.6"
+  ],
+  "excluded": [],
+  "formula_note": "The worked lines use scores rounded to 1 decimal place; the ranking uses unrounded scores, so a hand recalculation can differ by 0.1."
+ },
  "factors": [
   {
    "key": "public_transport",

@@ -140,7 +140,8 @@ def build(snapshot=None):
     out = {}
     for name, (areas, facility, minutes) in SCENARIOS.items():
         engine = ScoringEngine(default_strategies(FixedRouter(minutes)), snapshot)
-        out[name] = results_view(engine.compare(areas, _choices(facility)), snapshot)
+        out[name] = results_view(engine.compare(areas, _choices(facility)), snapshot,
+                                 all_factors=engine.factors())
     return out
 
 

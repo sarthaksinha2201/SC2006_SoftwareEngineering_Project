@@ -20,7 +20,7 @@
   </fieldset>
 
   {% for f in view.factors %}
-  <fieldset>
+  <fieldset class="factor{% if not f.included %} factor--off{% endif %}" data-factor="{{ f.key }}">
     <legend>{{ f.label }}</legend>
     <div class="factor-head">
       <label style="display:inline-flex;align-items:center;gap:.35rem;margin:0">
@@ -73,7 +73,10 @@
       </select>
     </label>
     {% elif f.key == "commute" %}
-    <div class="form-row">
+    {# Off by default (DECISIONS.md section 16): the destination field appears when
+       Commute is switched on, so the dependency shows exactly when it matters. #}
+    {% if not f.included %}<p class="factor-hint"><small>Switch on to enter where you commute to.</small></p>{% endif %}
+    <div class="form-row commute-details"{% if not f.included %} hidden{% endif %}>
       <div>
         <label>Destination postal code
           <input name="destination_postal" inputmode="numeric" pattern="[0-9]{6}"

@@ -5,6 +5,7 @@
 <h1>Where to Live: results</h1>
 <p><small>Data as of {{ view.snapshot_date }}.</small></p>
 
+{% if view.stale_warning %}{{ note(view.stale_warning, 'warning') }}{% endif %}
 {% for m in view.dropped %}{{ note(m, 'warning') }}{% endfor %}
 
 {% set rec = view.recommendation %}
@@ -17,21 +18,47 @@
   </button>
 </section>
 
-<dialog id="breakdown" class="modal">
+{% set b = view.breakdown %}
+<dialog id="breakdown" class="modal modal--wide">
   <div class="modal-head">
     <h2 style="margin:0">How the ranking was calculated</h2>
     <button type="button" class="modal-close" data-close-dialog aria-label="Close">&times;</button>
   </div>
-  <div class="chart-container">
-    <canvas id="breakdown-chart" role="img"
-            aria-label="Radar chart comparing each neighbourhood across the included factors"></canvas>
-  </div>
-  <ul>
-    {% for r in rec.reasons %}
-    <li>{{ r.label }}: {{ r.contribution }} points in favour of {{ r.favours }}</li>
+  <p>{{ b.winner }} (recommended) against {{ b.runner_up }} (runner-up), largest difference first.
+     Marginal contribution = ({{ b.winner }}'s score − {{ b.runner_up }}'s score) × weight.</p>
+  <div class="table-scroll">
+  <table class="results breakdown">
+    <tr><th>Factor</th><th>Weight</th><th>{{ b.winner }}</th><th>{{ b.runner_up }}</th><th>Marginal contribution</th></tr>
+    {% for r in b.rows %}
+    <tr>
+      <td>{{ r.label }}</td>
+      <td>{{ r.weight }}</td>
+      <td><strong>{{ r.winner_score }}</strong><br><small>{{ r.winner_raw }}</small></td>
+      <td><strong>{{ r.runner_up_score }}</strong><br><small>{{ r.runner_up_raw }}</small></td>
+      <td>{{ r.contribution }}<br><small>favours {{ r.favours }}</small></td>
+    </tr>
     {% endfor %}
-  </ul>
+  </table>
+  </div>
+  <h3>Overall score</h3>
+  <p><code>{{ b.formula }}</code></p>
+  {% for line in b.formula_examples %}<p><code>{{ line }}</code></p>{% endfor %}
+  <p><small>{{ b.formula_note }}</small></p>
+  {% if b.excluded %}
+  <h3>Not included</h3>
+  <ul>{% for e in b.excluded %}<li>{{ e.label }}: {{ e.reason }}</li>{% endfor %}</ul>
+  {% endif %}
 </dialog>
+
+<h2>Scores by factor</h2>
+<div class="chart-toolbar">
+  <button type="button" class="pill is-selected" data-chart-type="bar" aria-pressed="true">Bar chart</button>
+  <button type="button" class="pill" data-chart-type="radar" aria-pressed="false">Radar</button>
+</div>
+<div class="chart-container chart-container--bars">
+  <canvas id="scores-chart" role="img"
+          aria-label="Grouped bar chart of each neighbourhood's score on every included factor"></canvas>
+</div>
 
 <h2>Map</h2>
 <div id="map" class="map-container" role="img" aria-label="Map of the compared neighbourhoods"></div>

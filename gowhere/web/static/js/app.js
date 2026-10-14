@@ -53,34 +53,44 @@
     }
   }
 
-  // The breakdown modal's radar chart. Built lazily, the first time its dialog opens,
-  // so a <dialog> that starts closed never tries to size a canvas with zero width.
+  // Results page: a grouped horizontal bar chart (FR 1.5.3): one group per factor, one
+  // bar per neighbourhood. Radar is only a secondary toggle (DECISIONS.md section 16):
+  // its enclosed area looks meaningful but is an artefact of the axis order.
   function initChart() {
-    var canvas = document.getElementById("breakdown-chart");
+    var canvas = document.getElementById("scores-chart");
     var data = readJSON("chart-data");
     if (!canvas || !data || typeof Chart === "undefined") return;
-    var rendered = false;
-    var render = function () {
-      if (rendered) return;
-      rendered = true;
-      var palette = ["#1d6f5c", "#c9622b", "#4472c4", "#a238a3", "#b8860b", "#2e8b8b"];
-      new Chart(canvas, {
-        type: "radar",
+    var palette = ["#1d6f5c", "#c9622b", "#4472c4", "#a238a3", "#b8860b", "#2e8b8b"];
+    var chart = null;
+    function draw(type) {
+      if (chart) chart.destroy();
+      var bar = type === "bar";
+      chart = new Chart(canvas, {
+        type: type,
         data: {
           labels: data.labels,
           datasets: data.datasets.map(function (d, i) {
             var c = palette[i % palette.length];
-            return { label: d.label, data: d.data, borderColor: c,
-                     backgroundColor: c + "33", pointBackgroundColor: c };
+            return { label: d.label, data: d.data, borderColor: c, pointBackgroundColor: c,
+                     backgroundColor: bar ? c : c + "33", borderWidth: bar ? 0 : 2 };
           })
         },
-        options: { responsive: true, scales: { r: { min: 0, max: 10, ticks: { stepSize: 2 } } } }
+        options: bar
+          ? { indexAxis: "y", responsive: true, maintainAspectRatio: false,
+              scales: { x: { min: 0, max: 10, ticks: { stepSize: 2 } } } }
+          : { responsive: true, maintainAspectRatio: false,
+              scales: { r: { min: 0, max: 10, ticks: { stepSize: 2 } } } }
       });
-    };
-    var dialog = canvas.closest("dialog");
-    var opener = dialog && document.querySelector('[data-open-dialog="' + dialog.id + '"]');
-    if (opener) opener.addEventListener("click", render);
-    else render();
+      document.querySelectorAll("[data-chart-type]").forEach(function (b) {
+        var on = b.getAttribute("data-chart-type") === type;
+        b.classList.toggle("is-selected", on);
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+    }
+    document.querySelectorAll("[data-chart-type]").forEach(function (b) {
+      b.addEventListener("click", function () { draw(b.getAttribute("data-chart-type")); });
+    });
+    draw("bar");
   }
 
   function initDialogs() {
@@ -103,6 +113,25 @@
       navigator.geolocation.getCurrentPosition(function (pos) {
         document.querySelector('input[name="lat"]').value = pos.coords.latitude;
         document.querySelector('input[name="lon"]').value = pos.coords.longitude;
+      });
+    });
+  }
+
+  // Where to Live setup: an excluded factor is greyed out; switching Commute on reveals
+  // its destination postal code field (and switching it off hides it again).
+  function initFactorToggles() {
+    document.querySelectorAll("fieldset[data-factor]").forEach(function (fs) {
+      var box = fs.querySelector('input[name="include_' + fs.getAttribute("data-factor") + '"]');
+      if (!box) return;
+      box.addEventListener("change", function () {
+        fs.classList.toggle("factor--off", !box.checked);
+        var details = fs.querySelector(".commute-details");
+        var hint = fs.querySelector(".factor-hint");
+        if (details) {
+          details.hidden = !box.checked;
+          if (hint) hint.hidden = box.checked;
+          if (box.checked) details.querySelector('input[name="destination_postal"]').focus();
+        }
       });
     });
   }
@@ -139,6 +168,7 @@
     initChart();
     initDialogs();
     initGeolocation();
+    initFactorToggles();
     initLiveCheck();
   });
 })();

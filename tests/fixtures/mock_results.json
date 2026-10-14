@@ -1,5 +1,74 @@
 {
  "snapshot_date": "30 Sep 2026",
+ "stale_warning": "",
+ "breakdown": {
+  "winner": "Tampines",
+  "runner_up": "Changi",
+  "rows": [
+   {
+    "label": "Public Transport",
+    "weight": 8,
+    "winner_score": "3.9",
+    "runner_up_score": "0.1",
+    "winner_raw": "50.7% of flats are within a 10-minute walk of an MRT/LRT exit; median walk 9.9 min",
+    "runner_up_raw": "0% of flats are within a 10-minute walk of an MRT/LRT exit; median walk 61.1 min",
+    "contribution": "+30.1",
+    "favours": "Tampines"
+   },
+   {
+    "label": "Greenery",
+    "weight": 4,
+    "winner_score": "2.3",
+    "runner_up_score": "9.5",
+    "winner_raw": "66.8% of flats are within 400 m of a park or park connector",
+    "runner_up_raw": "100% of flats are within 400 m of a park or park connector",
+    "contribution": "−29.0",
+    "favours": "Changi"
+   },
+   {
+    "label": "Healthcare",
+    "weight": 5,
+    "winner_score": "4.5",
+    "runner_up_score": "0.0",
+    "winner_raw": "Half of flats are within 190 m of a GP clinic (CHAS)",
+    "runner_up_raw": "Half of flats are within 2,718 m of a GP clinic (CHAS)",
+    "contribution": "+22.6",
+    "favours": "Tampines"
+   },
+   {
+    "label": "Commute",
+    "weight": 6,
+    "winner_score": "5.9",
+    "runner_up_score": "7.0",
+    "winner_raw": "44.5 min by public transport from Blk 508 Tampines Central 1",
+    "runner_up_raw": "38 min by public transport from Blk 4 Changi Village Road",
+    "contribution": "−6.5",
+    "favours": "Changi"
+   },
+   {
+    "label": "Amenities",
+    "weight": 5,
+    "winner_score": "1.3",
+    "runner_up_score": "0.3",
+    "winner_raw": "Flats here have on average 4.7 of the selected amenities within 800 m (each type counted up to 3)",
+    "runner_up_raw": "Flats here have on average 3 of the selected amenities within 800 m (each type counted up to 3)",
+    "contribution": "+4.8",
+    "favours": "Tampines"
+   }
+  ],
+  "formula": "Overall score = (8 × Public Transport + 5 × Amenities + 4 × Greenery + 5 × Healthcare + 6 × Commute) ÷ 28",
+  "formula_examples": [
+   "Tampines = (8 × 3.9 + 5 × 1.3 + 4 × 2.3 + 5 × 4.5 + 6 × 5.9) ÷ 28 = 3.7",
+   "Changi = (8 × 0.1 + 5 × 0.3 + 4 × 9.5 + 5 × 0.0 + 6 × 7.0) ÷ 28 = 2.9"
+  ],
+  "excluded": [
+   {
+    "label": "Housing Affordability",
+    "reason": "Data unavailable: Changi and Tengah had fewer than 10 matching resales"
+   }
+  ],
+  "formula_note": "The worked lines use scores rounded to 1 decimal place; the ranking uses unrounded scores, so a hand recalculation can differ by 0.1."
+ },
  "factors": [
   {
    "key": "public_transport",

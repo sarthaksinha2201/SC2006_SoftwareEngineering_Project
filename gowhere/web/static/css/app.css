@@ -393,3 +393,15 @@ dialog.modal::backdrop { background: rgba(0, 0, 0, 0.45); }
   .form-row { flex-direction: column; }
   table.results { min-width: 480px; }
 }
+
+/* Results chart and breakdown (FR 1.5.3, FR 1.4.4) */
+.chart-toolbar { display: flex; gap: .5rem; margin: .5rem 0; }
+.chart-toolbar .pill { cursor: pointer; font: inherit; }
+.chart-container--bars { position: relative; height: 26rem; }
+.modal--wide { max-width: min(60rem, 95vw); }
+.breakdown td { vertical-align: top; }
+
+/* An excluded factor is greyed; its include toggle stays at full strength. */
+.factor--off > *:not(legend):not(.factor-head),
+.factor--off .factor-head label:last-child { opacity: .45; }
+.factor--off legend { color: var(--text-muted); }

@@ -223,8 +223,8 @@ def test_fixture_matches_what_the_app_produces(client):
     live = {}
     original = view_models.results_view
 
-    def capture(result, snapshot):
-        live.update(original(result, snapshot))
+    def capture(result, snapshot, **kw):
+        live.update(original(result, snapshot, **kw))
         return live
     import gowhere.web.routes as routes
     routes.results_view = capture
@@ -248,6 +248,77 @@ def test_contract_fixture_covers_the_required_cases():
     scored = json.loads((FIXTURES / "mock_results_all_scored.json").read_text())
     assert len(scored["factors"]) == 6
     assert "resale transactions registered" in " ".join(n for f in scored["factors"] for n in f["notes"])
+
+
+def test_setup_defaults():
+    """DECISIONS.md section 16: five factors on, Commute off with its postal field hidden,
+    every amenity type ticked, GP clinics for healthcare."""
+    from gowhere.web.view_models import DEFAULTS
+    from gowhere.scoring.amenities import AMENITY_TYPES
+    assert DEFAULTS["excluded"] == {"commute"}
+    assert DEFAULTS["amenity_types"] == list(AMENITY_TYPES) and DEFAULTS["facility_type"] == "gp"
+
+
+def test_commute_postal_field_hidden_until_commute_is_on(client):
+    page = client.get("/live").get_data(as_text=True)
+    commute = page[page.index('data-factor="commute"'):]
+    assert "factor--off" in page[page.index('data-factor="commute"') - 40:page.index('data-factor="commute"')]
+    assert 'class="form-row commute-details" hidden' in commute
+    assert 'name="include_commute" value="1" checked' not in commute
+    for key in ("public_transport", "housing_affordability", "amenities", "greenery", "healthcare"):
+        assert f'name="include_{key}" value="1" checked' in page
+
+
+def test_breakdown_lists_everything_fr_1_4_4_asks_for():
+    v = json.loads((FIXTURES / "mock_results.json").read_text())
+    b = v["breakdown"]
+    contributions = [abs(float(r["contribution"].replace("−", "-"))) for r in b["rows"]]
+    assert contributions == sorted(contributions, reverse=True)          # by size
+    assert {"weight", "winner_score", "runner_up_score", "winner_raw", "runner_up_raw",
+            "contribution"} <= set(b["rows"][0])
+    assert b["formula"].startswith("Overall score = (") and len(b["formula_examples"]) == 2
+    assert {"label": "Housing Affordability",
+            "reason": "Data unavailable: Changi and Tengah had fewer than 10 matching resales"} \
+        in b["excluded"]
+
+
+def test_breakdown_names_factors_the_user_switched_off(client):
+    client.post("/live", data=form())               # Public Transport and Greenery only
+    page = client.get("/live/results").get_data(as_text=True)
+    for label in ("Housing Affordability", "Amenities", "Healthcare", "Commute"):
+        assert f"{label}: Excluded by you" in page
+
+
+def test_stale_snapshot_warning_is_forced_by_an_old_date():
+    """FR 3.1.6. The live snapshot is from 30 Sep 2026, so this can't fire naturally
+    for a year: force the dates instead."""
+    from datetime import datetime, timezone
+    from gowhere.web.view_models import stale_warning
+    meta = {"generated_at": "2026-09-30T09:00:00+00:00"}
+    assert stale_warning(meta, datetime(2027, 9, 30, tzinfo=timezone.utc)) == ""   # exactly 12 months
+    warning = stale_warning(meta, datetime(2027, 10, 2, tzinfo=timezone.utc))
+    assert warning.startswith("This data was generated on 30 Sep 2026, more than 12 months ago")
+
+
+def test_stale_snapshot_warning_shows_on_the_results_page(tmp_path):
+    """End to end: a snapshot built over a year ago shows the warning with results."""
+    from gowhere.etl.build_snapshot import compute, write_snapshot
+    blocks = [{"blk_no": str(i), "street": "W", "total_dwelling_units": 100} for i in range(12)]
+    blocks.append({"blk_no": "1", "street": "E", "total_dwelling_units": 55})
+    geocodes = ([{"blk_no": str(i), "street": "W", "status": "ok", "lat": 1.35,
+                  "lon": 103.75 + i * 0.0005, "detail": ""} for i in range(12)]
+                + [{"blk_no": "1", "street": "E", "status": "ok", "lat": 1.35, "lon": 103.85, "detail": ""}])
+    sources, strategies = AllSources(), default_strategies(FixedRouter({}))
+    out = compute(blocks, geocodes, AREAS, sources, strategies)
+    meta = {"generated_at": "2024-01-15T09:00:00+00:00", "small_area_blocks": "10"}
+    for s in strategies:
+        meta.update(s.meta(sources))
+    write_snapshot(tmp_path / "old.db", out, AREAS, strategies, meta)
+    app = create_app({"SNAPSHOT_PATH": tmp_path / "old.db", "SECRET_KEY": "t", "TESTING": True,
+                      "EVENTS_PATH": tmp_path / "e.db"})
+    c = app.test_client()
+    c.post("/live", data=form())
+    assert "more than 12 months ago" in c.get("/live/results").get_data(as_text=True)
 
 
 def test_view_model_wording():

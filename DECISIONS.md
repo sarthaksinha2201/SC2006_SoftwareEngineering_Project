@@ -402,3 +402,20 @@ Target is 6–10 usable channels; 2 confirmed so far.
 
 **Open:** The Public Transport factor is **rail-only**. `PublicTransportScorer` has no `options()`, so the MRT/LRT · Bus · Either choice promised by FR 1.2.4 and the Data Dictionary does not exist yet.
 **Reason:** Bus stop and service data comes from LTA DataMall, which needs an account key nobody has registered for. Everything else in the factor — the qualifying-bus-stop rule (3+ services), the per-block distances, the 0.7/0.3 blend — is specified and ready. **Either register for the key and build the option, or amend FR 1.2.4 to describe a rail-only factor before the deliverable is recompiled.** What must not happen is the document promising a control the product doesn't have.
+
+## 16. Where to Live — review findings settled (14 Oct 2026)
+
+**Decision:** The results page shows a **grouped horizontal bar chart** by default — one group per factor, one bar per neighbourhood. The radar chart may remain as a secondary toggle but never as the only chart.
+**Reason:** FR 1.5.3 specifies a chart on the results page, and the implementation had only a radar chart inside a pop-up. Radar also misleads: the enclosed *area* looks meaningful when it is an artefact of the axis order.
+
+**Decision:** The score breakdown (FR 1.4.4) displays, for each included factor, the **importance weight, both the recommended and runner-up neighbourhoods' category scores and raw values, and the marginal contribution** sorted by size — plus the overall formula with the user's weights filled in, and every excluded factor with its reason (user-excluded, or data unavailable).
+**Reason:** This is the Transparency NFR's only evidence. Every value is already computed; it simply was not displayed.
+
+**Decision:** Factor defaults: **five factors included by default** (Public Transport, Housing Affordability, Amenities, Greenery, Healthcare); **Commute is off and greyed**, and switching it on reveals its destination postal code field. All six amenity types are ticked; healthcare defaults to GP clinics. **FR 1.2.2.1 is amended from "all" to "all except Commute", and FR 1.2.8.1's postal code requirement becomes a condition for Commute being scored rather than for submitting the comparison.**
+**Reason:** Commute cannot be computed without an input only the user can supply, so "included by default" would mean a first-time user is blocked from submitting until they either type a postal code or switch a factor off. Two alternatives were considered: starting *every* factor off (explicit, but a grader must tick six toggles before the app does anything) and auto-excluding Commute silently at submit (never blocks, but hides the dependency). The chosen behaviour makes the dependency visible at the moment the user reaches for the factor, while a comparison still works on the first click.
+
+**Decision:** Build the **Bus and Either options** for Public Transport (FR 1.2.4) rather than amending the FR to a rail-only factor.
+**Reason:** It is the only gap that deletes a promised control, and it is the most visible personalisation in the feature — someone who travels by bus gets a different answer. The machinery already exists: nearest-qualifying-facility distance per block is what Greenery and Healthcare do. Needs bus stops plus routes from LTA DataMall (to count services per stop for the 3-or-more qualifying rule), an `options()` method on the scorer, a snapshot rebuild and an updated golden test. The DataMall key is registered.
+
+**Decision:** The stale-snapshot warning (FR 3.1.6) ships with a test that **forces an old date**.
+**Reason:** The live snapshot was built on 30 Sep 2026, so the warning cannot fire naturally for a year — it would otherwise ship untested and silently broken.

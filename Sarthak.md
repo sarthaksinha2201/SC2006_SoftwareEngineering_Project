@@ -51,7 +51,7 @@ gowhere.ingest.telegram.fetch_posts(channel: str, since_post_id: str | None = No
 
 **How:** public channels serve plain HTML at `https://t.me/s/<channel>` — no login, no API key, no Telegram account. `requests` + BeautifulSoup. **Don't** use the Telegram API or a headless browser; both were considered and rejected (see `DECISIONS.md`).
 
-**Channels:** `sgweekend` and `sgwhereto` are confirmed. Not `sgnightlife` — it's a group, not a broadcast channel, with no post feed. The test for any new one: can you open `t.me/s/<name>` in a browser and see posts?
+**Channels:** `sgweekend`, `sgwhereto` and `SGArtsChannel` are confirmed. Not `sgnightlife` — it's a group, not a broadcast channel, with no post feed. The test for any new one: can you open `t.me/s/<name>` in a browser and see posts?
 
 **Traps, each of which will cost you an afternoon:**
 

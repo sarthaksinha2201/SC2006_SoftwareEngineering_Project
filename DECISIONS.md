@@ -275,8 +275,11 @@ The median rather than the mean, because blocks separated from their station by 
 | @sgweekend | **Use** | ~4–5 posts/week; 13 of last 15 had a date and a named venue |
 | @sgwhereto | **Use** | 14.5k subscribers, ~3–5 posts/week; 8 of last 10 had a specific date, 9 of 10 a named venue. Mix of events and retail promos — the Sales & Pop-ups category covers those |
 | @sgnightlife | **Reject** | A 20k-member group, not a broadcast channel. No post feed in the web view, and group messages are people talking, which we excluded on privacy grounds |
+| @SGArtsChannel | **Use** *(14 Oct)* | Public broadcast channel, ~3–4 posts/week; all 8 recent posts had an event date and a named venue (galleries and museums). Posts are long-running exhibitions, so they stay valid for weeks — useful for demo resilience. None give a clock time, which is what the all-day rule exists for |
+| @SGClubbing | **Reject** *(14 Oct)* | A 20k-member group, not a channel; no feed |
+| @LiteracyEventsSG, @SGGreenChat | **Reject** *(14 Oct)* | No feed at `t.me/s/` — either no such channel, or the web preview is disabled, which puts them out of reach without the Telegram API we rejected |
 
-Target is 6–10 usable channels; 2 confirmed so far.
+Three confirmed: @sgweekend, @sgwhereto, @SGArtsChannel. The test for any new one is whether `t.me/s/<name>` shows posts in a browser; channels say "subscribers", groups say "members".
 
 ## 8. Open items
 

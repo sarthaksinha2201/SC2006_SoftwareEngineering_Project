@@ -187,3 +187,13 @@ class OneMapAdapter:
 
     def drive_route(self, start, end, redact=False, retries=None):
         return self.route(start, end, "drive", redact=redact, retries=retries)
+
+
+def warn_if_all_failed(results, what):
+    """One failed route is normal; every route in a request failing is not. It looks
+    exactly like ordinary degradation to the user (an expired OneMap token did this for
+    eleven days unnoticed), so say it in the log. Counts only: no places."""
+    results = list(results)
+    if results and all(r is None for r in results):
+        log.warning("all %d %s routing calls failed in one request; is OneMap reachable "
+                    "and the token valid?", len(results), what)

@@ -35,6 +35,13 @@ Results are sorted, not scored (DECISIONS §3). The code is in `gowhere/lepak/se
    marked "Travel time unavailable". It passed the straight-line check, and hiding it
    would hide the failure.
 
+   One failed route is normal. If every route in a search fails, the server logs a
+   WARNING with the count: *"all 12 event routing calls failed in one request; is OneMap
+   reachable and the token valid?"*. Commute does the same for its routes. The warning
+   carries counts only, never a place. This exists because a total failure looks like
+   ordinary degradation: an expired OneMap token stopped all routing from 3 to 14 Oct
+   unnoticed.
+
 The results are computed once per search and stored in the session. Sorting (shortest
 travel time, the default; soonest; recently added), the category chips and paging all
 reorder that stored list. A test checks that none of them calls OneMap, DataMall or the

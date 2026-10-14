@@ -72,6 +72,7 @@ REFERENCE_CLASSIFIED_ON = "2026-09-30"   # date both reference files were compil
 FAR_FROM_RAIL_M = 1500.0
 # A Qualifying Bus Stop (Data Dictionary) is served by at least this many bus services.
 QUALIFYING_BUS_SERVICES = 3
+BUS_CATCHMENT_M = 400               # Bus score: distinct services within this radius (DECISIONS.md 18)
 
 # Housing Affordability (DECISIONS.md section 2): resale transactions from the 12 complete
 # calendar months before the resale data was fetched. The window is fixed in the snapshot,
@@ -93,7 +94,7 @@ EVENTS_PATH = DATA_DIR / "events.db"     # read-write event store; the snapshot 
 # Public broadcast channels with a t.me/s/ view (DECISIONS.md section 7). sgbestnightlife
 # is on probation: its yield decides whether it stays.
 LEPAK_CHANNELS = ["sgweekend", "sgwhereto", "SGArtsChannel", "sgconcerts", "dateideas",
-                  "sgfitnesshealth", "TimeOutSG", "sgbestnightlife"]
+                  "sgfitnesshealth", "sgbestnightlife"]   # TimeOutSG dropped: dormant (section 7)
 LLM_MODEL = "claude-haiku-4-5"
 LLM_BATCH_SIZE = 10                      # posts per extraction call
 EVENT_MERGE_RADIUS_M = 200.0             # duplicates: same date, similar title, this close

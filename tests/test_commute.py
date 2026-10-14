@@ -129,6 +129,20 @@ def test_routing_failure_for_one_area_drops_commute_for_all(snapshot):
     assert err.value.dropped[0]["missing_for"] == ["WEST"]
 
 
+def test_every_commute_route_failing_is_a_warning_one_is_not(snapshot, caplog):
+    from gowhere.scoring.engine import NoFactorsLeft
+    with caplog.at_level("WARNING", logger="gowhere.adapters.onemap"):
+        with pytest.raises(NoFactorsLeft):
+            engine_for(snapshot, FakeOneMap(fail_for={(1.35, 103.75)})).compare(["WEST", "EAST"], choice())
+        assert caplog.records == []
+        with pytest.raises(NoFactorsLeft):
+            engine_for(snapshot, FakeOneMap(fail_for={(1.35, 103.75), (1.38, 103.85)})).compare(
+                ["WEST", "EAST"], choice())
+    assert [r.getMessage() for r in caplog.records] == [
+        "all 2 commute routing calls failed in one request; is OneMap reachable and the token valid?"]
+    assert POSTAL not in caplog.text
+
+
 def test_onemap_unreachable_makes_commute_unavailable_not_an_error(snapshot):
     from gowhere.scoring.engine import NoFactorsLeft
     with pytest.raises(NoFactorsLeft):

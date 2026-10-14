@@ -219,6 +219,27 @@ def test_event_router_redacts_and_survives_failures():
     assert failing == {1: None, 2: None}
 
 
+def test_every_route_failing_is_logged_once_with_the_count(caplog):
+    events = [ev(1), ev(2), ev(3)]
+    with caplog.at_level("WARNING", logger="gowhere.adapters.onemap"):
+        EventRouter(_Adapter()).route_many(JUNCTION_8, events, "drive", NOW)
+        assert caplog.records == []                       # all fine: silent
+
+        class OneFails(_Adapter):
+            def route(self, start, end, route_type, **kw):
+                super().route(start, end, route_type, **kw)
+                if len(self.calls) == 1:
+                    raise HttpError("HTTP 500")
+                return ROUTES[route_type]
+        EventRouter(OneFails(), max_workers=1).route_many(JUNCTION_8, events, "drive", NOW)
+        assert caplog.records == []                       # one failure is normal
+
+        EventRouter(_Adapter(fail=True)).route_many(JUNCTION_8, events, "drive", NOW)
+    assert [r.getMessage() for r in caplog.records] == [
+        "all 3 event routing calls failed in one request; is OneMap reachable and the token valid?"]
+    assert "1.3" not in caplog.text                        # counts only, no places
+
+
 def test_short_trip_with_no_transit_itinerary_is_walked():
     class NoTransit(_Adapter):
         def transit_route(self, *a, **kw):

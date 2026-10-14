@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, time, timedelta
 
 from gowhere.adapters.http import HttpError
-from gowhere.adapters.onemap import REQUEST_TIME, OneMapAdapter
+from gowhere.adapters.onemap import REQUEST_TIME, OneMapAdapter, warn_if_all_failed
 from gowhere.etl.geo import haversine_m
 from gowhere.scoring.stats import round0
 
@@ -182,4 +182,6 @@ class EventRouter:
         with ThreadPoolExecutor(max_workers=self.max_workers) as pool:
             routes = pool.map(lambda e: self.route(origin, (e["lat"], e["lon"]), mode,
                                                    departure_for(e, now)), events)
-            return {e["id"]: r for e, r in zip(events, routes)}
+            out = {e["id"]: r for e, r in zip(events, routes)}
+        warn_if_all_failed(out.values(), "event")
+        return out

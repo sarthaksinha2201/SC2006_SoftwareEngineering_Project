@@ -92,40 +92,61 @@ def test_no_builtin_round_outside_round1():
     assert offenders == [], "use gowhere.scoring.stats.round1 at: " + ", ".join(offenders)
 
 
-# ---- Bus and Either modes (FR 1.2.4), hand-calculated in docs/golden-public-transport.md
+# ---- Bus and Either modes (FR 1.2.4; DECISIONS.md 18), hand-calculated in
+# docs/golden-public-transport.md
 
-from gowhere.scoring.public_transport import mode_walk
+from gowhere.scoring.public_transport import bus_scores, either_choice
+from gowhere.scoring.stats import weighted_quantile
 
-# area -> [(rail walk min, bus walk min, flats)]
+# area -> [(rail walk min, bus walk min, distinct bus services within 400 m, flats)]
 GOLDEN_MODES_INPUT = {
-    "P": [(12, 3, 100), (14, 5, 100)],      # far from rail, beside good bus stops
-    "Q": [(4, 11, 100), (6, 13, 100)],      # beside a station, poor bus
-    "R": [(9, 9.5, 100), (20, 12, 100)],
+    "P": [(12, 3, 20, 100), (14, 5, 30, 100)],     # far from rail, many bus services
+    "Q": [(4, 2, 8, 100), (6, 4, 10, 100)],        # beside a station; nearest bus stops, few services
+    "R": [(9, 9.5, 15, 100), (20, 12, 40, 100)],
 }
-# mode -> area -> (pct_within_10, median, score, display)
-GOLDEN_MODES_EXPECTED = {
-    "rail": {"P": (0.0, 12, 0.0, 0.0), "Q": (100.0, 4, 10.0, 10.0), "R": (50.0, 9, 5.0, 5.0)},
-    "bus": {"P": (100.0, 3, 10.0, 10.0), "Q": (0.0, 11, 0.0, 0.0), "R": (50.0, 9.5, 5.0, 5.0)},
-    "either": {"P": (100.0, 3, 8.25, 8.3), "Q": (100.0, 4, 6.75, 6.8), "R": (50.0, 9, 0.0, 0.0)},
-}
+# area -> (median services, median bus walk, PR(services), PR(walk), bus score)
+GOLDEN_BUS = {"P": (20, 3, 10.0, 5.0, 8.5), "Q": (8, 2, 0.0, 10.0, 3.0),
+              "R": (15, 9.5, 5.0, 0.0, 3.5)}
+GOLDEN_RAIL = {"P": 0.0, "Q": 10.0, "R": 5.0}
+# area -> (Either score, the mode it took)
+GOLDEN_EITHER = {"P": (8.5, "bus"), "Q": (10.0, "rail"), "R": (5.0, "rail")}
 
 
-@pytest.mark.parametrize("mode", ["rail", "bus", "either"])
-def test_golden_modes(mode):
-    rows = {a: [{"walk_min": r, "exit_distance_m": r * 80, "bus_walk_min": b,
-                 "bus_distance_m": b * 80} for r, b, _ in blocks]
-            for a, blocks in GOLDEN_MODES_INPUT.items()}
-    flats = {a: [f for _, _, f in blocks] for a, blocks in GOLDEN_MODES_INPUT.items()}
-    metrics = {a: area_metrics([mode_walk(r, mode)[0] for r in rows[a]], flats[a]) for a in rows}
-    scores = public_transport_scores(metrics)
-    for area, (pct, median, score, display) in GOLDEN_MODES_EXPECTED[mode].items():
-        assert metrics[area]["pct_within_10"] == pytest.approx(pct)
-        assert metrics[area]["median_walk_min"] == median
-        assert scores[area]["score"] == pytest.approx(score)
-        assert round1(scores[area]["score"]) == display
+def golden_mode_scores():
+    flats = {a: [f for *_, f in b] for a, b in GOLDEN_MODES_INPUT.items()}
+    rail = public_transport_scores({a: area_metrics([r for r, *_ in b], flats[a])
+                                    for a, b in GOLDEN_MODES_INPUT.items()})
+    bus_metrics = {a: {"median_services": weighted_quantile([s for _, _, s, _ in b], flats[a], 0.5),
+                       "median_walk_min": weighted_quantile([w for _, w, _, _ in b], flats[a], 0.5)}
+                   for a, b in GOLDEN_MODES_INPUT.items()}
+    return rail, bus_metrics, bus_scores(bus_metrics)
+
+
+def test_golden_bus_scores_services_not_distance():
+    rail, metrics, bus = golden_mode_scores()
+    for area, (svc, walk, pr_svc, pr_walk, score) in GOLDEN_BUS.items():
+        assert metrics[area]["median_services"] == svc
+        assert metrics[area]["median_walk_min"] == walk
+        assert bus[area]["pr_median_services"] == pytest.approx(pr_svc)
+        assert bus[area]["pr_median_walk"] == pytest.approx(pr_walk)
+        assert bus[area]["score"] == pytest.approx(score)
+    assert {a: r["score"] for a, r in rail.items()} == pytest.approx(GOLDEN_RAIL)
+
+
+def test_golden_either_takes_the_higher_mode_score():
+    rail, _, bus = golden_mode_scores()
+    for area, (score, mode) in GOLDEN_EITHER.items():
+        got = either_choice(rail[area]["score"], bus[area]["score"])
+        assert got[0] == pytest.approx(score) and got[1] == mode
+
+
+def test_either_breaks_a_tie_towards_rail():
+    assert either_choice(5.0, 5.0) == (5.0, "rail")
 
 
 def test_a_bus_user_gets_a_different_answer():
     """The reason for building the option: the top area changes with the mode."""
-    tops = {m: max(e, key=lambda a: e[a][2]) for m, e in GOLDEN_MODES_EXPECTED.items()}
-    assert tops == {"rail": "Q", "bus": "P", "either": "P"}
+    rail, _, bus = golden_mode_scores()
+    top = lambda scores: max(scores, key=scores.get)
+    assert top({a: r["score"] for a, r in rail.items()}) == "Q"
+    assert top({a: r["score"] for a, r in bus.items()}) == "P"

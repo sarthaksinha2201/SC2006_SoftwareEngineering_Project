@@ -16,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
 from gowhere.adapters.http import HttpError
-from gowhere.adapters.onemap import REQUEST_TIME, OneMapAdapter
+from gowhere.adapters.onemap import REQUEST_TIME, OneMapAdapter, warn_if_all_failed
 from gowhere.etl.addresses import expand_street
 from gowhere.etl.geo import LocalProjection
 from gowhere.scoring.base import InvalidRequest, ScoringStrategy, TextPattern, select_by_area
@@ -75,8 +75,9 @@ class CommuteRouter:
         if todo:
             with ThreadPoolExecutor(max_workers=self.max_workers) as pool:
                 results = pool.map(lambda a: self._route(origins[a], destination, mode), todo)
-                for area, result in zip(todo, results):
-                    self._minutes[(area, postal, mode)] = result
+                fresh = dict(zip(todo, results))
+            self._minutes.update({(a, postal, mode): m for a, m in fresh.items()})
+            warn_if_all_failed(fresh.values(), "commute")
         return {a: self._minutes[(a, postal, mode)] for a in origins}
 
     def _route(self, origin, destination, mode):

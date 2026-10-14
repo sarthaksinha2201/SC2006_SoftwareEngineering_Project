@@ -33,7 +33,7 @@ GOWHERE_SECRET_KEY=$(openssl rand -hex 32) .venv/bin/python -m gowhere.serve
 - **Demo day:** add `--ingest-every-hours 6`. The server then fetches events at start
   and every 6 hours on a background thread, in the same single process.
   `--host 0.0.0.0` lets a phone on the same Wi-Fi open it.
-- **Checks:** `.venv/bin/python -m pytest -q` should report 370 passed. It needs no
+- **Checks:** `.venv/bin/python -m pytest -q` should report 373 passed. It needs no
   network and no keys.
 - **The snapshot** (`data/snapshot.db`, rebuilt 14 Oct 2026 with bus data) is
   committed, so a clean clone runs as it is (DECISIONS §14).
@@ -60,11 +60,12 @@ As of 14 Oct, `.env` holds `ONEMAP_TOKEN` (expired) and `LTA_DATAMALL_KEY`.
 
 ## 3. The five-minute script
 
-The inputs are exact. The Where to Live results are from the 14 Oct snapshot with the
-14 Oct defaults: five factors on, Public Transport set to Either, all amenity types,
-GP clinics. The Commute minutes are the ones OneMap returned on 1 Oct. Routing is
-down until `ONEMAP_EMAIL` and `ONEMAP_PASSWORD` are added, so re-check steps 4 and 5
-once it works.
+The inputs are exact. The Where to Live results come from the 14 Oct snapshot, rebuilt
+with the service-variety Bus measure (DECISIONS §18), using the 14 Oct defaults: five
+factors on, Public Transport set to Either, all amenity types, GP clinics. Step 5 uses
+the Commute minutes OneMap returned on 1 Oct: Queenstown 21.6, Tampines 67.4, Punggol
+67.2, Bedok 65. Routing is down until `ONEMAP_EMAIL` and `ONEMAP_PASSWORD` are added,
+so re-check steps 4 and 5 once it works.
 
 ### Where to Live (about 3 minutes)
 
@@ -81,15 +82,15 @@ once it works.
 3. **Swap Changi for Bedok.** The warning disappears.
 4. **Switch Commute on.** The destination field appears only now. Enter **119077**
    (NUS) with weight 7 and public transport, then **Compare**.
-5. **Results:** *"Queenstown ranks first with 5.6 out of 10. Queenstown ranks ahead of
+5. **Results:** *"Queenstown ranks first with 6.0 out of 10. Queenstown ranks ahead of
    Punggol mainly because of Commute and Healthcare."*
 
    | Rank | Area | Score |
    |---|---|---|
-   | 1st | Queenstown | 5.6 |
-   | 2nd | Punggol | 3.8 |
-   | 3rd | Tampines | 3.5 |
-   | 4th | Bedok | 2.9 |
+   | 1st | Queenstown | 6.0 |
+   | 2nd | Punggol | 4.4 |
+   | 3rd | Tampines | 3.6 |
+   | 4th | Bedok | 3.4 |
 
    The bar chart shows one group per factor. **See how this was calculated** opens the
    full breakdown:
@@ -105,11 +106,15 @@ once it works.
    few sales to judge, so Housing was left out instead. These are two different answers
    to two different situations.
 7. **Change the comparison:** switch Commute off and raise Housing Affordability to
-   **10**. Punggol now ranks first with **4.4**, ahead of Queenstown with 4.2, and the
+   **10**. Punggol now ranks first with **5.0**, ahead of Queenstown with 4.8, and the
    page says they are nearly tied. One weight moved the ranking, and the app says how
    close the call is.
-8. **Optional:** set Public Transport's "Walk to" to **Bus**. The runner-up changes
-   from Punggol to Tampines. Someone who travels by bus gets a different answer.
+8. **Optional:** set Public Transport's "Travel by" to **Bus**. Queenstown drops from
+   second to third, behind Tampines. Its Bus score is 1.3, because a median of only 12
+   bus services stop within 400 m of its flats, against 16 in Punggol and Tampines.
+   Someone who travels by bus gets a different answer. Bus is scored on service variety,
+   not walking distance: every area has a bus stop within about three minutes, so
+   distance could not tell them apart (docs/golden-public-transport.md).
 
 ### Where to Lepak (about 2 minutes)
 
@@ -139,7 +144,7 @@ events with the LLM and stores them. It needs `ANTHROPIC_API_KEY`; without it th
 stores nothing and keeps each channel's place.
 
 **Measured 14 Oct, before the LLM step:** the scraper read the 40 newest posts from
-each of the 8 channels.
+each channel. TimeOutSG was measured too, then dropped (DECISIONS §7).
 
 | Channel | Posts | Pass the date pre-filter | Newest post |
 |---|---|---|---|
@@ -152,8 +157,11 @@ each of the 8 channels.
 | TimeOutSG | 40 | 8 | **19 Jun** |
 | sgbestnightlife | 40 | 17 | 9 Oct |
 
-TimeOutSG hasn't posted since June, so it looks dormant. Extraction, storage and the
-true yield need the API key.
+TimeOutSG has not posted since June, so it is dormant and has been removed from
+`config.LEPAK_CHANNELS`. The web preview shows no dates, so a channel's posting rate
+cannot be read from it; only the newest post's date and the post-ID range are reliable.
+sgbestnightlife stays on probation until the yield numbers decide. Extraction, storage
+and the true yield need the API key.
 
 For rehearsal only, the fixture posts can be replayed through the real pipeline with
 hand-written stand-in replies. This calls no model and still places venues on OneMap:

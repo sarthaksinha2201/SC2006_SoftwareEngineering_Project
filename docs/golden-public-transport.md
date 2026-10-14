@@ -51,58 +51,86 @@ PR: C 0, A 2.5, D 5, E 7.5, B 10.
 B's 8.25 is deliberate: Python's built-in `round(8.25, 1)` returns 8.2, which would disagree with this hand calculation. The system uses `gowhere.scoring.stats.round1` (half-up) for display.
 
 
-## Bus and Either modes (FR 1.2.4)
+## Bus and Either modes (FR 1.2.4; DECISIONS §18)
 
-The mode only decides which walking time each block contributes:
+The two modes are measured differently, because they differ in kind:
 
-- **rail:** the walk to the nearest MRT/LRT exit;
-- **bus:** the walk to the nearest Qualifying Bus Stop (one served by 3 or more
-  services);
-- **either:** the shorter of the two.
+- **rail** (above): 0.7 × PR(% of flats within a 10-minute walk of an exit) + 0.3 × PR(median walk).
+- **bus**: 0.7 × PR(median number of **distinct bus services** stopping within 400 m of a
+  block, higher better) + 0.3 × PR(median walk to the nearest Qualifying Bus Stop, lower
+  better). A Qualifying Bus Stop is served by 3 or more services. The 400 m count uses
+  every stop, so a 2-service stop still adds its services. A service is counted once
+  however many nearby stops it calls at.
+- **either**: the **higher** of the rail and bus scores, area by area. A tie counts as
+  rail.
 
-The scoring above then runs unchanged, ranked separately for each mode.
-`test_golden_modes` checks the following by hand. Every block has 100 flats.
+The higher of two percentile ranks is not itself a percentile rank. Either scores
+therefore sit above either mode alone. This is expected, not a bug.
 
-| Area | Block 1 (rail, bus) | Block 2 (rail, bus) |
+`test_golden_bus_scores_services_not_distance` and
+`test_golden_either_takes_the_higher_mode_score` check the following by hand. Every block
+has 100 flats; with two equal-weight blocks, the weighted median is the lower value.
+
+| Area | Block 1 (rail walk, bus walk, services) | Block 2 | Median services | Median bus walk |
+|---|---|---|---|---|
+| P | 12, 3, 20 | 14, 5, 30 | 20 | 3 |
+| Q | 4, 2, 8 | 6, 4, 10 | 8 | 2 |
+| R | 9, 9.5, 15 | 20, 12, 40 | 15 | 9.5 |
+
+**Rail**, as in the first section: P 0%, median 12; Q 100%, median 4; R 50%, median 9.
+Scores: P **0.0**, Q **10.0**, R **5.0**.
+
+**Bus.** Services, ranked from worst to best: Q 8, R 15, P 20, giving PRs 0, 5 and 10.
+Bus walk, worst to best: R 9.5, P 3, Q 2, giving PRs 0, 5 and 10.
+
+| Area | 0.7 × PR(services) + 0.3 × PR(walk) | Bus score |
 |---|---|---|
-| P | 12, 3 | 14, 5 |
-| Q | 4, 11 | 6, 13 |
-| R | 9, 9.5 | 20, 12 |
+| P | 0.7 × 10 + 0.3 × 5 | **8.5** |
+| Q | 0.7 × 0 + 0.3 × 10 | **3.0** |
+| R | 0.7 × 5 + 0.3 × 0 | **3.5** |
 
-The walking time each mode uses per block, and the area values that follow (with 2
-equal-weight blocks, the median is the lower walk):
+Q has the *nearest* bus stops, yet scores lowest on bus because few services stop there.
+That is the point of the measure.
 
-| Mode | P | Q | R |
-|---|---|---|---|
-| rail | 12, 14 → 0%, median 12 | 4, 6 → 100%, median 4 | 9, 20 → 50%, median 9 |
-| bus | 3, 5 → 100%, median 3 | 11, 13 → 0%, median 11 | 9.5, 12 → 50%, median 9.5 |
-| either | 3, 5 → 100%, median 3 | 4, 6 → 100%, median 4 | 9, 12 → 50%, median 9 |
+**Either:**
 
-Percentile ranks across the three areas, then score = 0.7 × PR(%) + 0.3 × PR(median):
+| Area | max(rail, bus) | Takes |
+|---|---|---|
+| P | max(0.0, 8.5) = **8.5** | bus |
+| Q | max(10.0, 3.0) = **10.0** | rail |
+| R | max(5.0, 3.5) = **5.0** | rail |
 
-| Mode | P | Q | R |
-|---|---|---|---|
-| rail | 0.7 × 0 + 0.3 × 0 = **0.0** | 0.7 × 10 + 0.3 × 10 = **10.0** | 0.7 × 5 + 0.3 × 5 = **5.0** |
-| bus | 0.7 × 10 + 0.3 × 10 = **10.0** | **0.0** | **5.0** |
-| either | 0.7 × 7.5 + 0.3 × 10 = **8.25 → 8.3** | 0.7 × 7.5 + 0.3 × 5 = **6.75 → 6.8** | **0.0** |
+The top area is Q for rail and P for bus, so a bus user gets a different answer
+(`test_a_bus_user_gets_a_different_answer`).
 
-Under Either, P and Q tie on 100%: they share ranks 2 and 3, so each gets
-(2.5 − 1) / 2 × 10 = 7.5. The top area is Q for rail, and P for bus and for either.
-`test_a_bus_user_gets_a_different_answer` holds the code to that.
+## Result: walking distance cannot rank bus access (14 Oct 2026)
 
-### A property of the real data (14 Oct 2026 snapshot)
+We first built Bus as the Data Dictionary specified, with the same measure as rail
+(% within 10 minutes, median walk) and the walk taken to a Qualifying Bus Stop. On the
+real data it could not tell areas apart:
 
-Qualifying bus stops are dense in HDB estates, so the 10-minute measure saturates for
-bus:
-
-| Mode | Areas with 100% of flats within 10 min | Lowest % | Median walk range |
+| Mode, distance measure | Areas with 100% of flats within 10 min | Lowest % | Median walk range |
 |---|---|---|---|
 | rail | 6 of 32 | 0% | 0.4–61.1 min |
 | bus | 30 of 32 | 97.4% | 0.5–2.7 min |
-| either | 31 of 32 | 99.9% | 0.4–2.7 min |
+| either (nearer of the two) | 31 of 32 | 99.9% | 0.4–2.7 min |
 
-For Bus and Either, the percentile rank of "% within 10 min" therefore ranks
-differences of a few tenths of a percent. That term still carries 70% of the score, so
-small real differences become large score gaps. Even a 5-minute threshold leaves every
-area at 87% or more. This follows the Data Dictionary as written, and has been raised
-for a decision rather than changed in code.
+Even a 5-minute threshold left every area at 87% or more, so a stricter threshold only
+moves the saturation point. The 70% term would have ranked differences of a few tenths
+of a percent.
+
+This is a real fact about Singapore, not a defect in the code. Rail is scarce, so how far
+you walk to it is the whole question. A bus stop is within about three minutes of
+almost every HDB flat, so distance cannot discriminate. What does vary is how many places
+the nearby buses go. We therefore changed the measure for Bus only, keeping the same
+0.7/0.3 shape. The services data was already in hand: 26,833 DataMall route rows.
+
+On the same snapshot, the new measure spreads the areas out:
+
+| Measure | Range across 32 areas | Distinct values |
+|---|---|---|
+| median distinct services within 400 m | 9 (Tanglin) to 59 (Downtown Core) | 14 |
+| Bus score | 0.9 (Woodlands) to 9.9 (Downtown Core) | — |
+
+Queenstown shows the difference. Its rail score is 6.4, but its Bus score is 1.3,
+because only a median of 12 services stop within 400 m of a flat.

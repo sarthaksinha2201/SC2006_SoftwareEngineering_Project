@@ -57,8 +57,9 @@ differed and the model is not deterministic, so this reproduces the discards rat
 than replaying them exactly. It cost US$0.004.
 
 **Venue not placed (21): mostly our matcher, partly fixed.** The model's venue strings
-were good. Twelve were well-known places that OneMap knows under another name, or that
-our strict matcher rejects:
+were good. Eleven of the 21 discards, which were 10 distinct events because one was
+extracted twice, were well-known places that OneMap knows under another name or that our
+strict matcher rejects:
 
 | Venue the model gave | Why it failed | Now |
 |---|---|---|
@@ -75,8 +76,18 @@ our strict matcher rejects:
 Each alias has its source in `data/reference/venue_aliases.csv`. The other nine are small
 galleries and studios named with no address: The Private Museum, IMBA, Supper House,
 Fever Exhibition Hall, Heartware Store & Gallery, The Fluxus House, Whitestone Gallery,
-Shop—House by DECK and Gravity by Noir. They stay unplaced. Guessing their locations is
-exactly what the matcher exists to prevent.
+Shop—House by DECK and Gravity by Noir. RASA Space, a club, stays unplaced too. Guessing
+their locations is exactly what the matcher exists to prevent. A matcher rule for
+parks was considered and rejected: it would recover about one event at the cost of a
+special case in the matching rules, and the alias file already covers such venues with
+a source for each (DECISIONS §20).
+
+**Recovery run (14 Oct, 23:27 SGT):** the posts behind the 21 discards went back through
+the real pipeline with the aliases in place. That run is recorded in `ingest_run` like
+any other. All 10 recoverable events were stored; 10 venues stayed unplaced and 3 items
+had no single venue. It took 6 calls, 7,373 input tokens (5,494 cached) and 3,041 output
+tokens, US$0.0018. Channel markers only ever move forward, so re-processing older posts
+cannot move them back. **events.db now holds 38 events.**
 
 The discard log now records the venue and address the model gave, not just the title,
 so the next unplaced venue can be judged from the log without re-running anything.
@@ -92,7 +103,9 @@ Sentosa, Marina Bay Sands). The discarded items name no place in the text:
 - F1 pop-up and appearance lists give brand names and dates only.
 - Chain-wide deals say "All outlets" or "All Donki Bars".
 
-Changing the prompt could only make the model guess venues, so it stays as it is.
+We measured the limit of the source material and left it alone. A prompt change could
+only make the model guess, which is exactly the wrong-venue failure the strict matcher
+exists to prevent.
 
 **Already ended (53)** is expected on a first run, which reads posts up to a few weeks
 old. Later runs read only new posts.

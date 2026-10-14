@@ -166,7 +166,8 @@ The run in numbers:
 - **Posts:** 25 were dropped by the pre-filter before reaching the LLM. Of the 110 sent, 11
   held no event.
 - **Events:** the model extracted 140, and 28 were stored after validation and venue
-  placement. None were merged as duplicates.
+  placement. None were merged as duplicates. Ten more were recovered once venue aliases
+  were added (docs/lepak-ingest.md), so **38 events** are in `data/events.db`.
 - **Cost:** 13 LLM calls used 28,095 input tokens (none cached) and 14,424 output tokens,
   of which 4,561 were reasoning. That is **US$0.0100** at list price, about US$0.04 a day
   at four runs a day, and less once the markers mean only new posts are sent.

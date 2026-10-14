@@ -286,13 +286,12 @@ The median rather than the mean, because blocks separated from their station by 
 | @sgbestnightlife | **Use, on probation** *(14 Oct)* | A real channel, but posts are weekly roundups with no per-item dates. Kept because discards are logged, so the yield data can justify dropping it |
 | @singaporeruncalendar | **Reject** *(14 Oct)* | Dormant — the two newest posts are admin notices about 17 months of owner inactivity, and some events are overseas (Bali) |
 
-Seven confirmed: @sgweekend, @sgwhereto, @SGArtsChannel, @sgconcerts, @dateideas, @sgfitnesshealth, @TimeOutSG, plus @sgbestnightlife on probation. The test for any new one is whether `t.me/s/<name>` shows posts in a browser; channels say "subscribers", groups say "members".
+Six confirmed: @sgweekend, @sgwhereto, @SGArtsChannel, @sgconcerts, @dateideas, @sgfitnesshealth — plus @sgbestnightlife on probation (17 of its 40 newest posts pass the date filter; alive but thin). The test for any new one is whether `t.me/s/<name>` shows posts in a browser; channels say "subscribers", groups say "members".
 
 ## 8. Open items *(reviewed 14 Oct 2026)*
 
 - **Recompile the deliverable** — FR, NFR, Data Dictionary and use case descriptions, against what was actually built. Several FRs are now knowingly out of date; see §17.
-- **Sarthak's S2 scraper** — still not written, and it is the only thing standing between the app and live events.
-- **Sarthak's S3 templates** — placeholders are still in place; the mock fixtures are committed and waiting.
+- **Sarthak's S3 templates** — placeholders are still in place; the mock fixtures are committed and waiting. *(S2, the scraper, was delivered on 13 Oct and is in use.)*
 - **Sequence diagrams (S4)** — must match the refactored code (ScoringStrategy, ScoringEngine, adapters), not the Lab 1 design.
 - **A wifi-off rehearsal with the network genuinely down** — the one run so far used a dead proxy, and a captive portal behaves differently.
 - *Settled since the last review:* the channel list (§7, seven usable), the division of work (`Sarthak.md`), and the Where to Live review findings (§16).

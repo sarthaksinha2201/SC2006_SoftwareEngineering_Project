@@ -493,3 +493,19 @@ Six confirmed: @sgweekend, @sgwhereto, @SGArtsChannel, @sgconcerts, @dateideas, 
 
 **Decision:** The discard log records the model's **venue and address strings**, not just the event title.
 **Reason:** Diagnosing this bucket required re-fetching and re-extracting the posts, because the log did not record what the model had actually produced. That cost a run; without the fix it would have cost one every time.
+
+## 21. Browser rehearsal findings (15 Oct 2026)
+
+**Finding:** A **concurrency bug** that no HTTP-level test had reached: the snapshot shared one SQLite connection across Waitress threads, so two overlapping `/live/check` requests — which the setup form issues as the user clicks — returned HTTP 500. Each thread now gets its own read-only connection, and the regression test fails 3 times out of 3 against the old code.
+**Reason this matters for the report:** it only appeared once the app was driven through a real browser by a user clicking quickly, because every earlier test issued requests one at a time. It is the clearest argument in the project for rehearsing the way a user actually behaves rather than the way a test harness does.
+
+**Decision:** Pin `shapely<2.2`.
+**Reason:** A fresh clone installs Shapely 2.2, which deprecates `shapely.ops.transform` and prints 110 deprecation warnings on every ETL run. A pin is one line and keeps a clean checkout quiet; migrating the call is future work, not demo-week work.
+
+**Decision:** Draw the **starting point on the event map whenever it is known**, not only when a route exists.
+**Reason:** Offline, or for any unroutable event, the map currently shows a single venue pin on a blank background at street zoom, which tells the user nothing. With both points shown, the "About 5.5 km away (straight-line estimate)" text has something to correspond to — the degraded state becomes informative rather than merely not broken.
+
+**Decision:** The phone-width comparison table stacks each factor's **summary beneath its scores**, rather than beside them.
+**Reason:** The table scrolls correctly inside its own box, but at 390 px the factor columns are so narrow that summaries wrap to one or two words per line and every row becomes very tall. A CSS-only change at a phone breakpoint.
+
+**Open:** Online Lepak search timing sits on the 8-second Performance target — 1 of 4 measurements reached 8.06 s, including a 0.5 s instrumentation wait. The cause is OneMap latency across 18–20 routes, **not** the 50-event route cap, which those searches never approached, so lowering the cap would not help. To be settled by measuring ~10 runs and reporting the median and the maximum: if the median is comfortably inside 8 s the target stands with the variance documented; if the 90th percentile exceeds it, **the NFR is changed to 10 seconds rather than the number being reported selectively.**

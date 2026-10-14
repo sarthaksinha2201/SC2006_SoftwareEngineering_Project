@@ -43,7 +43,17 @@
       attribution: "&copy; OpenStreetMap contributors",
       maxZoom: 19
     }).addTo(map);
-    var layer = L.geoJSON(data, { style: styleForFeature }).bindTooltip(tooltipFor).addTo(map);
+    var layer = L.geoJSON(data, {
+      style: styleForFeature,
+      // The starting point is a small filled circle; the venue keeps the default pin.
+      pointToLayer: function (feature, latlng) {
+        if (feature.properties && feature.properties.kind === "start") {
+          return L.circleMarker(latlng, { radius: 7, color: "#fff", weight: 2,
+                                          fillColor: "#1d6f5c", fillOpacity: 1 });
+        }
+        return L.marker(latlng);
+      }
+    }).bindTooltip(tooltipFor).addTo(map);
     try {
       var bounds = layer.getBounds();
       if (bounds.isValid()) map.fitBounds(bounds, { padding: [16, 16] });

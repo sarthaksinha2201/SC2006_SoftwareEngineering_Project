@@ -3,6 +3,8 @@
 {% block title %}Events · GoWhere{% endblock %}
 {% block content %}
 <h1>{{ view.heading }}</h1>
+<p class="event-meta">{{ view.freshness }}</p>
+{% if view.freshness_warning %}{{ note(view.freshness_warning, 'warning') }}{% endif %}
 
 <div class="sort-chip-row" aria-label="Sort">
   {% for s in view.sorts %}
@@ -10,10 +12,10 @@
   {% else %}<a class="pill" href="{{ s.url }}">{{ s.label }}</a>{% endif %}
   {% endfor %}
 </div>
-<div class="sort-chip-row" aria-label="Category">
+<div class="sort-chip-row" aria-label="Show or hide categories">
   {% for c in view.chips %}
-  {% if c.selected %}<span class="pill is-selected">{{ c.label }} ({{ c.count }})</span>
-  {% else %}<a class="pill" href="{{ c.url }}">{{ c.label }} ({{ c.count }})</a>{% endif %}
+  <a class="pill{% if c.selected %} is-selected{% endif %}" href="{{ c.url }}"
+     aria-pressed="{{ 'true' if c.selected else 'false' }}">{{ c.label }} ({{ c.count }})</a>
   {% endfor %}
 </div>
 

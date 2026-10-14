@@ -94,16 +94,58 @@ def test_sorting_chips_and_paging_call_nothing(app, client):
     client.post("/lepak", data=form(mode="drive"))
     router, datamall = app.routers[-1], app.extensions["gowhere"]["parking"].adapter
     before = (router.calls, datamall.calls, len(FakeLocations.calls))
-    for query in ("?sort=soonest", "?sort=recent", "?category=Family+%26+Kids",
-                  "?category=Arts+%26+Culture&sort=soonest&page=2", "?page=7", "?sort=bogus"):
+    for query in ("?sort=soonest", "?sort=recent", "?hide=Family+%26+Kids",
+                  "?hide=Arts+%26+Culture&hide=Sales+%26+Pop-ups&sort=soonest&page=2",
+                  "?page=7", "?sort=bogus", "?hide=Not+a+category"):
         assert client.get("/lepak/results" + query).status_code == 200
     assert (router.calls, datamall.calls, len(FakeLocations.calls)) == before
 
 
-def test_category_chip_filters(client):
+def test_category_chips_hide_independently(client):
+    """FR 2.4.2: hide one category and keep the rest; each chip toggles on its own."""
     client.post("/lepak", data=form())
-    page = client.get("/lepak/results?category=Family+%26+Kids").get_data(as_text=True)
-    assert "Free Yukata Experience" in page and "Anime Earth" not in page
+    page = client.get("/lepak/results?hide=Family+%26+Kids").get_data(as_text=True)
+    assert "Free Yukata Experience" not in page and "Anime Earth" in page
+    assert "Seoul Anthem K-pop Party" in page
+    both = client.get("/lepak/results?hide=Family+%26+Kids&hide=Arts+%26+Culture").get_data(as_text=True)
+    assert "Anime Earth" not in both and "Seoul Anthem K-pop Party" in both
+    # The Family & Kids chip on that page shows it again, keeping Arts & Culture hidden.
+    import html, re
+    chip = re.search(r'<a class="pill" href="([^"]+)"\s+aria-pressed="false">Family', page)
+    assert chip and "hide=" not in html.unescape(chip.group(1))
+
+
+def test_returning_from_an_event_restores_the_results_view(client):
+    """FR 2.5.3: sort order, hidden categories and page come back."""
+    import html, re
+    client.post("/lepak", data=form())
+    client.get("/lepak/results?sort=soonest&hide=Family+%26+Kids")
+    events = EventStore(client.application.config["EVENTS_PATH"]).events(LEPAK_NOW)
+    anime = next(e for e in events if e["title"] == "Anime Earth")
+    detail = client.get(f"/lepak/events/{anime['id']}").get_data(as_text=True)
+    back = html.unescape(re.search(r'href="([^"]*/lepak/results[^"]*)">Back', detail).group(1))
+    assert "sort=soonest" in back and "hide=Family+%26+Kids" in back and "page=1" in back
+
+
+def test_freshness_line_and_stale_warning(app, client):
+    """FR 2.3.4: how long ago events were updated; a warning past 24 hours."""
+    from datetime import timedelta
+    client.post("/lepak", data=form())
+    page = client.get("/lepak/results").get_data(as_text=True)
+    assert "Events last updated just now." in page and "more than 24 hours" not in page
+    app.config["NOW"] = lambda: LEPAK_NOW + timedelta(hours=25)
+    page = client.get("/lepak/results").get_data(as_text=True)
+    assert "Events last updated 25 hours ago." in page
+    assert "Events have not been updated for more than 24 hours" in page
+
+
+def test_a_failed_run_does_not_count_as_an_update(tmp_path):
+    from datetime import datetime
+    store = EventStore(tmp_path / "e.db")
+    store.record_run(datetime(2026, 10, 1, 9), datetime(2026, 10, 1, 9, 5), {"posts_seen": 3})
+    store.record_run(datetime(2026, 10, 2, 9), datetime(2026, 10, 2, 9, 5), {"llm_failures": 1})
+    assert store.last_updated() == datetime(2026, 10, 1, 9, 5)
+    assert EventStore(tmp_path / "none.db").last_updated() is None
 
 
 def test_paging(client, monkeypatch):
@@ -189,6 +231,7 @@ def test_event_detail(client):
     page = client.get(f"/lepak/events/{anime['id']}").get_data(as_text=True)
     assert "22 min by public transport" in page and "North South Line" in page
     assert '"kind": "route"' in page
+    assert '"kind": "start"' in page and "Directions" in page   # FR 2.5.2: start marker, steps
     # Straight to the page with no search: the event, without travel time or route.
     fresh = client.application.test_client().get(f"/lepak/events/{anime['id']}")
     assert fresh.status_code == 200 and "min by" not in fresh.get_data(as_text=True)
@@ -266,8 +309,8 @@ def test_lepak_fixtures_match_what_the_app_produces(client):
     original_results, original_event = lepak_views.results_view, lepak_views.event_view
 
     def cap(name, fn):
-        def wrapper(*a):
-            captured[name] = fn(*a)
+        def wrapper(*a, **kw):
+            captured[name] = fn(*a, **kw)
             return captured[name]
         return wrapper
     routes.lepak_views.results_view = cap("results", original_results)

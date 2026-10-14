@@ -1,5 +1,7 @@
 {
  "heading": "9 events within 45 min by public transport, next 30 days",
+ "freshness": "Events have not been updated yet.",
+ "freshness_warning": "No event update has completed yet, so there may be no events to show.",
  "empty_text": "",
  "unroutable_note": "No route could be found for some events, so their straight-line distance is shown as an estimate and they are listed last.",
  "sorts": [
@@ -32,26 +34,26 @@
   {
    "label": "Arts & Culture",
    "count": 4,
-   "selected": false,
-   "url": "/lepak/results?sort=travel&category=Arts+%26+Culture&page=1"
+   "selected": true,
+   "url": "/lepak/results?sort=travel&hide=Arts+%26+Culture&page=1"
   },
   {
    "label": "Music & Performances",
    "count": 2,
-   "selected": false,
-   "url": "/lepak/results?sort=travel&category=Music+%26+Performances&page=1"
+   "selected": true,
+   "url": "/lepak/results?sort=travel&hide=Music+%26+Performances&page=1"
   },
   {
    "label": "Family & Kids",
    "count": 2,
-   "selected": false,
-   "url": "/lepak/results?sort=travel&category=Family+%26+Kids&page=1"
+   "selected": true,
+   "url": "/lepak/results?sort=travel&hide=Family+%26+Kids&page=1"
   },
   {
    "label": "Sales & Pop-ups",
    "count": 1,
-   "selected": false,
-   "url": "/lepak/results?sort=travel&category=Sales+%26+Pop-ups&page=1"
+   "selected": true,
+   "url": "/lepak/results?sort=travel&hide=Sales+%26+Pop-ups&page=1"
   }
  ],
  "cards": [
@@ -241,5 +243,10 @@
  "total": 9,
  "prev_url": null,
  "next_url": null,
- "search_url": "/lepak"
+ "search_url": "/lepak",
+ "view_state": {
+  "sort": "travel",
+  "hide": [],
+  "page": 1
+ }
 }

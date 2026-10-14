@@ -14,6 +14,10 @@
 {% endif %}
 {% endif %}
 
+{% if view.steps %}
+<h2>Directions</h2>
+<ol class="directions">{% for st in view.steps %}<li>{{ st }}</li>{% endfor %}</ol>
+{% endif %}
 <div id="map" class="map-container" role="img" aria-label="Map of the venue{% if view.travel %} and route{% endif %}"></div>
 
 <p class="event-summary">{{ view.summary }}</p>

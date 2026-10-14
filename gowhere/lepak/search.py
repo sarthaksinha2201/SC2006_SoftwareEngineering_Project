@@ -12,8 +12,8 @@
    sorted last: they passed the straight-line check, and hiding them would hide the
    failure.
 
-The result is computed once per search and kept in the user's session; sorting, the
-category chips and paging only reorder it (sort_and_filter), so they call nothing.
+The result is computed once per search and kept in the user's session; sorting, hiding
+categories and paging only reorder it (sort_and_filter), so they call nothing.
 """
 from datetime import datetime, time, timedelta
 
@@ -119,10 +119,12 @@ def search(events, origin, categories, date_option, mode, max_minutes, router, n
                        "shown": len(results)}}
 
 
-def sort_and_filter(results, sort="travel", category=None, page=1):
-    """(page of results, total matching, number of pages). Pure: no external calls."""
-    if category:
-        results = [r for r in results if r["category"] == category]
+def sort_and_filter(results, sort="travel", hidden=(), page=1):
+    """(page of results, total matching, number of pages), with the categories in
+    `hidden` left out (FR 2.4.2). Pure: no external calls."""
+    hidden = set(hidden)
+    if hidden:
+        results = [r for r in results if r["category"] not in hidden]
     if sort == "soonest":
         key = lambda r: (r["start_at"], r["title"])
     elif sort == "recent":

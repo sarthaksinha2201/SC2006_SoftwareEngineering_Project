@@ -137,24 +137,26 @@ def _results():
 
 
 def test_sort_by_travel_puts_unroutable_last():
-    page, total, pages = sort_and_filter(_results(), "travel", None, 2)
+    page, total, pages = sort_and_filter(_results(), "travel", (), 2)
     assert (total, pages, len(page)) == (15, 2, 5)
     assert page[-1]["minutes"] is None
-    first, _, _ = sort_and_filter(_results(), "travel", None, 1)
+    first, _, _ = sort_and_filter(_results(), "travel", (), 1)
     assert [r["minutes"] for r in first][:3] == [26.0, 27.0, 28.0]
 
 
 def test_sort_soonest_and_recent():
-    soonest, _, _ = sort_and_filter(_results(), "soonest", None, 1)
+    soonest, _, _ = sort_and_filter(_results(), "soonest", (), 1)
     assert soonest[0]["start_at"] == "2026-10-06 10:00"
-    recent, _, _ = sort_and_filter(_results(), "recent", None, 1)
+    recent, _, _ = sort_and_filter(_results(), "recent", (), 1)
     assert recent[0]["id"] == 15
 
 
-def test_category_chip_and_page_clamping():
-    page, total, pages = sort_and_filter(_results(), "travel", "Community", 9)
+def test_hidden_categories_and_page_clamping():
+    page, total, pages = sort_and_filter(_results(), "travel", {"Arts & Culture"}, 9)
     assert total == 5 and pages == 1 and all(r["category"] == "Community" for r in page)
-    empty, total, pages = sort_and_filter([], "travel", None, 1)
+    page, total, _ = sort_and_filter(_results(), "travel", {"Community"}, 1)
+    assert total == 10 and all(r["category"] == "Arts & Culture" for r in page)
+    empty, total, pages = sort_and_filter([], "travel", (), 1)
     assert (empty, total, pages) == ([], 0, 1)
 
 
@@ -334,3 +336,48 @@ def test_fixture_events_search():
     assert sorted(r["title"] for r in found["results"]) == [
         "Anime Earth", "BellyGom Summer Day Out Party", "Free Yukata Experience",
         "Mid-Autumn Light-Up"]
+
+
+# ---- step-by-step directions (FR 2.5.2) ---------------------------------------------
+# A sample in OneMap's documented shape (OpenTripPlanner legs for public transport;
+# [direction, road, metres, ...] rows for drive and walk). Constructed, not recorded:
+# the OneMap token had expired when this was written. Re-record when routing works.
+
+STEP_SAMPLE_PT = {"plan": {"itineraries": [{"duration": 1500, "legs": [
+    {"mode": "WALK", "distance": 92.4, "duration": 96, "from": {"name": "Origin"},
+     "to": {"name": "BISHAN MRT STATION"}, "legGeometry": {"points": ""}},
+    {"mode": "SUBWAY", "route": "NS", "routeLongName": "NORTH SOUTH LINE", "duration": 343,
+     "from": {"name": "BISHAN MRT STATION"}, "to": {"name": "NOVENA MRT STATION"},
+     "intermediateStops": [{"name": "BRADDELL"}, {"name": "TOA PAYOH"}], "legGeometry": {"points": ""}},
+    {"mode": "BUS", "route": "141", "duration": 452, "from": {"name": "NOVENA STN"},
+     "to": {"name": "OPP CITY SQ MALL"}, "intermediateStops": [], "legGeometry": {"points": ""}},
+    {"mode": "WALK", "distance": 1216.7, "duration": 900, "from": {"name": "OPP CITY SQ MALL"},
+     "to": {"name": "Destination"}, "legGeometry": {"points": ""}}]}]}}
+STEP_SAMPLE_DRIVE = {"route_summary": {"total_time": 794, "total_distance": 6918},
+                     "route_geometry": "", "route_instructions": [
+    ["Head", "BISHAN PLACE", 120, "1.35,103.84", 20, "120m", "North", 0],
+    ["Right", "BISHAN ROAD", 1450, "1.35,103.84", 150, "1.4km", "East", 90],
+    ["Straight", "", 300, "1.34,103.85", 30, "300m", "South", 180],
+    ["Destination", "", 0, "1.31,103.85", 0, "0m", "", 0]]}
+
+
+def test_public_transport_steps():
+    assert parse_route(STEP_SAMPLE_PT, "pt")["steps"] == [
+        "Walk 90 m to Bishan MRT Station",
+        "Take the North South Line from Bishan MRT Station to Novena MRT Station (3 stops)",
+        "Take bus 141 from Novena Stn to Opp City Sq Mall (1 stop)",
+        "Walk 1.2 km to your destination"]
+
+
+def test_drive_steps():
+    assert parse_route(STEP_SAMPLE_DRIVE, "drive")["steps"] == [
+        "Head along Bishan Place for 120 m", "Turn right onto Bishan Road (1.4 km)",
+        "Continue for 300 m"]
+
+
+def test_malformed_directions_lose_steps_not_the_route():
+    broken = {**STEP_SAMPLE_DRIVE, "route_instructions": [None, "x", ["Left"], 5]}
+    route = parse_route(broken, "drive")
+    assert route["steps"] == [] and route["minutes"] > 0
+    recorded = parse_route(ROUTES["pt"], "pt")       # legs trimmed of stop names
+    assert recorded["minutes"] > 0 and recorded["steps"][0] == "Walk 90 m"

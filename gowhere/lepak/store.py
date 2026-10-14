@@ -12,6 +12,7 @@ EVENT_MERGE_RADIUS_M.
 import json
 import re
 import sqlite3
+from datetime import datetime
 
 from gowhere import config
 from gowhere.etl.geo import haversine_m
@@ -146,6 +147,18 @@ class EventStore:
             self.db.execute("INSERT INTO ingest_run (started_at, finished_at, counts_json) "
                             "VALUES (?, ?, ?)", (_fmt(started_at), _fmt(finished_at),
                                                  json.dumps(counts, sort_keys=True)))
+
+    def last_updated(self):
+        """When the last fully successful ingestion run finished (naive Singapore time),
+        or None if there has never been one. A run where Telegram, the LLM or OneMap
+        failed does not count: its posts are still waiting (FR 2.3.4)."""
+        failures = ("telegram_failures", "llm_failures", "onemap_failures")
+        for finished, counts_json in self.db.execute(
+                "SELECT finished_at, counts_json FROM ingest_run ORDER BY id DESC"):
+            counts = json.loads(counts_json)
+            if not any(counts.get(f) for f in failures):
+                return datetime.strptime(finished, "%Y-%m-%d %H:%M")
+        return None
 
     # -- reading ------------------------------------------------------------------
     def events(self, now=None):

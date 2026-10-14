@@ -405,3 +405,6 @@ dialog.modal::backdrop { background: rgba(0, 0, 0, 0.45); }
 .factor--off > *:not(legend):not(.factor-head),
 .factor--off .factor-head label:last-child { opacity: .45; }
 .factor--off legend { color: var(--text-muted); }
+
+/* Step-by-step directions on the event page (FR 2.5.2) */
+.directions { padding-left: 1.4rem; line-height: 1.6; }

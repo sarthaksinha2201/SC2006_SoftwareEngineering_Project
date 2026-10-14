@@ -152,44 +152,75 @@ def too_many_message(count):
             f"at once. Choose fewer categories, a shorter date range or a shorter travel time.")
 
 
-def results_view(saved, sort, category, page, now):
-    """`saved` is the session's search: {request, search}. Reordering only."""
+def freshness(last_updated, now):
+    """FR 2.3.4: how long ago events were last updated, and a warning past 24 hours."""
+    if last_updated is None:
+        return {"text": "Events have not been updated yet.",
+                "warning": "No event update has completed yet, so there may be no events "
+                           "to show."}
+    minutes = max(0, int((now - last_updated).total_seconds() // 60))
+    if minutes < 1:
+        ago = "just now"
+    elif minutes < 60:
+        ago = f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+    elif minutes < 48 * 60:
+        hours = minutes // 60
+        ago = f"{hours} hour{'s' if hours != 1 else ''} ago"
+    else:
+        ago = f"{minutes // (24 * 60)} days ago"
+    return {"text": f"Events last updated {ago}.",
+            "warning": ("Events have not been updated for more than 24 hours, so some may "
+                        "have changed or ended." if minutes > 24 * 60 else "")}
+
+
+def results_view(saved, sort, hidden, page, now, last_updated=None):
+    """`saved` is the session's search: {request, search}. Reordering only.
+    `hidden`: the categories the user has hidden with the chips (FR 2.4.2)."""
     req, found = saved["request"], saved["search"]
     sort = sort if sort in SORTS else "travel"
-    category = category if category in req["categories"] else None
-    rows, total, pages = sort_and_filter(found["results"], sort, category, page)
+    hidden = [c for c in req["categories"] if c in set(hidden or ())]
+    rows, total, pages = sort_and_filter(found["results"], sort, hidden, page)
     page = min(max(1, page), pages)
-    link = lambda **kw: url_for("web.lepak_results", **{"sort": sort, "category": category,
+    link = lambda **kw: url_for("web.lepak_results", **{"sort": sort, "hide": hidden,
                                                         "page": 1, **kw})
+    toggled = lambda c: [x for x in req["categories"] if (x in hidden) != (x == c)]
     all_count = len(found["results"])
     by_cat = {c: sum(r["category"] == c for r in found["results"]) for c in req["categories"]}
+    fresh = freshness(last_updated, now)
     return {
         "heading": (f"{all_count} {'event' if all_count == 1 else 'events'} within "
                     f"{req['max_minutes']} min by {MODES[req['mode']]}, "
                     f"{DATE_OPTIONS[req['date_option']].lower()}"),
+        "freshness": fresh["text"], "freshness_warning": fresh["warning"],
         "empty_text": ("" if total else
                        "No events match. Try more categories, a longer date range or a longer "
-                       "travel time."),
+                       "travel time." if not hidden else
+                       "Every matching event is in a hidden category. Show a category again "
+                       "to see its events."),
         "unroutable_note": ("No route could be found for some events, so their straight-line "
                             "distance is shown as an estimate and they are listed last."
                             if any(r["minutes"] is None for r in rows) else ""),
         "sorts": [{"value": k, "label": v, "selected": k == sort, "url": link(sort=k)}
                   for k, v in SORTS.items()],
-        "chips": ([{"label": "All", "count": all_count, "selected": category is None,
-                    "url": link(category=None)}]
-                  + [{"label": c, "count": by_cat[c], "selected": c == category,
-                      "url": link(category=c)} for c in req["categories"]]),
+        # Each category chip shows or hides its events independently; "All" shows every one.
+        "chips": ([{"label": "All", "count": all_count, "selected": not hidden,
+                    "url": link(hide=[])}]
+                  + [{"label": c, "count": by_cat[c], "selected": c not in hidden,
+                      "url": link(hide=toggled(c))} for c in req["categories"]]),
         "cards": [card(r, req["mode"], now) for r in rows],
         "page": page, "pages": pages, "total": total,
         "prev_url": link(page=page - 1) if page > 1 else None,
         "next_url": link(page=page + 1) if page < pages else None,
         "search_url": url_for("web.lepak_setup"),
+        # Saved in the session, so returning from an event restores this view (FR 2.5.3).
+        "view_state": {"sort": sort, "hide": hidden, "page": page},
     }
 
 
-def event_view(r, mode, now):
+def event_view(r, mode, now, back=None, origin=None):
     """The event detail screen: its card plus a map of the venue and, when the event
-    came from this session's search, the route to it."""
+    came from this session's search, the starting point, the route and step-by-step
+    directions (FR 2.5.2). `back` is the results view to return to (FR 2.5.3)."""
     c = card(r, mode, now) if mode else card({**r, "route": None, "distance_m": None}, "pt", now)
     if not mode:
         c["travel"], c["travel_estimated"] = None, False
@@ -198,9 +229,15 @@ def event_view(r, mode, now):
     if r.get("route"):
         features.insert(0, {"type": "Feature", "geometry": r["route"]["geometry"],
                             "properties": {"kind": "route"}})
+        if origin:      # the user's own starting point, on their own page only
+            features.append({"type": "Feature",
+                             "geometry": {"type": "Point", "coordinates": [origin[1], origin[0]]},
+                             "properties": {"kind": "start", "name": "Your starting point"}})
     parking = r.get("parking")
     return {**c, "map": {"type": "FeatureCollection", "features": features},
+            "steps": (r.get("route") or {}).get("steps", []),
             "carparks": [{"name": p["name"], "lots": p["lots"],
                           "distance": f"{round0(p['distance_m'] / 10) * 10} m"}
                          for p in (parking or {}).get("carparks", [])],
-            "back_url": url_for("web.lepak_results"), "search_url": url_for("web.lepak_setup")}
+            "back_url": url_for("web.lepak_results", **(back or {})),
+            "search_url": url_for("web.lepak_setup")}

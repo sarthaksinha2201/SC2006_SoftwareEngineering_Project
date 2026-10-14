@@ -150,13 +150,14 @@ def lepak_submit():
     except HttpError:
         return _lepak_error(form, "OneMap can't be reached right now, so we can't look up "
                                   "your starting point. Please try again shortly.")
-    state.lepak = {"form": form, "request": req, "search": found}
+    # The starting point stays in this session's memory: it marks the route map's start.
+    state.lepak = {"form": form, "request": req, "search": found, "origin": origin}
     return redirect(url_for("web.lepak_results"), code=303)
 
 
 @bp.get("/lepak/results")
 def lepak_results():
-    """Sort, category chip and page come from the query string and only reorder the
+    """Sort, hidden categories and page come from the query string and only reorder the
     saved results: nothing here calls an external service."""
     state = _state()
     if state.lepak is None:
@@ -166,8 +167,9 @@ def lepak_results():
     except ValueError:
         page = 1
     view = lepak_views.results_view(state.lepak, request.args.get("sort"),
-                                    request.args.get("category"), page,
-                                    current_app.config["NOW"]())
+                                    request.args.getlist("hide"), page,
+                                    current_app.config["NOW"](), _events().last_updated())
+    state.lepak["view_state"] = view["view_state"]
     return render_template("lepak_results.html", view=view)
 
 
@@ -182,7 +184,8 @@ def lepak_event(event_id):
         if mode == "drive":        # refreshed here (cached 2 min), never on sort or chips
             found = {**found, "parking": current_app.extensions["gowhere"]["parking"].near(
                 found["lat"], found["lon"])}
-        return render_template("event_detail.html", view=lepak_views.event_view(found, mode, now))
+        return render_template("event_detail.html", view=lepak_views.event_view(
+            found, mode, now, back=saved.get("view_state"), origin=saved.get("origin")))
     event = _events().event(event_id)
     if event is None or event["ends_at"] < now.strftime("%Y-%m-%d %H:%M"):
         return render_template("error.html", title="Event not found",

@@ -72,8 +72,69 @@ def _line(points):
     return {"type": "LineString", "coordinates": [[lon, lat] for lat, lon in points]}
 
 
+def _place(name):
+    if not name or name.lower() in ("origin", "destination"):
+        return None
+    return name.title().replace("Mrt", "MRT").replace("Lrt", "LRT")
+
+
+def _metres(m):
+    m = float(m or 0)
+    return f"{round0(m / 10) * 10:.0f} m" if m < 1000 else f"{m / 1000:.1f} km"
+
+
+def _pt_step(leg):
+    """One public transport leg as a sentence, or None if OneMap gave too little."""
+    mode, to, frm = leg.get("mode"), _place((leg.get("to") or {}).get("name")), \
+        _place((leg.get("from") or {}).get("name"))
+    if mode == "WALK":
+        raw_to = ((leg.get("to") or {}).get("name") or "").lower()
+        where = to or ("your destination" if raw_to == "destination" else None)
+        return f"Walk {_metres(leg.get('distance'))}" + (f" to {where}" if where else "")
+    stops = len(leg.get("intermediateStops") or []) + 1
+    what = {"SUBWAY": f"the {_leg_text(leg)}", "BUS": f"bus {leg.get('route')}",
+            "TRAM": f"the {_leg_text(leg)}"}.get(mode, _leg_text(leg))
+    if not (frm and to):
+        return f"Take {what}"
+    return f"Take {what} from {frm} to {to} ({stops} stop{'s' if stops != 1 else ''})"
+
+
+_TURNS = {"left": "Turn left onto", "right": "Turn right onto", "slight left": "Bear left onto",
+          "slight right": "Bear right onto", "sharp left": "Turn sharp left onto",
+          "sharp right": "Turn sharp right onto", "straight": "Continue onto",
+          "continue": "Continue onto"}
+
+
+def _road_step(instr):
+    """One drive or walk instruction, OneMap's [direction, road, metres, ...] row."""
+    direction, road, metres = str(instr[0]), str(instr[1] or "").title(), instr[2]
+    if direction.lower() in ("destination", "arrive") or not road and not metres:
+        return None
+    if direction.lower() == "head":
+        return f"Head along {road} for {_metres(metres)}" if road else f"Head off for {_metres(metres)}"
+    verb = _TURNS.get(direction.lower(), direction.capitalize())
+    if not road:        # "Turn left onto" with no road reads wrong: drop the "onto"
+        return f"{verb.removesuffix(' onto')} for {_metres(metres)}"
+    return f"{verb} {road} ({_metres(metres)})"
+
+
+def steps_from(response, mode, legs=None):
+    """Step-by-step directions (FR 2.5.2). Defensive: anything malformed is skipped,
+    so a change in OneMap's reply loses steps, never the route."""
+    out = []
+    try:
+        if mode == "pt":
+            out = [_pt_step(leg) for leg in legs or []]
+        else:
+            out = [_road_step(i) for i in response.get("route_instructions") or []
+                   if isinstance(i, (list, tuple)) and len(i) >= 3]
+    except (KeyError, TypeError, ValueError, IndexError, AttributeError):
+        return []
+    return [s for s in out if s]
+
+
 def parse_route(response, mode):
-    """{minutes, summary, geometry (GeoJSON LineString, lon/lat)} or None."""
+    """{minutes, mode, summary, steps, geometry (GeoJSON LineString, lon/lat)} or None."""
     if mode == "pt":
         itineraries = (response.get("plan") or {}).get("itineraries") or []
         if not itineraries:
@@ -83,6 +144,7 @@ def parse_route(response, mode):
         points = [p for leg in legs for p in decode_polyline((leg.get("legGeometry") or {}).get("points", ""))]
         return {"minutes": best["duration"] / 60, "mode": "pt",
                 "summary": " → ".join(_leg_text(leg) for leg in legs),
+                "steps": steps_from(response, "pt", legs),
                 "geometry": _line(points)}
     summary = response.get("route_summary") or {}
     if summary.get("total_time") is None:
@@ -90,6 +152,7 @@ def parse_route(response, mode):
     km = summary.get("total_distance", 0) / 1000
     return {"minutes": summary["total_time"] / 60, "mode": mode,
             "summary": f"{'Drive' if mode == 'drive' else 'Walk'} {km:.1f} km",
+            "steps": steps_from(response, mode),
             "geometry": _line(decode_polyline(response.get("route_geometry") or ""))}
 
 

@@ -479,3 +479,18 @@ Six confirmed: @sgweekend, @sgwhereto, @SGArtsChannel, @sgconcerts, @dateideas, 
 
 **Decision:** Drop **@sgbestnightlife**.
 **Reason:** 0 events stored from 20 posts, with only 6 passing the date pre-filter. It was kept on probation precisely so the yield data could decide, and it has.
+
+## 20. What the first run actually discarded (14 Oct 2026)
+
+**Finding:** Of the 21 events discarded as "venue not placed", **12 were our failure, not the model's**. The model produced good venue strings — KC Arts Centre, Suntec Convention Centre, Esplanade Recital Studio, Great World, F1 Pit Building. Two causes: OneMap knows several of them under a different name (Isetan Scotts is Shaw House; Clarke Quay Central is The Central; the F1 Pit Building is The Pit Building), and our strict matcher rejected genuine OneMap hits because the name was not a contiguous substring ("Suntec Convention Centre" against OneMap's "Suntec Singapore Convention & Exhibition Centre").
+**Decision:** Recover them through **10 alias entries**, each with a source and a verification date, rather than by loosening the matcher. The remaining 9 — small galleries and studios whose posts give no address at all — stand as genuine misses.
+**Reason:** Same reasoning as §12: a wrong venue sends someone to the wrong place with a confident travel time attached. Aliases keep every match auditable; a looser matcher would silently affect every venue in the system to fix twelve.
+
+**Decision:** The proposed matcher rule — treating several exact-name hits with no postal code as one place when they are all parks — is **recorded as future work, not built**.
+**Reason:** It would recover roughly one event (Fort Canning Park, which OneMap returns as two distant entries) at the cost of a special case in the matching rules. The alias file already handles such venues with provenance.
+
+**Finding:** The 38 events discarded for having **no single venue are genuine**, and the prompt was not changed.
+**Reason:** Investigated rather than assumed. The model splits roundup posts correctly into one event per item and fills in the venue wherever the text names a place. The discarded items name no place anywhere — "Free Workouts & Runs This Weekend" with names and dates only, F1 pop-up lists of brands, "all outlets" chain deals. **A prompt change could only have made the model guess venues**, which would produce exactly the wrong-venue failure the strict matcher exists to prevent. Reported as a measured limit of the source material rather than tuned away.
+
+**Decision:** The discard log records the model's **venue and address strings**, not just the event title.
+**Reason:** Diagnosing this bucket required re-fetching and re-extracting the posts, because the log did not record what the model had actually produced. That cost a run; without the fix it would have cost one every time.

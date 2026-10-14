@@ -90,7 +90,10 @@ OSM_AMENITY_TAGS = {"mall": '["shop"="mall"]', "gym": '["leisure"="fitness_centr
 
 # ---- Where to Lepak (DECISIONS.md sections 3 and 11) ----
 EVENTS_PATH = DATA_DIR / "events.db"     # read-write event store; the snapshot stays read-only
-LEPAK_CHANNELS = ["sgweekend", "sgwhereto"]   # public broadcast channels with a t.me/s/ view
+# Public broadcast channels with a t.me/s/ view (DECISIONS.md section 7). sgbestnightlife
+# is on probation: its yield decides whether it stays.
+LEPAK_CHANNELS = ["sgweekend", "sgwhereto", "SGArtsChannel", "sgconcerts", "dateideas",
+                  "sgfitnesshealth", "TimeOutSG", "sgbestnightlife"]
 LLM_MODEL = "claude-haiku-4-5"
 LLM_BATCH_SIZE = 10                      # posts per extraction call
 EVENT_MERGE_RADIUS_M = 200.0             # duplicates: same date, similar title, this close

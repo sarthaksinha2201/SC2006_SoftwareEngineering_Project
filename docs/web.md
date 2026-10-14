@@ -21,10 +21,14 @@ GOWHERE_SECRET_KEY=<random string> flask --app "gowhere.web:create_app()" run
 | `POST /live/check` | Selection-time warning: JSON `{"warnings": [...], "incomplete": msg or null}`. Never checks Commute. |
 | `GET /lepak` | Where to Lepak search, refilled from this session's last search |
 | `POST /lepak` | Validates, looks up the starting point, filters by straight line, routes (at most 50), then redirects 303 to results. An invalid search, an unknown postal code, OneMap being down, or more than 50 candidates re-renders the search page with a 400 and a message. |
-| `GET /lepak/results?sort=&category=&page=` | This session's last search, reordered. Sort, chip and page only reorder the saved results and make no external call. |
+| `GET /lepak/results?sort=&hide=&page=` | This session's last search, reordered. `hide` repeats once per hidden category (FR 2.4.2). Sort, hidden categories and page only reorder the saved results and make no external call. The view is remembered, so an event's **Back to results** restores it (FR 2.5.3). |
 | `GET /lepak/events/<id>` | Event detail. From this session's search it has the travel time, route and (drive mode) freshly cached parking. Opened directly, it shows the event without travel. Unknown or ended: 404. |
 
 POST then redirect-then-GET keeps the results URL free of any user input.
+
+**Running the app:** `python -m gowhere.serve` starts Waitress in one process. Add
+`--ingest-every-hours 6` to also run event ingestion on a background thread. See
+docs/demo.md.
 
 ## Templates and the contract
 

@@ -73,7 +73,9 @@ Core tables are defined in `CORE_SCHEMA` in `gowhere/etl/build_snapshot.py`. Eac
 - Public Transport (`PublicTransportScorer`):
   - `mrt_exit`: every MRT **and LRT** exit, one set: "nearest exit" means the nearest MRT or LRT exit.
   - `public_transport_block`: nearest exit, straight-line distance and modelled walk time per block.
-  - `public_transport_area`: % of flats within 10 min, median and P90 walk, the median distance to an exit, `far_from_rail` (median distance above `meta.far_from_rail_m`), both percentile ranks, and the 0–10 score.
+  - `bus_stop`: the Qualifying Bus Stops: LTA DataMall stops served by at least 3 bus services, counting both directions once. Of 5,209 stops, the 4 in Johor Bahru are dropped and 3,330 qualify (14 Oct 2026).
+  - `public_transport_block` also holds the nearest qualifying bus stop, its straight-line distance and the walk time. These are NULL when the snapshot was built without bus data.
+  - `public_transport_area`: one row per area and mode (`rail`, `bus`, `either`). Each row has the % of flats within 10 min, the median and P90 walk, the median distance to that mode's nearest stop or exit, `far_from_rail` (median rail exit distance above `meta.far_from_rail_m`), both percentile ranks (ranked within the mode) and the 0–10 score. Without bus data only `rail` rows exist, and the factor offers no mode choice.
 
 - Housing Affordability (`HousingAffordabilityScorer`):
   - `housing_transaction`: every HDB resale in the window, placed in its area through its block. Not aggregated, because the user's budget is only known at request time.

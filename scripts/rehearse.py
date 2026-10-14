@@ -25,9 +25,8 @@ env = {**os.environ, "GOWHERE_SECRET_KEY": "rehearsal"}
 if mode == "offline":   # every outbound connection fails, as with wifi off
     env.update(HTTP_PROXY="http://127.0.0.1:9", HTTPS_PROXY="http://127.0.0.1:9",
                http_proxy="http://127.0.0.1:9", https_proxy="http://127.0.0.1:9", NO_PROXY="")
-server = subprocess.Popen([f"{root}/.venv/bin/flask", "--app", "gowhere.web:create_app()", "run",
-                           "--port", str(PORT)], cwd=root, env=env,
-                          stdout=open(LOG, "w"), stderr=subprocess.STDOUT)
+server = subprocess.Popen([f"{root}/.venv/bin/python", "-m", "gowhere.serve", "--port", str(PORT)],
+                          cwd=root, env=env, stdout=open(LOG, "w"), stderr=subprocess.STDOUT)
 b = requests.Session(); b.trust_env = False       # the browser itself is local
 base = f"http://127.0.0.1:{PORT}"
 for _ in range(50):
@@ -48,13 +47,14 @@ def show(text, *patterns):
         for m in re.findall(p, text, re.S)[:6]:
             print("   ", re.sub(r"\s+", " ", m if isinstance(m, str) else " | ".join(m)).strip()[:160])
 
-live = {"include_public_transport": "1", "weight_public_transport": "6",
+live = {"include_public_transport": "1", "weight_public_transport": "6", "pt_mode": "either",
         "include_housing_affordability": "1", "weight_housing_affordability": "8",
         "flat_type": "4 ROOM", "budget_min": "400000", "budget_max": "700000",
         "min_remaining_lease_years": "60",
-        "include_amenities": "1", "weight_amenities": "5", "amenity_types": ["supermarket", "hawker_centre"],
+        "include_amenities": "1", "weight_amenities": "5",
+        "amenity_types": ["supermarket", "hawker_centre", "library", "mall", "gym", "cafe"],
         "include_greenery": "1", "weight_greenery": "4",
-        "include_healthcare": "1", "weight_healthcare": "5", "facility_type": "polyclinic"}
+        "include_healthcare": "1", "weight_healthcare": "5", "facility_type": "gp"}
 t = step("Home", "get", "/")
 t = b.post(base + "/live/check", data={**live, "areas": ["QUEENSTOWN", "TAMPINES", "PUNGGOL", "CHANGI"]}).json()
 print("\n## Selection-time check with Changi:", t)
@@ -71,21 +71,21 @@ t = step("Where to Live results again (reload)", "get", "/live/results")
 lepak = {"categories": ["Arts & Culture", "Music & Performances", "Family & Kids"], "date_option": "week",
          "origin": "postal", "postal": START, "mode": "pt", "max_minutes": "45"}
 t = step("Lepak search, public transport from 238801", "post", "/lepak", data=lepak)
-show(t, r"<h1>(.*?)</h1>", r'role="alert">(.*?)<', r"<h2><a[^>]*>(.*?)</a></h2>.*?<p>([^<]*(?:min |About )[^<]*)</p>")
+show(t, r"<h1>(.*?)</h1>", r'role="alert">(.*?)<', r"<h2><a[^>]*>(.*?)</a></h2>.*?<p[^>]*>([^<]*(?:min |About )[^<]*)</p>")
 first = re.search(r'/lepak/events/(\d+)', t)
 t2 = step("Sort soonest", "get", "/lepak/results?sort=soonest"); show(t2, r"<h2><a[^>]*>(.*?)</a></h2>")
-t2 = step("Chip Family & Kids", "get", "/lepak/results?category=Family+%26+Kids"); show(t2, r"<h2><a[^>]*>(.*?)</a></h2>")
+t2 = step("Hide Family & Kids", "get", "/lepak/results?hide=Family+%26+Kids"); show(t2, r"<h2><a[^>]*>(.*?)</a></h2>")
 if first:
     t2 = step("Event detail", "get", f"/lepak/events/{first.group(1)}")
-    show(t2, r"<h1>(.*?)</h1>", r"<p>([^<]*(?:min |About )[^<]*)</p>")
+    show(t2, r"<h1>(.*?)</h1>", r"<p[^>]*>([^<]*(?:min |About )[^<]*)</p>")
 t = step("Lepak search, drive", "post", "/lepak", data={**lepak, "mode": "drive"})
-show(t, r"<h1>(.*?)</h1>", r'role="alert">(.*?)<', r"<p>(Parking[^<]*|[\d,]+ car lots[^<]*)</p>")
+show(t, r"<h1>(.*?)</h1>", r'role="alert">(.*?)<', r"<p[^>]*>(Parking[^<]*|[\d,]+ car lots[^<]*|No carparks[^<]*)</p>")
 t = step("Lepak search from an HDB postal code (140051)", "post", "/lepak",
          data={**lepak, "postal": HDB})
-show(t, r"<h1>(.*?)</h1>", r'role="alert">(.*?)<', r"<h2><a[^>]*>(.*?)</a></h2>.*?<p>([^<]*(?:min |About )[^<]*)</p>")
+show(t, r"<h1>(.*?)</h1>", r'role="alert">(.*?)<', r"<h2><a[^>]*>(.*?)</a></h2>.*?<p[^>]*>([^<]*(?:min |About )[^<]*)</p>")
 t = step("Lepak search, use my location", "post", "/lepak",
          data={**lepak, "origin": "here", "lat": "1.3040", "lon": "103.8318", "postal": ""})
-show(t, r"<h1>(.*?)</h1>", r'role="alert">(.*?)<', r"<h2><a[^>]*>(.*?)</a></h2>.*?<p>([^<]*(?:min |About )[^<]*)</p>")
+show(t, r"<h1>(.*?)</h1>", r'role="alert">(.*?)<', r"<h2><a[^>]*>(.*?)</a></h2>.*?<p[^>]*>([^<]*(?:min |About )[^<]*)</p>")
 server.terminate(); server.wait()
 log = open(LOG).read()
 print(f"\n## Server log: {len(log.splitlines())} lines; '{DEST}' x{log.count(DEST)}, '{START}' x{log.count(START)}, "

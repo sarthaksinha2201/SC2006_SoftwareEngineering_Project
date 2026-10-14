@@ -62,10 +62,15 @@ As of 14 Oct, `.env` holds `ONEMAP_TOKEN` (expired) and `LTA_DATAMALL_KEY`.
 
 The inputs are exact. The Where to Live results come from the 14 Oct snapshot, rebuilt
 with the service-variety Bus measure (DECISIONS §18), using the 14 Oct defaults: five
-factors on, Public Transport set to Either, all amenity types, GP clinics. Step 5 uses
-the Commute minutes OneMap returned on 1 Oct: Queenstown 21.6, Tampines 67.4, Punggol
-67.2, Bedok 65. Routing is down until `ONEMAP_EMAIL` and `ONEMAP_PASSWORD` are added,
-so re-check steps 4 and 5 once it works.
+factors on, Public Transport set to Either, all amenity types, GP clinics.
+
+**Step 5's Commute figures are reconstructed, not measured.** They are Queenstown
+21.6, Tampines 67.4, Punggol 67.2 and Bedok 65 minutes. Routing has been down since
+3 Oct, so no live OneMap result was available. Instead, these are the only combination
+of previously recorded OneMap minutes that reproduces the 1 Oct results exactly against
+the 1 Oct snapshot. They must be re-measured once `ONEMAP_EMAIL` and `ONEMAP_PASSWORD`
+are in place, and steps 4 and 5 updated from the live run. Do not quote them in the
+report as measurements.
 
 ### Where to Live (about 3 minutes)
 

@@ -282,7 +282,7 @@ The median rather than the mean, because blocks separated from their station by 
 | @sgconcerts | **Use** *(14 Oct)* | 94.9k subscribers; every recent post carries an event date, named venue and start time. The highest-quality source found |
 | @dateideas | **Use** *(14 Oct)* | 60.1k subscribers, Singapore-specific; most posts name a venue and many give dates and opening times |
 | @sgfitnesshealth | **Use** *(14 Oct)* | 24.3k subscribers, ~5–8 posts/week; a mix of dated events and undated guides |
-| @TimeOutSG | **Use** *(14 Oct)* | ~14 posts/week, but many are listicles without event dates — high volume, lower yield per post |
+| @TimeOutSG | **Reject** *(14 Oct, corrected)* | **Dormant** — newest post 19 Jun 2026, and only 8 of its 40 newest posts pass the date pre-filter. An earlier assessment here claimed ~14 posts/week; that was inferred from clustered posting *times* on the web preview, which shows no dates. Frequency cannot be read from that page — only the newest post's date and the post-ID range are reliable |
 | @sgbestnightlife | **Use, on probation** *(14 Oct)* | A real channel, but posts are weekly roundups with no per-item dates. Kept because discards are logged, so the yield data can justify dropping it |
 | @singaporeruncalendar | **Reject** *(14 Oct)* | Dormant — the two newest posts are admin notices about 17 months of owner inactivity, and some events are overseas (Bali) |
 
@@ -449,3 +449,17 @@ Seven confirmed: @sgweekend, @sgwhereto, @SGArtsChannel, @sgconcerts, @dateideas
 
 **Decision:** Stored event text has `<` and `>` stripped, **in addition to** escaping on output.
 **Reason:** A code review found a real stored-XSS path: a venue name containing HTML executed when the user hovered a map marker, confirmed in a headless browser. The text comes from public Telegram posts — exactly the untrusted-input case the prompt-injection rules exist for — and the marker tooltip was writing it as HTML. Escaping on output is the correct fix; stripping on input is defence in depth for the next template that forgets. **This belongs in the report's security section:** it is the third defect found by taking untrusted input seriously, after the `round()` rounding bug and the postal code leaking through OneMap's error text.
+
+
+## 18. Bus access saturates (14 Oct 2026)
+
+**Finding:** Built exactly to the Data Dictionary, the Bus measure carries almost no information. **30 of 32 areas have 100% of flats within a 10-minute walk** of a qualifying stop (lowest 97.4%), and flat-weighted median walks span just 0.5–2.7 minutes. Even a 5-minute threshold leaves every area above 87%. So 70% of the Bus score would be a percentile rank of differences of a few tenths of a percent — noise dressed as a score.
+
+**Decision:** Redefine the Bus measure as **service richness**, not walking distance: `0.7 × percentile(flat-weighted median number of distinct bus services reachable within 400 m) + 0.3 × percentile(flat-weighted median walk to the nearest qualifying stop)`.
+**Reason:** The two modes differ in kind. Rail is **scarce**, so how far you walk to it is the whole question. Buses are **ubiquitous** — Singapore's network puts a stop within three minutes of essentially every HDB flat — so distance cannot discriminate, and what actually varies is *how many places you can get to* from the stops near you. Keeping the same two-component shape and the same 0.7/0.3 split as rail means only the access measure changes, not the formula. The data is already in hand: 26,833 route rows give the services at each stop, so no new source is needed.
+
+**Decision:** With the two modes measured differently, **Either = the higher of the two mode scores**, replacing "whichever is nearer".
+**Reason:** "Nearer" is meaningless once the measures aren't comparable. "Whichever mode serves you best" is what a user choosing Either actually means, and it stays hand-checkable. Note in the report that the maximum of two percentile ranks is not itself a percentile rank, so Either scores sit higher than either mode alone.
+
+**Decision:** The saturation finding is reported as a **result, not a defect**.
+**Reason:** "We implemented the specified measure, measured it on real data, found it could not discriminate, and changed the measure for that mode" is a stronger story than a measure that happened to work. It is also a genuine fact about Singapore worth stating: bus access is near-universal, so it is not a useful basis for choosing between neighbourhoods — rail access and service variety are.

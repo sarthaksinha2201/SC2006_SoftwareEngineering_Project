@@ -11,9 +11,9 @@ GoWhere (SC2006 Team 5). **Updated 1 Oct** — the backend is now built and merg
 | Task | State | Priority |
 |---|---|---|
 | **S1** Data acquisition | **Mostly done** — 12 datasets already fetched. Only bus stops remain, blocked on a key | Low |
-| **S2** Telegram scraper | **Not started — nothing else can produce live events** | **1st** |
-| **S3** Templates | **Not started** — the contract and placeholders are ready for you | **2nd** |
-| **S4** Diagrams + test tables | **Not started** — must match the refactored code, not the Lab 1 design | **3rd** |
+| **S2** Telegram scraper | **Done** — merged 13 Oct, in use | — |
+| **S3** Templates | **Not started** — the contract and placeholders are ready for you | **1st** |
+| **S4** Diagrams + test tables | **Not started** — must match the refactored code, not the Lab 1 design | **2nd** |
 
 ## Ground rules
 
@@ -51,7 +51,7 @@ gowhere.ingest.telegram.fetch_posts(channel: str, since_post_id: str | None = No
 
 **How:** public channels serve plain HTML at `https://t.me/s/<channel>` — no login, no API key, no Telegram account. `requests` + BeautifulSoup. **Don't** use the Telegram API or a headless browser; both were considered and rejected (see `DECISIONS.md`).
 
-**Channels:** `sgweekend`, `sgwhereto`, `SGArtsChannel`, `sgconcerts`, `dateideas`, `sgfitnesshealth`, `TimeOutSG` are confirmed, plus `sgbestnightlife` on probation. Not `sgnightlife` — it's a group, not a broadcast channel, with no post feed. The test for any new one: can you open `t.me/s/<name>` in a browser and see posts?
+**Channels:** `sgweekend`, `sgwhereto`, `SGArtsChannel`, `sgconcerts`, `dateideas`, `sgfitnesshealth` are confirmed, plus `sgbestnightlife` on probation. `TimeOutSG` was dropped as dormant. Not `sgnightlife` — it's a group, not a broadcast channel, with no post feed. The test for any new one: can you open `t.me/s/<name>` in a browser and see posts?
 
 **Traps, each of which will cost you an afternoon:**
 

@@ -290,9 +290,8 @@ Six confirmed: @sgweekend, @sgwhereto, @SGArtsChannel, @sgconcerts, @dateideas, 
 
 ## 8. Open items *(reviewed 14 Oct 2026)*
 
+- *All four of Sarthak's tasks (S2 scraper, S3 templates, S4 diagrams and test table) were delivered and merged by 14 Oct. Templates are responsive with Leaflet and Chart.js vendored locally — no CDN.*
 - **Recompile the deliverable** — FR, NFR, Data Dictionary and use case descriptions, against what was actually built. Several FRs are now knowingly out of date; see §17.
-- **Sarthak's S3 templates** — placeholders are still in place; the mock fixtures are committed and waiting. *(S2, the scraper, was delivered on 13 Oct and is in use.)*
-- **Sequence diagrams (S4)** — must match the refactored code (ScoringStrategy, ScoringEngine, adapters), not the Lab 1 design.
 - **A wifi-off rehearsal with the network genuinely down** — the one run so far used a dead proxy, and a captive portal behaves differently.
 - *Settled since the last review:* the channel list (§7, seven usable), the division of work (`Sarthak.md`), and the Where to Live review findings (§16).
 

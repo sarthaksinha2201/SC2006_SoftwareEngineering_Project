@@ -1,6 +1,6 @@
 # Work Assignment — Sarthak
 
-GoWhere (SC2006 Team 5). **Updated 1 Oct** — the backend is now built and merged to `main`, so this brief has changed. S1 is mostly done; your highest-value task is now **S2**.
+GoWhere (SC2006 Team 5). **All four tasks delivered and merged as of 14 Oct — this brief is kept for reference.** *(Updated 1 Oct — the backend is now built and merged to `main`, so this brief has changed. S1 is mostly done; your highest-value task is now S2.)*
 
 **Read `DECISIONS.md` first** — every design decision with its reasoning. **`docs/`** has the technical write-ups (`demo.md` is the runbook, `web.md` describes the routes and page contracts, `frontend-notes.md` is written for you).
 
@@ -12,8 +12,8 @@ GoWhere (SC2006 Team 5). **Updated 1 Oct** — the backend is now built and merg
 |---|---|---|
 | **S1** Data acquisition | **Mostly done** — 12 datasets already fetched. Only bus stops remain, blocked on a key | Low |
 | **S2** Telegram scraper | **Done** — merged 13 Oct, in use | — |
-| **S3** Templates | **Not started** — the contract and placeholders are ready for you | **1st** |
-| **S4** Diagrams + test tables | **Not started** — must match the refactored code, not the Lab 1 design | **2nd** |
+| **S3** Templates | **Done** — merged 14 Oct (PR #2), responsive, Leaflet and Chart.js vendored locally | — |
+| **S4** Diagrams + test tables | **Done** — merged 14 Oct (PR #3), `docs/sequence-diagrams.md` | — |
 
 ## Ground rules
 

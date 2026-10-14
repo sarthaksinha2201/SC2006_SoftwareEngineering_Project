@@ -80,3 +80,59 @@ def test_backoff_is_jittered_exponential():
     s = FakeSession([Resp(429), Resp(429), Resp(200, {"ok": 1})])
     get_json(s, "u", backoff_s=2.0, sleep=slept.append, jitter=iter([0.0, 1.0]).__next__)
     assert slept == [1.0, 6.0]        # 2 s x 0.5, then 4 s x 1.5
+
+
+# ---- OneMap token renewal ----------------------------------------------------------
+
+import base64 as _b64
+import json as _json
+import logging as _logging
+
+from gowhere.adapters.onemap import TokenSource
+
+
+def _jwt(exp):
+    body = _b64.urlsafe_b64encode(_json.dumps({"exp": exp}).encode()).decode().rstrip("=")
+    return f"h.{body}.s"
+
+
+class TokenSession:
+    def __init__(self, tokens, status=200):
+        self.tokens, self.status, self.posts = list(tokens), status, []
+
+    def post(self, url, json=None, timeout=None):
+        self.posts.append(json)
+        body = {"access_token": self.tokens.pop(0)} if self.status == 200 else {"error": json["email"]}
+        return Resp(self.status, body)
+
+
+def test_token_is_fetched_once_and_renewed_near_expiry():
+    now = [1_000_000]
+    session = TokenSession([_jwt(1_000_000 + 3 * 86400), _jwt(1_300_000 + 3 * 86400)])
+    src = TokenSource("me@example.com", "pw", session=session, clock=lambda: now[0])
+    first = src.get()
+    assert src.get() == first and len(session.posts) == 1          # cached while valid
+    now[0] = 1_000_000 + 3 * 86400 - 300                            # 5 min before expiry
+    assert src.get() != first and len(session.posts) == 2
+
+
+def test_a_401_renews_the_token_and_retries_once():
+    tokens = TokenSource("me@example.com", "pw", session=TokenSession([_jwt(9e9), _jwt(9e9 + 1)]))
+    s = FakeSession([Resp(401, {"message": "Unauthorized"}), Resp(200, {"ok": 1})])
+    adapter = OneMapAdapter(session=s, tokens=tokens, min_interval_s=0, sleep=no_sleep)
+    assert adapter.walking_route((1, 2), (3, 4)) == {"ok": 1}
+    assert s.calls[0][2]["Authorization"] != s.calls[1][2]["Authorization"]
+
+
+def test_failed_token_request_never_echoes_the_login():
+    src = TokenSource("me@example.com", "secret-pw", session=TokenSession([], status=403))
+    with pytest.raises(HttpError) as e:
+        src.get()
+    assert "me@example.com" not in str(e.value) and "secret-pw" not in str(e.value)
+
+
+def test_expired_static_token_is_used_but_warned_about_once(caplog):
+    caplog.set_level(_logging.WARNING)
+    src = TokenSource(static=_jwt(1_000), clock=lambda: 2_000)
+    assert src.get() == _jwt(1_000) and src.get() == _jwt(1_000)
+    assert caplog.text.count("ONEMAP_TOKEN expired") == 1 and "ONEMAP_EMAIL" in caplog.text

@@ -53,6 +53,9 @@ class ScoringStrategy(ABC):
     label = ""   # name shown to users, e.g. "Public Transport"
     # Completes "<Factor> was left out because <area> ..." when an area has no data.
     missing_reason = "has no data for this factor"
+    # How an option is named in messages shown to users; otherwise its key with
+    # underscores as spaces ("facility_type" -> "facility type").
+    option_labels = {}
 
     # ---- ETL time (offline, builds the snapshot) --------------------------------
 

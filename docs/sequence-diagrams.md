@@ -13,7 +13,8 @@ in each section. UC IDs refer to the Use Case diagram in the Lab 2 deliverable
 Commute factor included), which includes **UC-7 Plan Route**, which includes
 **UC-8 Resolve Location**. Sources: `gowhere/web/routes.py` (`live_submit`),
 `gowhere/scoring/engine.py` (`ScoringEngine`), `gowhere/scoring/commute.py`
-(`CommuteScorer`, `CommuteRouter`), `gowhere/adapters/onemap.py` (`OneMapAdapter`).
+(`CommuteScorer`, `CommuteRouter`), `gowhere/services/location.py` (`LocationService`,
+the shared Resolve Location service), `gowhere/adapters/onemap.py` (`OneMapAdapter`).
 
 ```mermaid
 sequenceDiagram
@@ -23,6 +24,7 @@ sequenceDiagram
     participant Strategy as ScoringStrategy
     participant Comm as CommuteScorer
     participant Router as CommuteRouter
+    participant Loc as LocationService
     participant OneMap as OneMapAdapter
     participant API as OneMap API
 
@@ -40,11 +42,13 @@ sequenceDiagram
         Engine->>Comm: category_scores(snapshot, areas, options)
 
         Comm->>Router: locate(destination_postal)
-        Note over Router,API: «include» UC-8 Resolve Location
-        Router->>OneMap: search(postal)
+        Note over Loc,API: «include» UC-8 Resolve Location
+        Router->>Loc: postal(destination_postal)
+        Loc->>OneMap: search(postal, redact=True)
         OneMap->>API: GET /search
-        API-->>OneMap: coordinates
-        OneMap-->>Router: (lat, lon)
+        API-->>OneMap: results
+        OneMap-->>Loc: results
+        Loc-->>Router: (lat, lon), held in session memory only
 
         Comm->>Router: minutes(origins, postal, mode)
         Note over Router,API: «include» UC-7 Plan Route
@@ -153,7 +157,7 @@ sequenceDiagram
 
 ## 3. Ingest Events
 
-**UC-10 Ingest Events** — initiating actor **NULL** (system-triggered hourly; per
+**UC-10 Ingest Events** — initiating actor **NULL** (system-triggered every 6 hours; per
 `DECISIONS.md` section 6, no Scheduler actor is drawn, since a scheduler is internal
 to the system). Includes **UC-8 Resolve Location** when placing a venue. Sources:
 `gowhere/ingest/run.py` (`Ingestor`, `TelegramPostSource`), `gowhere/ingest/telegram.py`
@@ -174,7 +178,7 @@ sequenceDiagram
     participant OMAPI as OneMap API
     participant Store as EventStore
 
-    Note over Run: Triggered hourly by the system's own schedule.<br/>Initiating actor: NULL — no Scheduler actor (DECISIONS.md section 6).
+    Note over Run: Triggered every 6 hours by the system's own schedule.<br/>Initiating actor: NULL — no Scheduler actor (DECISIONS.md section 6).
 
     loop for each channel in the Telegram Channel List
         Run->>Source: posts(channel, since_post_id)

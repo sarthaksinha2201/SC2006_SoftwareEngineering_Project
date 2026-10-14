@@ -131,6 +131,16 @@ def test_clean_text_strips_control_characters_and_caps_length():
     assert clean_text("Night‮\x00 Market\n\n", 50) == "Night Market"
     assert clean_text("x" * 200, 10) == "x" * 9 + "…"
     assert clean_text(42, 10) is None
+    assert clean_text('Junction 8 <img src=x onerror="alert(1)">', 80) == 'Junction 8 img src=x onerror="alert(1)"'
+
+
+def test_the_map_tooltip_never_hands_leaflet_a_string():
+    """Leaflet sets string tooltip content with innerHTML. The tooltip must be built as
+    an element with textContent, so a venue name can never become markup."""
+    js = (ROOT / "gowhere" / "web" / "static" / "js" / "app.js").read_text()
+    body = js[js.index("function tooltipFor"):js.index("function initMap")]
+    assert "textContent" in body and "return el;" in body
+    assert "innerHTML" not in body
 
 
 # ---- prompt injection --------------------------------------------------------------
@@ -557,3 +567,38 @@ def test_snapshot_postal_location(tmp_path):
     snap = Snapshot(tmp_path / "s.db")
     assert snap.postal_location("560123") == (1.37, 103.85)
     assert snap.postal_location("238801") is None
+
+
+def test_telegram_outage_skips_the_channel_and_keeps_its_marker():
+    """S2's scraper raises HttpError when t.me is unreachable. The run must survive it,
+    leave that channel's marker alone and still process the other channels."""
+    class HalfDown(FilePostSource):
+        def posts(self, channel, since_post_id=None):
+            if channel == "sgweekend":
+                raise HttpError("ConnectionError")
+            return super().posts(channel, since_post_id)
+    ing = ingestor()
+    result = ing.run(HalfDown(FIXTURES / "posts.json"), CHANNELS, now=NOW)
+    assert result["telegram_failures"] == 1
+    assert ing.store.last_post_id("sgweekend") is None
+    assert ing.store.last_post_id("sgwhereto") == 4499
+    assert ing.store.db.execute("SELECT COUNT(*) FROM ingest_run").fetchone()[0] == 1
+
+
+def test_the_schedule_survives_a_failed_run(monkeypatch):
+    from gowhere.ingest import run as run_module
+    calls = []
+
+    class Boom(Ingestor):
+        def run(self, source, channels, now=None):
+            calls.append(1)
+            if len(calls) == 1:
+                raise RuntimeError("disk full")
+            raise KeyboardInterrupt          # end the test's loop on the second run
+    monkeypatch.setattr(run_module, "Ingestor", Boom)
+    monkeypatch.setattr(run_module, "EventStore", lambda: EventStore(":memory:"))
+    monkeypatch.setattr(run_module.time, "sleep", lambda s: None)
+    monkeypatch.setattr(run_module.logging, "FileHandler", lambda *a, **k: logging.NullHandler())
+    with pytest.raises(KeyboardInterrupt):
+        run_module.main(["--posts-file", str(FIXTURES / "posts.json"), "--every-hours", "6"])
+    assert len(calls) == 2                   # the first failure did not stop the loop

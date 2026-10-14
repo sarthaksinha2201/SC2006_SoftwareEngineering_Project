@@ -109,10 +109,14 @@ class Discard(Exception):
 
 
 def clean_text(value, limit):
-    """Plain single-line text: control and format characters removed, whitespace
-    collapsed, cut to `limit` characters. None or blank -> None."""
+    """Plain single-line text: control and format characters removed, angle brackets
+    removed, whitespace collapsed, cut to `limit` characters. None or blank -> None.
+
+    Pages escape event text anyway; dropping < and > as well means a stored field can
+    never carry markup, whatever a future client does with it (defence in depth)."""
     if not isinstance(value, str):
         return None
+    value = value.replace("<", " ").replace(">", " ")
     value = "".join(" " if unicodedata.category(c)[0] in "CZ" else c for c in value)
     value = " ".join(value.split())
     if not value:

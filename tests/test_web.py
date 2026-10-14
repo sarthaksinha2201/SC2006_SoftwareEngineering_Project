@@ -142,6 +142,27 @@ def test_invalid_submissions_rerender_setup_with_message(client, over, message):
     assert r.status_code == 400 and message in r.get_data(as_text=True)
 
 
+# Boundaries from docs/black-box-tests.md that had no automated test (rows 3-7, 13, 15).
+@pytest.mark.parametrize("over, message", [
+    ({"weight_greenery": "0"}, "Greenery: weight must be a whole number from 1 to 10"),
+    ({"areas": ["WEST", "EAST", "NORTH", "SOUTH", "CENTRE"]}, "select 2 to 4 neighbourhoods"),
+    ({"include_commute": "1", "weight_commute": "5", "destination_postal": "12345", "mode": "pt"},
+     "Commute: destination postal code must be a 6-digit Singapore postal code"),
+    ({"include_commute": "1", "weight_commute": "5", "destination_postal": "1234567", "mode": "pt"},
+     "Commute: destination postal code must be a 6-digit Singapore postal code"),
+])
+def test_boundary_rejections_name_things_as_users_see_them(client, over, message):
+    r = client.post("/live", data=form(**over))
+    page = r.get_data(as_text=True)
+    assert r.status_code == 400 and message in page
+    assert "destination_postal" not in page.split("<form")[0]     # no code keys in the message
+
+
+@pytest.mark.parametrize("over", [{"weight_greenery": "1"}, {"weight_greenery": "10"}])
+def test_weight_boundaries_accepted(client, over):
+    assert client.post("/live", data=form(**over)).status_code == 303
+
+
 def test_selection_time_check_warns_without_touching_commute(client):
     r = client.post("/live/check", data=form(
         include_housing_affordability="1", weight_housing_affordability="5", flat_type="4 ROOM",

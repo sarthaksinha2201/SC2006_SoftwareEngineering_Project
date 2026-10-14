@@ -124,23 +124,29 @@ class ScoringEngine:
         for key, choice in choices.items():
             if key not in self.strategies:
                 raise InvalidRequest(f"unknown factor: {key}")
+            # Messages reach users, so they name factors and options as users see them
+            # ("Commute: destination postal code ..."), never by their keys in code.
+            strategy = self.strategies[key]
+            label = strategy.label
+            opt = lambda name: strategy.option_labels.get(name, name.replace("_", " "))
             if not isinstance(choice.weight, int) or not MIN_WEIGHT <= choice.weight <= MAX_WEIGHT:
-                raise InvalidRequest(f"{key}: weight must be a whole number "
+                raise InvalidRequest(f"{label}: weight must be a whole number "
                                      f"from {MIN_WEIGHT} to {MAX_WEIGHT}")
-            allowed = self.strategies[key].options(self.snapshot)
+            allowed = strategy.options(self.snapshot)
             if set(choice.options) != set(allowed):
-                raise InvalidRequest(f"{key}: options must be exactly {sorted(allowed)}")
+                raise InvalidRequest(f"{label}: options must be exactly "
+                                     f"{', '.join(opt(n) for n in sorted(allowed))}")
             for name, value in choice.options.items():
                 if value not in allowed[name]:
                     if isinstance(allowed[name], SubsetOf):
-                        raise InvalidRequest(f"{key}: choose one or more of "
+                        raise InvalidRequest(f"{label}: choose one or more of "
                                              f"{', '.join(allowed[name].choices)}, each once")
                     if isinstance(allowed[name], TextPattern):
-                        raise InvalidRequest(f"{key}: {name} must be {allowed[name].description}")
+                        raise InvalidRequest(f"{label}: {opt(name)} must be {allowed[name].description}")
                     if isinstance(allowed[name], NumberRange):
-                        raise InvalidRequest(f"{key}: {name} must be a number from "
+                        raise InvalidRequest(f"{label}: {opt(name)} must be a number from "
                                              f"{allowed[name].minimum:g} to {allowed[name].maximum:g}")
-                    raise InvalidRequest(f"{key}: {name} must be one of {allowed[name]}")
+                    raise InvalidRequest(f"{label}: {opt(name)} must be one of {allowed[name]}")
             self.strategies[key].validate_options(choice.options)
         return {a: {k: info[a][k] for k in ("region", "n_blocks", "n_flats", "small_sample")}
                 for a in areas}

@@ -87,7 +87,14 @@ class Ingestor:
         return result
 
     def _channel(self, channel, source, now, counts, discards):
-        posts = source.posts(channel, self.store.last_post_id(channel))
+        try:
+            posts = source.posts(channel, self.store.last_post_id(channel))
+        except HttpError as e:
+            # Telegram unreachable: skip this channel this run. Its marker is untouched,
+            # so its posts are fetched next run; the other channels carry on.
+            counts["telegram_failures"] += 1
+            log.error("%s: could not fetch posts; marker not advanced: %s", channel, e)
+            return
         counts["posts_seen"] += len(posts)
         batch = []
         for i, post in enumerate(posts):
@@ -181,9 +188,15 @@ def main(argv=None):
                                         aliases=load_venue_aliases()))
     channels = args.channel or config.LEPAK_CHANNELS
     while True:
-        ingestor.run(source, channels)
         if not args.every_hours:
+            ingestor.run(source, channels)
             return
+        try:
+            ingestor.run(source, channels)
+        except Exception:
+            # One failed run must not end the schedule: log it and try again next time.
+            # Markers only move after a commit, so nothing is skipped.
+            log.exception("ingestion run failed; retrying in %s h", args.every_hours)
         time.sleep(args.every_hours * 3600)
 
 

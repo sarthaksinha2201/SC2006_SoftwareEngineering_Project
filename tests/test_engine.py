@@ -74,6 +74,12 @@ def test_tie_at_one_decimal_is_joint_rank():
     assert [(x["name"], x["rank"]) for x in r["areas"]] == [("ALPHA", 1), ("BETA", 1), ("DELTA", 3)]
 
 
+def test_four_neighbourhoods_is_the_valid_maximum():
+    e = engine(Stub("a", {"ALPHA": 9.0, "BETA": 6.0, "GAMMA": 4.0, "DELTA": 2.0}))
+    r = e.compare(["ALPHA", "BETA", "GAMMA", "DELTA"], {"a": FactorChoice(5)})
+    assert [x["rank"] for x in r["areas"]] == [1, 2, 3, 4]
+
+
 def test_close_call_at_exactly_point_two_despite_float_error():
     # 8.3 - 8.1 is 0.20000000000000107 in floating point; it must still count as <= 0.2
     e = engine(Stub("a", {"ALPHA": 8.3, "BETA": 8.1}))

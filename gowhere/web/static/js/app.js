@@ -19,10 +19,14 @@
     return { color: "#1d6f5c", weight: 2 };
   }
 
+  // Returns an element, never a string: Leaflet inserts string content as HTML, and on
+  // the event map the name is a venue taken from a public Telegram post (untrusted).
   function tooltipFor(layer) {
     var p = (layer.feature && layer.feature.properties) || {};
-    if (p.name && p.overall !== undefined) return p.name + ": " + p.overall + " / 10";
-    return p.name || "";
+    var el = document.createElement("span");
+    el.textContent = (p.name && p.overall !== undefined) ? p.name + ": " + p.overall + " / 10"
+                                                          : (p.name || "");
+    return el;
   }
 
   // Where to Live results: planning-area polygons coloured by rank. Event detail: the

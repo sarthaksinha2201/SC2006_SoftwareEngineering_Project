@@ -116,6 +116,8 @@ def test_paging(client, monkeypatch):
 
 @pytest.mark.parametrize("over, message", [
     ({"categories": []}, "Choose 1 to 4 categories"),
+    ({"categories": ["Arts & Culture", "Music & Performances", "Family & Kids",
+                     "Sales & Pop-ups", "Community"]}, "Choose 1 to 4 categories"),
     ({"postal": "12345"}, "6-digit"),
     ({"postal": "1234567"}, "6-digit"),
     ({"postal": "999999"}, "couldn&#39;t find that postal code"),
@@ -150,6 +152,10 @@ def test_offline_postal_codes(app, client, postal, status, text):
     if text:
         page = r.get_data(as_text=True)
         assert text in page and "couldn&#39;t find that postal code" not in page
+
+
+def test_one_category_is_enough(client):
+    assert client.post("/lepak", data=form(categories=["Community"])).status_code == 303
 
 
 def test_device_location(client):

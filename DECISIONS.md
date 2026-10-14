@@ -139,7 +139,7 @@ These were needed to make the golden test reproducible. None changes the design;
 **Reason:** PDPA, and it keeps the Security NFR ("no personally identifiable information") literally true.
 
 **Decision:** Ingest **every 6 hours**, not hourly.
-**Reason:** Cost is driven by post volume, not frequency — only unseen posts are processed, so hourly and 6-hourly cost nearly the same (about $5/month on Haiku 4.5 at $1/$5 per million tokens). 6-hourly is chosen for simpler operation. A manual run is available before the demo.
+**Reason:** Cost is driven by post volume, not frequency — only unseen posts are processed, so hourly and 6-hourly cost nearly the same. 6-hourly is chosen for simpler operation. A manual run is available before the demo. *(Measured 14 Oct: US$0.0100 for a full run across 7 channels, about US$0.04/day at 4 runs. See §19.)*
 
 **Decision:** **Regex pre-filter**, then **batch ~10 posts per LLM call**.
 **Reason:** Posts with no date-like text never reach the LLM, and batching avoids re-sending the instruction prompt for every post.
@@ -462,3 +462,20 @@ Six confirmed: @sgweekend, @sgwhereto, @SGArtsChannel, @sgconcerts, @dateideas, 
 
 **Decision:** The saturation finding is reported as a **result, not a defect**.
 **Reason:** "We implemented the specified measure, measured it on real data, found it could not discriminate, and changed the measure for that mode" is a stronger story than a measure that happened to work. It is also a genuine fact about Singapore worth stating: bus access is near-universal, so it is not a useful basis for choosing between neighbourhoods — rail access and service variety are.
+
+
+## 19. LLM provider, first live ingestion, and a retracted finding (14 Oct 2026)
+
+**Retraction:** The claim that "routing was dead for eleven days because the OneMap token expired" is **unproven and must not appear in the report.** Tested directly: OneMap accepted the 30 Sep token with HTTP 200 eleven days past its JWT `exp` claim, while a malformed or missing token gets a clean 401. So OneMap is not currently enforcing expiry, and whatever caused the earlier failures, that explanation does not hold.
+**Reason this is recorded rather than deleted:** the story was plausible, tidy, and wrong — a token with a visible expiry date, failures starting three days later. It was nearly written into the report as established fact. Self-renewal is still the right design, because nothing guarantees an old token keeps working, and it is verified live: a token due to expire in 60 seconds was replaced by a fresh 72-hour login. The code's warning was softened from "routing will fail" to "may be refused". **Keep this as a report item about verifying causes rather than inferring them.**
+
+**Decision:** The LLM provider is **OpenAI**, model `gpt-6-luna`, with reasoning effort set to low.
+**Reason:** The user supplied an OpenAI key. The model is documented for high-volume work at $0.10/M input and $0.50/M output; it is a reasoning model and reasoning tokens bill as output, hence low effort. The schema is sent as a strict JSON schema through Structured Outputs — our own validator is kept anyway, because it is also the defence against an injected post inventing a field.
+
+**Evidence for the Supportability NFR:** the provider swap changed **the adapter class and nothing else in production code**. One test outside it changed, because it had been built around an Anthropic-shaped fake client — test coupling, not a production leak, and worth reporting honestly as such. This is a stronger demonstration than the planned case, because nobody arranged it in advance.
+
+**Measured, first live ingestion (14 Oct, 7 channels):** 135 posts fetched → 25 dropped by the pre-filter → 110 sent to the model → 140 events extracted → **28 stored**. Discards: 53 already ended, 38 with no single venue, 21 venue not placed, 0 schema failures, 0 duplicates. Cost: 13 calls, 28,095 input and 14,424 output tokens, **US$0.0100 for the run**.
+**Reason this is recorded in full:** it is the project's only real measurement of extraction quality, and the discard breakdown is more useful than the headline. Three honest caveats: "already ended" is inflated because a first run reads weeks-old posts; "no single venue" is mostly roundup posts listing several events; and "venue not placed" is partly our own strict matcher rather than the model.
+
+**Decision:** Drop **@sgbestnightlife**.
+**Reason:** 0 events stored from 20 posts, with only 6 passing the date pre-filter. It was kept on probation precisely so the yield data could decide, and it has.

@@ -50,13 +50,13 @@ GOWHERE_SECRET_KEY=$(openssl rand -hex 32) .venv/bin/python -m gowhere.serve
 | Key | Used for | Without it |
 |---|---|---|
 | `ONEMAP_EMAIL` + `ONEMAP_PASSWORD` | OneMap routing: Commute, Lepak travel times, route lines and directions. The app fetches a token and renews it before its 3-day expiry. | Postal lookups still work. Commute is left out and named as such, and every Lepak event shows its straight-line distance as an estimate. |
-| `ONEMAP_TOKEN` (fallback) | The same, until it expires after 3 days. The 30 Sep token expired on 3 Oct, so routing was down until renewal was added. | As above, and the log warns once that the token has expired. |
+| `ONEMAP_TOKEN` (fallback) | The same, with no renewal. Its `exp` claim says 3 days. On 14 Oct, OneMap still accepted the 30 Sep token 11 days past that claim, so the claim is not reliably enforced, but nothing guarantees how long a token keeps working. | As above, and the log warns once when the token is past its `exp` claim. |
 | `OPENAI_API_KEY` | Event extraction at ingestion (OpenAI `gpt-6-luna`) | Ingestion stores nothing and keeps each channel's place. The app serves whatever `data/events.db` already holds. |
 | `LTA_DATAMALL_KEY` | Live carpark availability (drive mode), and bus stops and routes when the snapshot is rebuilt | Drive-mode results say "Parking information unavailable"; everything else shows. A rebuilt snapshot would be rail-only. |
 | `GOWHERE_SECRET_KEY` (environment) | Signing the session cookie | A random key is used, so sessions reset when the server restarts. |
 
-As of 14 Oct, `.env` holds `ONEMAP_TOKEN` (expired) and `LTA_DATAMALL_KEY`.
-`ONEMAP_EMAIL`, `ONEMAP_PASSWORD` and `OPENAI_API_KEY` are still to add.
+As of 14 Oct, `.env` holds every key above. Token renewal was verified live: a
+token due to expire was replaced by a fresh login with 72 hours of validity.
 
 ## 3. The five-minute script
 
@@ -64,13 +64,10 @@ The inputs are exact. The Where to Live results come from the 14 Oct snapshot, r
 with the service-variety Bus measure (DECISIONS §18), using the 14 Oct defaults: five
 factors on, Public Transport set to Either, all amenity types, GP clinics.
 
-**Step 5's Commute figures are reconstructed, not measured.** They are Queenstown
-21.6, Tampines 67.4, Punggol 67.2 and Bedok 65 minutes. Routing has been down since
-3 Oct, so no live OneMap result was available. Instead, these are the only combination
-of previously recorded OneMap minutes that reproduces the 1 Oct results exactly against
-the 1 Oct snapshot. They must be re-measured once `ONEMAP_EMAIL` and `ONEMAP_PASSWORD`
-are in place, and steps 4 and 5 updated from the live run. Do not quote them in the
-report as measurements.
+**Step 5's Commute figures were measured live** on OneMap on 14 Oct 2026, for a weekday
+8:30 am departure: Queenstown 21.6, Punggol 67.2, Tampines 67.4 and Bedok 65.0 minutes.
+They match exactly the figures previously reconstructed from the 1 Oct results, which
+confirms the reconstruction method.
 
 ### Where to Live (about 3 minutes)
 

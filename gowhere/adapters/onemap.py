@@ -97,7 +97,7 @@ class TokenSource:
         exp = token_expiry(self.static)
         if exp is not None and exp < self.clock() and not self._warned:
             self._warned = True
-            log.warning("ONEMAP_TOKEN expired at %s UTC, so routing will fail. Set ONEMAP_EMAIL "
+            log.warning("ONEMAP_TOKEN expired at %s UTC, so OneMap may refuse it. Set ONEMAP_EMAIL "
                         "and ONEMAP_PASSWORD in .env for automatic renewal.",
                         time.strftime("%Y-%m-%d %H:%M", time.gmtime(exp)))
 

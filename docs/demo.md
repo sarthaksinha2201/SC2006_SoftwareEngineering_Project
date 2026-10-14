@@ -16,7 +16,7 @@ python3.13 -m venv .venv
 cat > .env <<'END'
 ONEMAP_EMAIL=...
 ONEMAP_PASSWORD=...
-ANTHROPIC_API_KEY=...
+OPENAI_API_KEY=...
 LTA_DATAMALL_KEY=...
 END
 
@@ -51,12 +51,12 @@ GOWHERE_SECRET_KEY=$(openssl rand -hex 32) .venv/bin/python -m gowhere.serve
 |---|---|---|
 | `ONEMAP_EMAIL` + `ONEMAP_PASSWORD` | OneMap routing: Commute, Lepak travel times, route lines and directions. The app fetches a token and renews it before its 3-day expiry. | Postal lookups still work. Commute is left out and named as such, and every Lepak event shows its straight-line distance as an estimate. |
 | `ONEMAP_TOKEN` (fallback) | The same, until it expires after 3 days. The 30 Sep token expired on 3 Oct, so routing was down until renewal was added. | As above, and the log warns once that the token has expired. |
-| `ANTHROPIC_API_KEY` | Event extraction at ingestion | Ingestion stores nothing and keeps each channel's place. The app serves whatever `data/events.db` already holds. |
+| `OPENAI_API_KEY` | Event extraction at ingestion (OpenAI `gpt-6-luna`) | Ingestion stores nothing and keeps each channel's place. The app serves whatever `data/events.db` already holds. |
 | `LTA_DATAMALL_KEY` | Live carpark availability (drive mode), and bus stops and routes when the snapshot is rebuilt | Drive-mode results say "Parking information unavailable"; everything else shows. A rebuilt snapshot would be rail-only. |
 | `GOWHERE_SECRET_KEY` (environment) | Signing the session cookie | A random key is used, so sessions reset when the server restarts. |
 
 As of 14 Oct, `.env` holds `ONEMAP_TOKEN` (expired) and `LTA_DATAMALL_KEY`.
-`ONEMAP_EMAIL`, `ONEMAP_PASSWORD` and `ANTHROPIC_API_KEY` are still to add.
+`ONEMAP_EMAIL`, `ONEMAP_PASSWORD` and `OPENAI_API_KEY` are still to add.
 
 ## 3. The five-minute script
 
@@ -145,7 +145,7 @@ minutes, and the three or four categories with the most events.
 
 The web app shows whatever `data/events.db` holds. `python -m gowhere.ingest.run`
 fetches every channel in `config.LEPAK_CHANNELS` using Sarthak's scraper, extracts
-events with the LLM and stores them. It needs `ANTHROPIC_API_KEY`; without it the run
+events with the LLM and stores them. It needs `OPENAI_API_KEY`; without it the run
 stores nothing and keeps each channel's place.
 
 **Measured 14 Oct, before the LLM step:** the scraper read the 40 newest posts from

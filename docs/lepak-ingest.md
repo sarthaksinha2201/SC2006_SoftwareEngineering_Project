@@ -5,7 +5,7 @@
 ```
 posts (S2 contract, newer than the channel's marker)
   -> regex pre-filter          no date-like text: never sent to the LLM
-  -> LLM extraction            batches of 10, claude-haiku-4-5, forced tool call
+  -> LLM extraction            batches of 10, OpenAI gpt-6-luna, strict JSON schema
   -> validation                every field; failures discarded with a reason
   -> venue placement           OneMap search via LocationService; unplaced: discarded
   -> merge and store           data/events.db, then the channel's marker moves
@@ -19,8 +19,34 @@ posts (S2 contract, newer than the channel's marker)
 | `python -m gowhere.ingest.run --posts-file F` | Read post records from a file instead of the scraper |
 | `python -m gowhere.ingest.run --report` | Yield of the recent runs |
 
-Needs `ANTHROPIC_API_KEY` in `.env`. Without it every LLM call fails and nothing moves.
+Needs `OPENAI_API_KEY` in `.env`. Without it every LLM call fails and nothing moves.
 That is the designed failure path, not a crash.
+
+## The LLM adapter
+
+`gowhere.adapters.llm.LlmAdapter` is the only code that knows which provider is used.
+The pipeline calls `call_tool(system, user, tool)` and gets back a dict shaped by the
+tool's schema.
+
+- **Provider and model:** OpenAI's Responses API with `gpt-6-luna`, OpenAI's model for
+  high-volume tasks. On 14 Oct 2026 it cost US$0.10 per million input tokens and
+  US$0.50 per million output tokens. It is a reasoning model, and reasoning tokens are
+  billed as output, so `config.LLM_REASONING_EFFORT` is `low`.
+- **Structured Outputs:** the `record_events` schema is sent as a strict JSON schema, so
+  the API rejects any reply that does not fit it. `extract.validate` still checks every
+  field. It is the second line of defence, and the one that stops a post persuading the
+  model to put a made-up value in a valid field.
+- **Privacy:** `store=False`, so OpenAI keeps no copy of the posts.
+- **The key** is never in an error or a log line. Error text is scrubbed of the key, and
+  of anything shaped like one, before it leaves the adapter. The SDK's exception is not
+  chained, because it can carry the request headers. `tests/test_llm_adapter.py`
+  checks this.
+- **Cost:** every call logs its token counts, and the adapter keeps running totals
+  (`usage`, `cost_usd()`).
+
+The provider was switched from Anthropic to OpenAI on 14 Oct 2026, because that is the key
+the team has. The switch changed the adapter class, its own tests, the model constant
+and the dependency. Nothing else in the pipeline changed.
 
 ## The rules
 
@@ -150,7 +176,7 @@ The fixture is 31 real posts, saved 30 Sep 2026: 20 from @sgweekend and 11 from
 6-hourly run sees mostly new posts.
 
 **Caveat:** the LLM replies in `tests/fixtures/lepak/extractions.json` are hand-written to
-the extraction rules, not recorded from Haiku, because there is no API key yet. The
+the extraction rules, not recorded from the model, because there is no API key yet. The
 pipeline, validator, placement, merge and marker are tested; the model's own accuracy is
 not. Once a key exists:
 

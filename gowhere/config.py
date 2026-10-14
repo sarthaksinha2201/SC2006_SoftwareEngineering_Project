@@ -95,7 +95,8 @@ EVENTS_PATH = DATA_DIR / "events.db"     # read-write event store; the snapshot 
 # is on probation: its yield decides whether it stays.
 LEPAK_CHANNELS = ["sgweekend", "sgwhereto", "SGArtsChannel", "sgconcerts", "dateideas",
                   "sgfitnesshealth", "sgbestnightlife"]   # TimeOutSG dropped: dormant (section 7)
-LLM_MODEL = "claude-haiku-4-5"
+LLM_MODEL = "gpt-6-luna"                 # OpenAI: cheapest model for bulk structured extraction
+LLM_REASONING_EFFORT = "low"             # reasoning tokens bill as output; extraction needs little
 LLM_BATCH_SIZE = 10                      # posts per extraction call
 EVENT_MERGE_RADIUS_M = 200.0             # duplicates: same date, similar title, this close
 EVENT_MAX_DAYS_AHEAD = 400               # an event dated further out is treated as a misread

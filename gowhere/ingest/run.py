@@ -196,6 +196,7 @@ def main(argv=None):
     ap.add_argument("--replay-replies", help="answer from this {post_id: events} JSON instead "
                                               "of calling the LLM (rehearsal only)")
     args = ap.parse_args(argv)
+    config.load_dotenv()      # OPENAI_API_KEY and the OneMap credentials live in .env
     config.LOG_DIR.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s",
                         handlers=[logging.StreamHandler(), logging.FileHandler(LOG_FILE)])

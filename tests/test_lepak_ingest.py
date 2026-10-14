@@ -12,7 +12,7 @@ from types import SimpleNamespace
 import pytest
 
 from gowhere.adapters.http import HttpError
-from gowhere.adapters.llm import LlmAdapter, LlmError
+from gowhere.adapters.llm import LlmError
 from gowhere.config import ROOT
 from gowhere.etl.addresses import match_place
 from gowhere.etl.reference import load_venue_aliases
@@ -290,9 +290,11 @@ def test_llm_failure_keeps_the_marker_and_the_next_run_catches_up():
     assert key(store) == key(clean.store)                          # nothing lost, nothing doubled
 
 
-def test_llm_unavailable_stores_nothing_and_moves_no_marker():
+def test_llm_unavailable_stores_nothing_and_moves_no_marker(monkeypatch):
+    from gowhere.adapters import llm
+    monkeypatch.setattr(llm.os, "getenv", lambda name, default=None: None)   # no key at all
     store = EventStore(":memory:")
-    result = ingestor(store, LlmAdapter(client=_Client(raises=True))).run(
+    result = ingestor(store, llm.LlmAdapter()).run(
         FilePostSource(FIXTURES / "posts.json"), CHANNELS, now=NOW)
     assert result["llm_failures"] == 2 and result.get("events_stored", 0) == 0
     assert store.last_post_id("sgweekend") is None and store.last_post_id("sgwhereto") is None
@@ -467,43 +469,6 @@ def test_venue_searches_are_cached_but_a_users_postal_code_never_is():
 
 
 # ---- the LLM adapter ----------------------------------------------------------------
-
-class _Client:
-    def __init__(self, raises=False, content=(), stop_reason="tool_use"):
-        self.raises, self.content, self.stop_reason = raises, list(content), stop_reason
-        self.messages = self
-
-    def create(self, **kwargs):
-        self.kwargs = kwargs
-        if self.raises:
-            raise TimeoutError("simulated")
-        return SimpleNamespace(content=self.content, stop_reason=self.stop_reason)
-
-
-def test_llm_adapter_forces_the_tool_and_returns_its_input():
-    block = SimpleNamespace(type="tool_use", name="record_events", input={"events": []})
-    client = _Client(content=[block])
-    assert LlmAdapter(client=client).call_tool("s", "u", TOOL) == {"events": []}
-    assert client.kwargs["tool_choice"] == {"type": "tool", "name": "record_events"}
-    assert client.kwargs["model"] == "claude-haiku-4-5"
-
-
-@pytest.mark.parametrize("client", [
-    _Client(raises=True),
-    _Client(content=[SimpleNamespace(type="text", text="Sure! Here are the events...")]),
-    _Client(content=[SimpleNamespace(type="tool_use", name="record_events", input={})],
-            stop_reason="max_tokens"),
-])
-def test_llm_adapter_failures_raise(client):
-    with pytest.raises(LlmError):
-        LlmAdapter(client=client).call_tool("s", "u", TOOL)
-
-
-def test_llm_adapter_without_a_key(monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    with pytest.raises(LlmError, match="ANTHROPIC_API_KEY"):
-        LlmAdapter().call_tool("s", "u", TOOL)
-
 
 def test_a_failed_postal_lookup_is_remembered_briefly():
     t = [0.0]

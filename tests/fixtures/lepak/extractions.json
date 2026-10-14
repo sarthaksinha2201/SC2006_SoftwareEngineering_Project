@@ -1,5 +1,5 @@
 {
- "_note": "Hand-written stand-in for the LLM's replies to tests/fixtures/lepak/posts.json, in the record_events tool's shape minus the batch-relative 'post' number. Written to the extraction rules in gowhere/ingest/extract.py, not recorded from the model: no ANTHROPIC_API_KEY yet. Replace with a real recording once there is one.",
+ "_note": "Hand-written stand-in for the LLM's replies to tests/fixtures/lepak/posts.json, in the record_events tool's shape minus the batch-relative 'post' number. Written to the extraction rules in gowhere/ingest/extract.py, not recorded from the model. Replace with a real recording once there is one.",
  "sgweekend/3788": [
   {
    "title": "HOMEGROWN Music Festival",

@@ -2,6 +2,6 @@ flask>=3.0
 requests>=2.32
 shapely>=2.0
 pytest>=8.0
-anthropic>=1.0
+openai>=3.31
 beautifulsoup4>=4.12
 waitress>=3.0

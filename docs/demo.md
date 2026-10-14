@@ -33,7 +33,7 @@ GOWHERE_SECRET_KEY=$(openssl rand -hex 32) .venv/bin/python -m gowhere.serve
 - **Demo day:** add `--ingest-every-hours 6`. The server then fetches events at start
   and every 6 hours on a background thread, in the same single process.
   `--host 0.0.0.0` lets a phone on the same Wi-Fi open it.
-- **Checks:** `.venv/bin/python -m pytest -q` should report 382 passed. It needs no
+- **Checks:** `.venv/bin/python -m pytest -q` should report 383 passed. It needs no
   network and no keys.
 - **The snapshot** (`data/snapshot.db`, rebuilt 14 Oct 2026 with bus data) is
   committed, so a clean clone runs as it is (DECISIONS §14).
@@ -233,17 +233,25 @@ covering all six screens plus the error and empty states.
 | Sideways scroll at phone width | 0 screens | 0 screens |
 | Bar chart (vendored Chart.js) | Renders | Renders |
 | Area map (vendored Leaflet) | Outlines and tiles | Outlines on a blank background |
-| Event map | Start point, route and venue, with 7 direction steps | Venue pin only (no route, so no start point) |
+| Event map | Start point, route and venue, with 7 direction steps | Start point and venue (no route), so the straight-line estimate has two points on the map |
 | Selection-time warning (Changi) | 107 ms | 3 ms |
 | Where to Live results with Commute | 1.1 s | 0.7 s |
-| Lepak search, public transport | 6.0–7.0 s (238801) | 0.7–1.2 s (140051, straight-line estimates) |
+| Lepak search, public transport | 10 timed runs from 238801, 20 events routed each, fresh session per run, click to page load with no idle wait: **median 5.1 s, 90th percentile 6.1 s, max 6.2 s**. All 19 successful browser runs: median 5.0 s, max 6.9 s. | 0.7–1.2 s (140051, straight-line estimates) |
 | Lepak, use my location | 5.7–8.1 s | 0.8 s |
 | Lepak drive with parking | 3.7–4.2 s, live lot counts | 0.7–3.9 s, "Parking information unavailable" |
 | Sort, chips, paging, detail, back | under 1.3 s each; Back restores sort, hidden chips and page | same |
 | Postal code in any URL, the cookie or the server log | 0 (the cookie holds only `sid`) | 0 |
 
-These times are wall-clock, from click until the network had been idle for 0.5 s. They
-include that 0.5 s idle wait.
+Other times are wall-clock, from click until the network had been idle for 0.5 s, and
+include that 0.5 s wait.
+
+- **One run timed out:** one browser run of the 20 attempted got no page within 60 s.
+  The server stayed responsive. Six plain-HTTP runs straight afterwards took 4.1–7.2 s,
+  and the next 10 browser runs all succeeded, so the cause is undetermined.
+- **OneMap throttling:** OneMap answered some routing calls with HTTP 429 when searches
+  repeated every 10–15 s. The retry recovered every time.
+- **Screenshots:** Puppeteer's full-page screenshots drop Leaflet's SVG layer and tiles.
+  Judge maps from element screenshots.
 
 **Fixed during the browser rehearsal:**
 - **Shared database connection:** the snapshot shared one SQLite connection across

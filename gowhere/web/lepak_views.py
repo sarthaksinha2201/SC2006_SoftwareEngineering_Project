@@ -219,8 +219,10 @@ def results_view(saved, sort, hidden, page, now, last_updated=None):
 
 def event_view(r, mode, now, back=None, origin=None):
     """The event detail screen: its card plus a map of the venue and, when the event
-    came from this session's search, the starting point, the route and step-by-step
-    directions (FR 2.5.2). `back` is the results view to return to (FR 2.5.3)."""
+    came from this session's search, the starting point, and the route and
+    step-by-step directions when there is one (FR 2.5.2). The start is drawn even with
+    no route (offline, or unroutable), so the straight-line estimate has two points to
+    refer to. `back` is the results view to return to (FR 2.5.3)."""
     c = card(r, mode, now) if mode else card({**r, "route": None, "distance_m": None}, "pt", now)
     if not mode:
         c["travel"], c["travel_estimated"] = None, False
@@ -229,10 +231,10 @@ def event_view(r, mode, now, back=None, origin=None):
     if r.get("route"):
         features.insert(0, {"type": "Feature", "geometry": r["route"]["geometry"],
                             "properties": {"kind": "route"}})
-        if origin:      # the user's own starting point, on their own page only
-            features.append({"type": "Feature",
-                             "geometry": {"type": "Point", "coordinates": [origin[1], origin[0]]},
-                             "properties": {"kind": "start", "name": "Your starting point"}})
+    if origin:          # the user's own starting point, on their own page only
+        features.append({"type": "Feature",
+                         "geometry": {"type": "Point", "coordinates": [origin[1], origin[0]]},
+                         "properties": {"kind": "start", "name": "Your starting point"}})
     parking = r.get("parking")
     return {**c, "map": {"type": "FeatureCollection", "features": features},
             "steps": (r.get("route") or {}).get("steps", []),

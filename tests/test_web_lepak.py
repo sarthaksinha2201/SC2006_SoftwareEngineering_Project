@@ -238,6 +238,18 @@ def test_event_detail(client):
     assert client.get("/lepak/events/9999").status_code == 404
 
 
+def test_unroutable_event_map_still_shows_where_you_start(client):
+    """Offline or unroutable: venue and start, so the straight-line estimate has two
+    points on the map rather than one pin on a blank background."""
+    client.post("/lepak", data=form())
+    events = EventStore(client.application.config["EVENTS_PATH"]).events(LEPAK_NOW)
+    bellygom = next(e for e in events if e["title"] == "BellyGom Summer Day Out Party")
+    page = client.get(f"/lepak/events/{bellygom['id']}").get_data(as_text=True)
+    assert "straight-line estimate" in page
+    assert '"kind": "start"' in page and '"kind": "venue"' in page
+    assert '"kind": "route"' not in page and "Directions" not in page
+
+
 def test_event_text_is_escaped(app, client):
     store = EventStore(app.config["EVENTS_PATH"])
     store.commit_batch([{"title": "<script>alert(1)</script>", "category": "Arts & Culture",

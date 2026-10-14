@@ -392,6 +392,11 @@ dialog.modal::backdrop { background: rgba(0, 0, 0, 0.45); }
   h1 { font-size: 1.35rem; }
   .form-row { flex-direction: column; }
   table.results { min-width: 480px; }
+  /* Each factor cell is its score with the summary beneath. Squeezed into 390 px the
+     summaries wrapped a word or two per line; a minimum column width keeps them
+     readable, and the table scrolls inside .table-scroll, never the page (15 Oct). */
+  table.results:not(.breakdown) td:nth-child(n+4),
+  table.results:not(.breakdown) th:nth-child(n+4) { min-width: 10rem; }
 }
 
 /* Results chart and breakdown (FR 1.5.3, FR 1.4.4) */

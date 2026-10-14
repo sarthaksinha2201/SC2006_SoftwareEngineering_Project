@@ -1,6 +1,8 @@
 flask>=3.0
 requests>=2.32
-shapely>=2.0
+# <2.2: Shapely 2.2 deprecates shapely.ops.transform (gowhere/etl/geo.py), which floods a
+# fresh clone's test run with warnings. Migrate to shapely.transform after demo week.
+shapely>=2.0,<2.2
 pytest>=8.0
 openai>=3.31
 beautifulsoup4>=4.12

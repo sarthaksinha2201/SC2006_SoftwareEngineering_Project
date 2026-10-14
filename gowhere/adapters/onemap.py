@@ -116,10 +116,23 @@ def shared_tokens():
         return _shared
 
 
+# Connections kept open per host: at least gowhere.lepak.routing.MAX_WORKERS, or parallel
+# routing discards and reopens connections ("Connection pool is full", 14 Oct rehearsal).
+POOL_MAXSIZE = 16
+
+
+def _pooled_session():
+    session = requests.Session()
+    adapter = requests.adapters.HTTPAdapter(pool_maxsize=POOL_MAXSIZE)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
+
+
 class OneMapAdapter:
     def __init__(self, session=None, token=None, min_interval_s=None, sleep=time.sleep,
                  retries=4, timeout_s=30, tokens=None):
-        self.session = session or requests.Session()
+        self.session = session or _pooled_session()
         self.retries, self.timeout_s = retries, timeout_s
         # An explicit token (tests, one-off scripts) is used as given; otherwise the
         # shared, self-renewing source.

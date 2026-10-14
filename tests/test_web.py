@@ -130,12 +130,12 @@ def test_dropped_factor_named_with_area_and_reason(client):
 
 
 @pytest.mark.parametrize("over, message", [
-    ({"areas": ["WEST"]}, "select 2 to 4"),
+    ({"areas": ["WEST"]}, "Select 2 to 4 neighbourhoods."),
     ({"weight_greenery": "eleven"}, "whole number"),
     ({"weight_greenery": "11"}, "weight must be"),
     ({"include_housing_affordability": "1", "weight_housing_affordability": "5",
       "flat_type": "4 ROOM", "budget_min": "700000", "budget_max": "400000"},
-     "budget minimum must not exceed"),
+     "Budget minimum must not exceed"),
 ])
 def test_invalid_submissions_rerender_setup_with_message(client, over, message):
     r = client.post("/live", data=form(**over))
@@ -145,7 +145,7 @@ def test_invalid_submissions_rerender_setup_with_message(client, over, message):
 # Boundaries from docs/black-box-tests.md that had no automated test (rows 3-7, 13, 15).
 @pytest.mark.parametrize("over, message", [
     ({"weight_greenery": "0"}, "Greenery: weight must be a whole number from 1 to 10"),
-    ({"areas": ["WEST", "EAST", "NORTH", "SOUTH", "CENTRE"]}, "select 2 to 4 neighbourhoods"),
+    ({"areas": ["WEST", "EAST", "NORTH", "SOUTH", "CENTRE"]}, "Select 2 to 4 neighbourhoods."),
     ({"include_commute": "1", "weight_commute": "5", "destination_postal": "12345", "mode": "pt"},
      "Commute: destination postal code must be a 6-digit Singapore postal code"),
     ({"include_commute": "1", "weight_commute": "5", "destination_postal": "1234567", "mode": "pt"},
@@ -333,3 +333,17 @@ def test_view_model_wording():
     assert rec["headline"] == "A and B are joint first with 6.2 out of 10."
     assert rec["because"] == "" and "could swap them" in rec["close_call_text"]
     assert rec["reasons"][1] == {"label": "Y", "contribution": "3.5", "favours": "B"}
+
+
+def test_snapshot_is_safe_to_share_between_threads():
+    """Waitress serves requests on several threads; the setup form's checks can arrive
+    together. A single shared connection failed under exactly this (14 Oct rehearsal)."""
+    from concurrent.futures import ThreadPoolExecutor
+    from gowhere import config
+    from gowhere.snapshot import Snapshot
+    snap = Snapshot(config.SNAPSHOT_PATH)
+    expected = snap.query("SELECT name FROM planning_area ORDER BY name")
+    with ThreadPoolExecutor(8) as pool:
+        results = list(pool.map(lambda _: snap.query("SELECT name FROM planning_area ORDER BY name"),
+                                range(400)))
+    assert all(r == expected for r in results)

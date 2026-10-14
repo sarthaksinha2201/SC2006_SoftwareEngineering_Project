@@ -402,3 +402,12 @@ def test_malformed_directions_lose_steps_not_the_route():
     assert route["steps"] == [] and route["minutes"] > 0
     recorded = parse_route(ROUTES["pt"], "pt")       # legs trimmed of stop names
     assert recorded["minutes"] > 0 and recorded["steps"][0] == "Walk 90 m"
+
+
+def test_the_onemap_connection_pool_fits_the_routing_workers():
+    """Smaller and parallel routing discards connections (seen in the 14 Oct rehearsal)."""
+    from gowhere.adapters.onemap import POOL_MAXSIZE, OneMapAdapter
+    from gowhere.lepak.routing import MAX_WORKERS
+    assert POOL_MAXSIZE >= MAX_WORKERS
+    adapter = OneMapAdapter(token="t").session.get_adapter("https://www.onemap.gov.sg/")
+    assert adapter._pool_maxsize == POOL_MAXSIZE

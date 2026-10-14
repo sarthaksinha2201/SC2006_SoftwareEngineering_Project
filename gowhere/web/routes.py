@@ -42,6 +42,13 @@ def live_setup():
     return render_template("live_setup.html", view=setup_view(engine, snapshot, state.last_request))
 
 
+def as_sentence(error):
+    """Validation messages are written as fragments ("select 2 to 4 neighbourhoods") so
+    they compose; on the page each one stands alone, so it is shown as a sentence."""
+    text = str(error)
+    return text[:1].upper() + text[1:] + ("" if text.endswith((".", "?", "!")) else ".")
+
+
 @bp.post("/live")
 def live_submit():
     state = _state()
@@ -52,7 +59,7 @@ def live_submit():
         engine.compare(areas, choices)     # validates; routes Commute once into the cache
     except (FormError, InvalidRequest) as e:
         return render_template("live_setup.html",
-                               view=setup_view(engine, snapshot, form, error=str(e))), 400
+                               view=setup_view(engine, snapshot, form, error=as_sentence(e))), 400
     except NoFactorsLeft:
         pass                                # the results page explains which were dropped
     state.last_request = form

@@ -1,15 +1,29 @@
 """Read-only access to data/snapshot.db: the only data source the web app uses."""
 import sqlite3
+import threading
 
 from gowhere import config
 
 
 class Snapshot:
+    """One per app, shared by every Waitress thread. Each thread gets its own read-only
+    connection: a single shared connection failed with "bad parameter or other API
+    misuse" when the setup form's checks arrived together (14 Oct browser rehearsal)."""
+
     def __init__(self, path=config.SNAPSHOT_PATH):
         if not path.exists():
             raise FileNotFoundError(f"no snapshot at {path}; run python -m gowhere.etl.build_snapshot")
-        self.db = sqlite3.connect(f"file:{path}?mode=ro", uri=True, check_same_thread=False)
-        self.db.row_factory = sqlite3.Row
+        self.path = path
+        self._local = threading.local()
+
+    @property
+    def db(self):
+        conn = getattr(self._local, "conn", None)
+        if conn is None:
+            conn = sqlite3.connect(f"file:{self.path}?mode=ro", uri=True)
+            conn.row_factory = sqlite3.Row
+            self._local.conn = conn
+        return conn
 
     def query(self, sql, params=()):
         return [dict(r) for r in self.db.execute(sql, params)]

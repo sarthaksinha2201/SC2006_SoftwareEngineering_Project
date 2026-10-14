@@ -41,6 +41,35 @@ def load_mrt_exits(raw_dir=None):
     return exits
 
 
+def load_bus_stops(raw_dir=None):
+    """Every LTA bus stop: [{code, name, road, lat, lon}] (DataMall BusStops)."""
+    return [{"code": r["BusStopCode"].strip(), "name": (r.get("Description") or "").strip(),
+             "road": (r.get("RoadName") or "").strip(),
+             "lat": float(r["Latitude"]), "lon": float(r["Longitude"])}
+            for page in _read(config.RAW_BUS_STOPS, raw_dir) for r in page["value"]]
+
+
+def load_bus_services(raw_dir=None):
+    """{bus stop code: set of bus service numbers stopping there} (DataMall BusRoutes),
+    both directions together: a stop counts each service once."""
+    services = {}
+    for page in _read(config.RAW_BUS_ROUTES, raw_dir):
+        for r in page["value"]:
+            services.setdefault(r["BusStopCode"].strip(), set()).add(r["ServiceNo"].strip())
+    return services
+
+
+def bus_data_as_of(raw_dir=None):
+    """DataMall's bus lists carry no date of their own: the fetch date stands in."""
+    manifest = json.loads(((raw_dir or config.RAW_DIR) / "_manifest.json").read_text())
+    return manifest[config.RAW_BUS_STOPS]["fetched_at"][:10]
+
+
+def has_bus_data(raw_dir=None):
+    raw_dir = raw_dir or config.RAW_DIR
+    return all((raw_dir / f"{n}.json").exists() for n in (config.RAW_BUS_STOPS, config.RAW_BUS_ROUTES))
+
+
 def load_planning_areas(raw_dir=None):
     """[{name, region, geometry (GeoJSON dict)}] for every planning area."""
     return [{"name": feat["properties"]["PLN_AREA_N"].strip().upper(),

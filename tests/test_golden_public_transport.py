@@ -90,3 +90,42 @@ def test_no_builtin_round_outside_round1():
                       if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
                       and n.func.id == "round" and id(n) not in allowed]
     assert offenders == [], "use gowhere.scoring.stats.round1 at: " + ", ".join(offenders)
+
+
+# ---- Bus and Either modes (FR 1.2.4), hand-calculated in docs/golden-public-transport.md
+
+from gowhere.scoring.public_transport import mode_walk
+
+# area -> [(rail walk min, bus walk min, flats)]
+GOLDEN_MODES_INPUT = {
+    "P": [(12, 3, 100), (14, 5, 100)],      # far from rail, beside good bus stops
+    "Q": [(4, 11, 100), (6, 13, 100)],      # beside a station, poor bus
+    "R": [(9, 9.5, 100), (20, 12, 100)],
+}
+# mode -> area -> (pct_within_10, median, score, display)
+GOLDEN_MODES_EXPECTED = {
+    "rail": {"P": (0.0, 12, 0.0, 0.0), "Q": (100.0, 4, 10.0, 10.0), "R": (50.0, 9, 5.0, 5.0)},
+    "bus": {"P": (100.0, 3, 10.0, 10.0), "Q": (0.0, 11, 0.0, 0.0), "R": (50.0, 9.5, 5.0, 5.0)},
+    "either": {"P": (100.0, 3, 8.25, 8.3), "Q": (100.0, 4, 6.75, 6.8), "R": (50.0, 9, 0.0, 0.0)},
+}
+
+
+@pytest.mark.parametrize("mode", ["rail", "bus", "either"])
+def test_golden_modes(mode):
+    rows = {a: [{"walk_min": r, "exit_distance_m": r * 80, "bus_walk_min": b,
+                 "bus_distance_m": b * 80} for r, b, _ in blocks]
+            for a, blocks in GOLDEN_MODES_INPUT.items()}
+    flats = {a: [f for _, _, f in blocks] for a, blocks in GOLDEN_MODES_INPUT.items()}
+    metrics = {a: area_metrics([mode_walk(r, mode)[0] for r in rows[a]], flats[a]) for a in rows}
+    scores = public_transport_scores(metrics)
+    for area, (pct, median, score, display) in GOLDEN_MODES_EXPECTED[mode].items():
+        assert metrics[area]["pct_within_10"] == pytest.approx(pct)
+        assert metrics[area]["median_walk_min"] == median
+        assert scores[area]["score"] == pytest.approx(score)
+        assert round1(scores[area]["score"]) == display
+
+
+def test_a_bus_user_gets_a_different_answer():
+    """The reason for building the option: the top area changes with the mode."""
+    tops = {m: max(e, key=lambda a: e[a][2]) for m, e in GOLDEN_MODES_EXPECTED.items()}
+    assert tops == {"rail": "Q", "bus": "P", "either": "P"}

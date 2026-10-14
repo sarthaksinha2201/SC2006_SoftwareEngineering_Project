@@ -161,6 +161,32 @@ def report(store, last=10):
               f"{c.get('events_extracted', 0)}, kept {kept}  discarded {c.get('discarded', {})}")
 
 
+def default_ingestor(store=None, llm=None):
+    """The production pipeline: real LLM, OneMap with the on-disk search cache and the
+    venue alias list. Build it in the thread that will use it (SQLite connections are
+    per thread)."""
+    return Ingestor(store or EventStore(), llm or LlmAdapter(),
+                    LocationService(cache=SearchCache(config.CACHE_DIR / "onemap_search.sqlite"),
+                                    aliases=load_venue_aliases()))
+
+
+def run_on_schedule(ingestor, source, channels, every_hours, sleep=None, stop=None):
+    """Run now, then every `every_hours`, until `stop` (a threading.Event) is set. A
+    failed run is logged and the schedule carries on: markers only move after a commit,
+    so nothing is skipped."""
+    sleep = sleep or time.sleep
+    while stop is None or not stop.is_set():
+        try:
+            ingestor.run(source, channels)
+        except Exception:
+            log.exception("ingestion run failed; retrying in %s h", every_hours)
+        if stop is not None:
+            if stop.wait(every_hours * 3600):
+                return
+        else:
+            sleep(every_hours * 3600)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--posts-file", help="read post records from this JSON file")
@@ -178,26 +204,16 @@ def main(argv=None):
         report(store)
         return
     source = FilePostSource(args.posts_file) if args.posts_file else TelegramPostSource()
+    llm = None
     if args.replay_replies:
         log.warning("replaying recorded replies from %s: no LLM is called", args.replay_replies)
         llm = ReplayLlm(json.loads(Path(args.replay_replies).read_text(encoding="utf-8")))
-    else:
-        llm = LlmAdapter()
-    ingestor = Ingestor(store, llm,
-                        LocationService(cache=SearchCache(config.CACHE_DIR / "onemap_search.sqlite"),
-                                        aliases=load_venue_aliases()))
+    ingestor = default_ingestor(store, llm)
     channels = args.channel or config.LEPAK_CHANNELS
-    while True:
-        if not args.every_hours:
-            ingestor.run(source, channels)
-            return
-        try:
-            ingestor.run(source, channels)
-        except Exception:
-            # One failed run must not end the schedule: log it and try again next time.
-            # Markers only move after a commit, so nothing is skipped.
-            log.exception("ingestion run failed; retrying in %s h", args.every_hours)
-        time.sleep(args.every_hours * 3600)
+    if not args.every_hours:
+        ingestor.run(source, channels)
+        return
+    run_on_schedule(ingestor, source, channels, args.every_hours)
 
 
 if __name__ == "__main__":

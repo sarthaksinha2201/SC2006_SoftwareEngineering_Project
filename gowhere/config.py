@@ -24,6 +24,8 @@ RAW_HAWKER_CENTRES = "nea_hawker_centres"
 RAW_LIBRARIES = "nlb_libraries"                   # NLB layer served as a OneMap theme
 RAW_SUPERMARKETS = "sfa_supermarkets"             # licence list: addresses, no coordinates
 RAW_OSM_AMENITIES = "osm_amenities"               # malls, gyms, cafes (Overpass)
+RAW_BUS_STOPS = "lta_bus_stops"                   # LTA DataMall BusStops (needs LTA_DATAMALL_KEY)
+RAW_BUS_ROUTES = "lta_bus_routes"                 # LTA DataMall BusRoutes: services per stop
 
 # Walking model (DECISIONS.md section 4). The detour factor is the median ratio of
 # OneMap walking-route distance to straight-line distance over 200 sampled blocks;
@@ -68,6 +70,8 @@ REFERENCE_CLASSIFIED_ON = "2026-09-30"   # date both reference files were compil
 # exceeds this is flagged far_from_rail, so the UI can say which stations the score
 # reflects (e.g. Tengah before the Jurong Region Line opens).
 FAR_FROM_RAIL_M = 1500.0
+# A Qualifying Bus Stop (Data Dictionary) is served by at least this many bus services.
+QUALIFYING_BUS_SERVICES = 3
 
 # Housing Affordability (DECISIONS.md section 2): resale transactions from the 12 complete
 # calendar months before the resale data was fetched. The window is fixed in the snapshot,

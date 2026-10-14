@@ -165,7 +165,8 @@ def summarise(sample, current_factor=config.DETOUR_FACTOR,
 
 def public_transport_by_area(result):
     """{area: public_transport_area row} from a build_snapshot.compute result."""
-    return {r["planning_area"]: r for r in result["tables"]["public_transport_area"]}
+    return {r["planning_area"]: r for r in result["tables"]["public_transport_area"]
+            if r["mode"] == "rail"}           # the detour factor was calibrated on rail
 
 
 def ranking_impact(result_a, result_b, top=18, bottom=4):

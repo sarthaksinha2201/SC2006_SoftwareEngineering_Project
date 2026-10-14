@@ -7,6 +7,7 @@ Form fields:
     housing_affordability: flat_type, budget_min, budget_max, min_remaining_lease_years ("" = any)
     amenities: amenity_types    (repeated field)
     healthcare: facility_type
+    public_transport: pt_mode   (only when the snapshot has bus data: rail, bus or either)
     commute: destination_postal, mode
 
 Parsing only converts types. The engine validates the values (ranges, allowed choices,
@@ -32,6 +33,9 @@ def _int(form, name, label):
 
 
 def _options(form, key):
+    if key == "public_transport":
+        # Sent only when the setup page offered the choice (the snapshot has bus data).
+        return {"mode": form.get("pt_mode", "")} if "pt_mode" in form else {}
     if key == "housing_affordability":
         lease = (form.get("min_remaining_lease_years") or "").strip()
         return {"flat_type": form.get("flat_type", ""),

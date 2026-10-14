@@ -35,7 +35,7 @@ class FixedRouter:
 
 def _choices(facility_type):
     return {
-        "public_transport": FactorChoice(8),
+        "public_transport": FactorChoice(8, {"mode": "either"}),
         "housing_affordability": FactorChoice(7, {"flat_type": "4 ROOM", "budget_min": 400_000,
                                                   "budget_max": 700_000,
                                                   "min_remaining_lease_years": 60}),

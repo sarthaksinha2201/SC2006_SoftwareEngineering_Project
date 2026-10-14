@@ -4,3 +4,4 @@ shapely>=2.0
 pytest>=8.0
 anthropic>=1.0
 beautifulsoup4>=4.12
+waitress>=3.0

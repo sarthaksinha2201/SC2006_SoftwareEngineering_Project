@@ -14,6 +14,7 @@ from gowhere.scoring.amenities import AMENITY_TYPES
 from gowhere.scoring.commute import MODES
 from gowhere.scoring.healthcare import FACILITY_LABELS
 from gowhere.scoring.housing import FLAT_TYPES, MIN_LEASE_YEARS
+from gowhere.scoring.public_transport import DEFAULT_MODE, MODE_LABELS
 from gowhere.web.forms import FACTOR_ORDER
 
 CLOSE_CALL_POINTS = "0.2"
@@ -30,6 +31,7 @@ DEFAULTS = {
     "amenity_types": list(AMENITY_TYPES),
     "facility_type": "gp",
     "mode": "pt",
+    "pt_mode": DEFAULT_MODE,         # FR 1.2.4.1: Either
 }
 
 
@@ -203,7 +205,8 @@ def setup_view(engine, snapshot, form=None, error=None):
     """The setup screen. `form` is the last submitted form (to refill it), or None."""
     get = (lambda k, d=None: form.get(k, d)) if form else (lambda k, d=None: d)
     getlist = (lambda k, d: form.getlist(k)) if form else (lambda k, d: d)
-    labels = {f["key"]: f["label"] for f in engine.factors()}
+    described = {f["key"]: f for f in engine.factors()}
+    labels = {k: f["label"] for k, f in described.items()}
     areas = snapshot.areas()
     selected = set(getlist("areas", []))
     factors = []
@@ -214,7 +217,7 @@ def setup_view(engine, snapshot, form=None, error=None):
         factors.append({"key": key, "label": labels[key], "included": included,
                         # as typed, so an invalid entry is shown back rather than crashing
                         "weight": str(get(f"weight_{key}", DEFAULTS["weight"]) or DEFAULTS["weight"]),
-                        "controls": _controls(key, get, getlist)})
+                        "controls": _controls(key, get, getlist, described[key]["options"])})
     return {
         "snapshot_date": snapshot_date(snapshot.meta()),
         "min_areas": 2, "max_areas": 4,
@@ -227,7 +230,14 @@ def setup_view(engine, snapshot, form=None, error=None):
     }
 
 
-def _controls(key, get, getlist):
+def _controls(key, get, getlist, options=None):
+    if key == "public_transport":
+        modes = (options or {}).get("mode")
+        if not modes:
+            return {}                      # rail-only snapshot: nothing to choose
+        chosen = get("pt_mode", DEFAULTS["pt_mode"])
+        return {"pt_modes": [{"value": m, "label": MODE_LABELS[m], "selected": m == chosen}
+                             for m in modes]}
     if key == "housing_affordability":
         flat = get("flat_type", DEFAULTS["flat_type"])
         lease = get("min_remaining_lease_years", "") or ""

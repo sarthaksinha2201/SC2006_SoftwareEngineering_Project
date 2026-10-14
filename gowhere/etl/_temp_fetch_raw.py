@@ -1,6 +1,7 @@
 """TEMPORARY stand-in for S1 (gowhere.etl.fetch_raw, owned by Sarthak).
 
-Fetches only the datasets the Public Transport, Greenery and Healthcare factors need, following the S1 output
+Fetches the datasets the six factors need (bus stops and routes from LTA DataMall need
+LTA_DATAMALL_KEY), following the S1 output
 contract so it can be deleted without touching anything downstream:
 
     data/raw/<dataset_name>.json   exactly what the API returned
@@ -16,6 +17,7 @@ from datetime import date, datetime, timezone
 
 from gowhere import config
 from gowhere.adapters.datagov import DataGovAdapter
+from gowhere.adapters.datamall import BUS_ROUTES, BUS_STOPS, MAX_STATIC_PAGES, DataMallAdapter
 from gowhere.adapters.onemap import OneMapAdapter
 from gowhere.adapters.overpass import OverpassAdapter
 
@@ -46,6 +48,8 @@ DATASETS = {
     config.RAW_LIBRARIES: (LIBRARIES_THEME, "onemap_theme"),
     config.RAW_SUPERMARKETS: (SUPERMARKETS_ID, "datastore"),
     config.RAW_OSM_AMENITIES: (OSM_AMENITIES, "overpass"),
+    config.RAW_BUS_STOPS: (BUS_STOPS, "datamall"),
+    config.RAW_BUS_ROUTES: (BUS_ROUTES, "datamall"),
 }
 
 
@@ -66,6 +70,8 @@ def record_count(payload, kind):
         return len(payload["SrchResults"]) - 1   # first entry is the theme's own metadata
     if kind == "overpass":
         return len(payload["elements"])
+    if kind == "datamall":
+        return sum(len(p["value"]) for p in payload)     # stored as the page responses
     return len(payload.get("features", []))
 
 
@@ -74,6 +80,8 @@ def source_url(dataset_id, kind):
         return f"https://www.onemap.gov.sg/api/public/themesvc/retrieveTheme?queryName={dataset_id}"
     if kind == "overpass":
         return "https://overpass-api.de/api/interpreter"
+    if kind == "datamall":
+        return f"https://datamall2.mytransport.sg/ltaodataservice/{dataset_id}"
     return f"https://data.gov.sg/datasets/{dataset_id}/view"
 
 
@@ -100,6 +108,10 @@ def fetch(names=None, force=False, adapter=None, onemap=None, raw_dir=None, toda
                        for page in adapter.datastore_pages(dataset_id, filters={"month": month})]
         elif kind == "overpass":
             payload = OverpassAdapter().amenities(list(config.OSM_AMENITY_TAGS.values()))
+        elif kind == "datamall":
+            config.load_dotenv()
+            payload = DataMallAdapter().pages(dataset_id, max_pages=MAX_STATIC_PAGES,
+                                              retries=4, timeout_s=30)
         elif kind == "onemap_theme":
             if onemap is None:
                 config.load_dotenv()

@@ -595,10 +595,28 @@ def test_the_schedule_survives_a_failed_run(monkeypatch):
             if len(calls) == 1:
                 raise RuntimeError("disk full")
             raise KeyboardInterrupt          # end the test's loop on the second run
-    monkeypatch.setattr(run_module, "Ingestor", Boom)
+    monkeypatch.setattr(run_module, "default_ingestor", lambda store=None, llm=None: Boom(EventStore(":memory:"), None, None))
     monkeypatch.setattr(run_module, "EventStore", lambda: EventStore(":memory:"))
     monkeypatch.setattr(run_module.time, "sleep", lambda s: None)
     monkeypatch.setattr(run_module.logging, "FileHandler", lambda *a, **k: logging.NullHandler())
     with pytest.raises(KeyboardInterrupt):
         run_module.main(["--posts-file", str(FIXTURES / "posts.json"), "--every-hours", "6"])
     assert len(calls) == 2                   # the first failure did not stop the loop
+
+
+def test_server_ingestion_thread_runs_and_stops(monkeypatch):
+    """gowhere.serve's background ingestion: runs at once, then stops cleanly."""
+    import threading
+    from gowhere import serve
+    ran = threading.Event()
+
+    class Once(Ingestor):
+        def run(self, source, channels, now=None):
+            ran.set()
+    monkeypatch.setattr(serve.ingest_run, "default_ingestor",
+                        lambda store=None, llm=None: Once(EventStore(":memory:"), None, None))
+    thread, stop = serve.start_ingestion(6, channels=["sgweekend"])
+    assert ran.wait(5)
+    stop.set()
+    thread.join(5)
+    assert not thread.is_alive()

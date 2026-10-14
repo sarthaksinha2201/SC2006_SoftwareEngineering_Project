@@ -33,7 +33,13 @@
       </label>
     </div>
     {% set c = f.controls %}
-    {% if f.key == "housing_affordability" %}
+    {% if f.key == "public_transport" and c.pt_modes %}
+    <label>Walk to
+      <select name="pt_mode">
+        {% for o in c.pt_modes %}<option value="{{ o.value }}" {% if o.selected %}selected{% endif %}>{{ o.label }}</option>{% endfor %}
+      </select>
+    </label>
+    {% elif f.key == "housing_affordability" %}
     <div class="form-row">
       <div>
         <label>Flat type

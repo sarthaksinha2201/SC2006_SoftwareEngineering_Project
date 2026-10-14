@@ -21,6 +21,36 @@ class RawSources:
     def mrt_exits_as_of(self):
         return self._get("mrt_exits_as_of", lambda: raw.mrt_exits_as_of(self.raw_dir))
 
+    def bus_stops(self):
+        """Qualifying Bus Stops (at least config.QUALIFYING_BUS_SERVICES services) inside
+        Singapore: [{code, name, lat, lon, services}]. DataMall's list includes four
+        stops in Johor Bahru (the checkpoint, Larkin, JB Sentral); points outside every
+        planning area are dropped, as for the OpenStreetMap amenities. [] when the bus
+        data was never fetched (it needs LTA_DATAMALL_KEY): the factor is then rail-only."""
+        def load():
+            if not raw.has_bus_data(self.raw_dir):
+                self._cache["bus_meta"] = {}
+                return []
+            from gowhere.etl.geo import PlanningAreaIndex
+            index = PlanningAreaIndex(raw.load_planning_areas(self.raw_dir))
+            services = raw.load_bus_services(self.raw_dir)
+            stops = raw.load_bus_stops(self.raw_dir)
+            inside = [st for st in stops if index.area_of(st["lat"], st["lon"])]
+            qualifying = [{**st, "services": len(services.get(st["code"], ()))} for st in inside
+                          if len(services.get(st["code"], ())) >= config.QUALIFYING_BUS_SERVICES]
+            self._cache["bus_meta"] = {
+                "bus_stops_total": str(len(stops)),
+                "bus_stops_outside_singapore": str(len(stops) - len(inside)),
+                "bus_stops_qualifying": str(len(qualifying)),
+                "qualifying_bus_services": str(config.QUALIFYING_BUS_SERVICES),
+                "bus_data_as_of": raw.bus_data_as_of(self.raw_dir)}
+            return qualifying
+        return self._get("bus_stops", load)
+
+    def bus_meta(self):
+        self.bus_stops()
+        return self._cache["bus_meta"]
+
     def parks(self):
         return self._get("parks", lambda: raw.load_parks(self.raw_dir))
 

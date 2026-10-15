@@ -2,74 +2,74 @@
  "snapshot_date": "14 Oct 2026",
  "stale_warning": "",
  "breakdown": {
-  "winner": "Pasir Ris",
-  "runner_up": "Punggol",
+  "winner": "Punggol",
+  "runner_up": "Pasir Ris",
   "rows": [
+   {
+    "label": "Public Transport",
+    "weight": 8,
+    "winner_score": "7.9",
+    "runner_up_score": "5.0",
+    "winner_raw": "MRT/LRT scores higher here: 97.7% of flats are within a 10-minute walk of an MRT/LRT exit; median walk 4.4 min",
+    "runner_up_raw": "Bus scores higher here: a median of 16 different bus services stop within 400 m of a flat; median walk 2.4 min to a bus stop with 3 or more services",
+    "contribution": "+23.7",
+    "favours": "Punggol"
+   },
    {
     "label": "Housing Affordability",
     "weight": 7,
-    "winner_score": "7.7",
-    "runner_up_score": "5.9",
-    "winner_raw": "77.4% of 4-room resales with at least 60 years of lease left in the last 12 months (240 of 310) were within your budget",
-    "runner_up_raw": "59.2% of 4-room resales with at least 60 years of lease left in the last 12 months (504 of 852) were within your budget",
-    "contribution": "+12.8",
+    "winner_score": "5.9",
+    "runner_up_score": "7.7",
+    "winner_raw": "59.2% of 4-room resales with at least 60 years of lease left in the last 12 months (504 of 852) were within your budget",
+    "runner_up_raw": "77.4% of 4-room resales with at least 60 years of lease left in the last 12 months (240 of 310) were within your budget",
+    "contribution": "−12.8",
     "favours": "Pasir Ris"
    },
    {
     "label": "Healthcare",
     "weight": 5,
-    "winner_score": "2.9",
-    "runner_up_score": "4.8",
-    "winner_raw": "Half of flats are within 1,136 m of a polyclinic",
-    "runner_up_raw": "Half of flats are within 1,044 m of a polyclinic",
-    "contribution": "−9.7",
+    "winner_score": "4.8",
+    "runner_up_score": "2.9",
+    "winner_raw": "Half of flats are within 1,044 m of a polyclinic",
+    "runner_up_raw": "Half of flats are within 1,136 m of a polyclinic",
+    "contribution": "+9.7",
     "favours": "Punggol"
    },
    {
     "label": "Amenities",
     "weight": 5,
-    "winner_score": "2.9",
-    "runner_up_score": "4.5",
-    "winner_raw": "Flats here have on average 5.2 of the selected amenities within 800 m (each type counted up to 3)",
-    "runner_up_raw": "Flats here have on average 5.8 of the selected amenities within 800 m (each type counted up to 3)",
-    "contribution": "−8.1",
+    "winner_score": "4.5",
+    "runner_up_score": "2.9",
+    "winner_raw": "Flats here have on average 5.8 of the selected amenities within 800 m (each type counted up to 3)",
+    "runner_up_raw": "Flats here have on average 5.2 of the selected amenities within 800 m (each type counted up to 3)",
+    "contribution": "+8.1",
     "favours": "Punggol"
    },
    {
     "label": "Greenery",
     "weight": 4,
-    "winner_score": "3.2",
-    "runner_up_score": "1.3",
-    "winner_raw": "70.7% of flats are within 400 m of a park or park connector",
-    "runner_up_raw": "60.1% of flats are within 400 m of a park or park connector",
-    "contribution": "+7.7",
+    "winner_score": "1.3",
+    "runner_up_score": "3.2",
+    "winner_raw": "60.1% of flats are within 400 m of a park or park connector",
+    "runner_up_raw": "70.7% of flats are within 400 m of a park or park connector",
+    "contribution": "−7.7",
     "favours": "Pasir Ris"
-   },
-   {
-    "label": "Public Transport",
-    "weight": 8,
-    "winner_score": "4.1",
-    "runner_up_score": "4.6",
-    "winner_raw": "100% of flats are within a 10-minute walk of an MRT/LRT exit or a bus stop with 3 or more services; median walk 2.4 min",
-    "runner_up_raw": "100% of flats are within a 10-minute walk of an MRT/LRT exit or a bus stop with 3 or more services; median walk 2.3 min",
-    "contribution": "−3.9",
-    "favours": "Punggol"
    },
    {
     "label": "Commute",
     "weight": 6,
-    "winner_score": "4.8",
-    "runner_up_score": "4.2",
-    "winner_raw": "51.2 min by public transport from Blk 530D Pasir Ris Drive 1",
-    "runner_up_raw": "54.7 min by public transport from Blk 301A Punggol Central",
-    "contribution": "+3.5",
+    "winner_score": "4.2",
+    "runner_up_score": "4.8",
+    "winner_raw": "54.7 min by public transport from Blk 301A Punggol Central",
+    "runner_up_raw": "51.2 min by public transport from Blk 530D Pasir Ris Drive 1",
+    "contribution": "−3.5",
     "favours": "Pasir Ris"
    }
   ],
   "formula": "Overall score = (8 × Public Transport + 7 × Housing Affordability + 5 × Amenities + 4 × Greenery + 5 × Healthcare + 6 × Commute) ÷ 35",
   "formula_examples": [
-   "Pasir Ris = (8 × 4.1 + 7 × 7.7 + 5 × 2.9 + 4 × 3.2 + 5 × 2.9 + 6 × 4.8) ÷ 35 = 4.5",
-   "Punggol = (8 × 4.6 + 7 × 5.9 + 5 × 4.5 + 4 × 1.3 + 5 × 4.8 + 6 × 4.2) ÷ 35 = 4.4"
+   "Punggol = (8 × 7.9 + 7 × 5.9 + 5 × 4.5 + 4 × 1.3 + 5 × 4.8 + 6 × 4.2) ÷ 35 = 5.2",
+   "Pasir Ris = (8 × 5.0 + 7 × 7.7 + 5 × 2.9 + 4 × 3.2 + 5 × 2.9 + 6 × 4.8) ÷ 35 = 4.7"
   ],
   "excluded": [],
   "formula_note": "The worked lines use scores rounded to 1 decimal place; the ranking uses unrounded scores, so a hand recalculation can differ by 0.1."
@@ -80,7 +80,8 @@
    "label": "Public Transport",
    "weight": 8,
    "notes": [
-    "A bus stop counts when at least 3 bus services stop there (3330 stops, LTA data of 2026-10-14)."
+    "Bus is scored on how many different bus services stop within 400 m (70%) and the walk to the nearest stop served by at least 3 services (30%). Bus stops are near almost every flat, so the variety of services is what differs between areas (LTA data of 2026-10-14).",
+    "Either uses the higher of the MRT/LRT and Bus scores for each area, so it is usually higher than either one alone."
    ]
   },
   {
@@ -123,59 +124,11 @@
  ],
  "areas": [
   {
-   "key": "PASIR RIS",
-   "name": "Pasir Ris",
-   "rank": 1,
-   "rank_label": "1st",
-   "overall": "4.5",
-   "flats_text": "30,758 flats in 438 blocks",
-   "small_sample": false,
-   "notes": [],
-   "categories": [
-    {
-     "key": "public_transport",
-     "label": "Public Transport",
-     "score": "4.1",
-     "summary": "100% of flats are within a 10-minute walk of an MRT/LRT exit or a bus stop with 3 or more services; median walk 2.4 min"
-    },
-    {
-     "key": "housing_affordability",
-     "label": "Housing Affordability",
-     "score": "7.7",
-     "summary": "77.4% of 4-room resales with at least 60 years of lease left in the last 12 months (240 of 310) were within your budget"
-    },
-    {
-     "key": "amenities",
-     "label": "Amenities",
-     "score": "2.9",
-     "summary": "Flats here have on average 5.2 of the selected amenities within 800 m (each type counted up to 3)"
-    },
-    {
-     "key": "greenery",
-     "label": "Greenery",
-     "score": "3.2",
-     "summary": "70.7% of flats are within 400 m of a park or park connector"
-    },
-    {
-     "key": "healthcare",
-     "label": "Healthcare",
-     "score": "2.9",
-     "summary": "Half of flats are within 1,136 m of a polyclinic"
-    },
-    {
-     "key": "commute",
-     "label": "Commute",
-     "score": "4.8",
-     "summary": "51.2 min by public transport from Blk 530D Pasir Ris Drive 1"
-    }
-   ]
-  },
-  {
    "key": "PUNGGOL",
    "name": "Punggol",
-   "rank": 2,
-   "rank_label": "2nd",
-   "overall": "4.4",
+   "rank": 1,
+   "rank_label": "1st",
+   "overall": "5.2",
    "flats_text": "63,264 flats in 557 blocks",
    "small_sample": false,
    "notes": [],
@@ -183,8 +136,8 @@
     {
      "key": "public_transport",
      "label": "Public Transport",
-     "score": "4.6",
-     "summary": "100% of flats are within a 10-minute walk of an MRT/LRT exit or a bus stop with 3 or more services; median walk 2.3 min"
+     "score": "7.9",
+     "summary": "MRT/LRT scores higher here: 97.7% of flats are within a 10-minute walk of an MRT/LRT exit; median walk 4.4 min"
     },
     {
      "key": "housing_affordability",
@@ -219,59 +172,59 @@
    ]
   },
   {
-   "key": "TAMPINES",
-   "name": "Tampines",
-   "rank": 3,
-   "rank_label": "3rd",
-   "overall": "4.0",
-   "flats_text": "87,410 flats in 924 blocks",
+   "key": "PASIR RIS",
+   "name": "Pasir Ris",
+   "rank": 2,
+   "rank_label": "2nd",
+   "overall": "4.7",
+   "flats_text": "30,758 flats in 438 blocks",
    "small_sample": false,
    "notes": [],
    "categories": [
     {
      "key": "public_transport",
      "label": "Public Transport",
-     "score": "4.2",
-     "summary": "100% of flats are within a 10-minute walk of an MRT/LRT exit or a bus stop with 3 or more services; median walk 2.4 min"
+     "score": "5.0",
+     "summary": "Bus scores higher here: a median of 16 different bus services stop within 400 m of a flat; median walk 2.4 min to a bus stop with 3 or more services"
     },
     {
      "key": "housing_affordability",
      "label": "Housing Affordability",
-     "score": "4.9",
-     "summary": "48.9% of 4-room resales with at least 60 years of lease left in the last 12 months (326 of 666) were within your budget"
+     "score": "7.7",
+     "summary": "77.4% of 4-room resales with at least 60 years of lease left in the last 12 months (240 of 310) were within your budget"
     },
     {
      "key": "amenities",
      "label": "Amenities",
-     "score": "1.3",
-     "summary": "Flats here have on average 4.7 of the selected amenities within 800 m (each type counted up to 3)"
+     "score": "2.9",
+     "summary": "Flats here have on average 5.2 of the selected amenities within 800 m (each type counted up to 3)"
     },
     {
      "key": "greenery",
      "label": "Greenery",
-     "score": "2.3",
-     "summary": "66.8% of flats are within 400 m of a park or park connector"
+     "score": "3.2",
+     "summary": "70.7% of flats are within 400 m of a park or park connector"
     },
     {
      "key": "healthcare",
      "label": "Healthcare",
-     "score": "4.2",
-     "summary": "Half of flats are within 1,087 m of a polyclinic"
+     "score": "2.9",
+     "summary": "Half of flats are within 1,136 m of a polyclinic"
     },
     {
      "key": "commute",
      "label": "Commute",
-     "score": "6.0",
-     "summary": "43.9 min by public transport from Blk 508 Tampines Central 1"
+     "score": "4.8",
+     "summary": "51.2 min by public transport from Blk 530D Pasir Ris Drive 1"
     }
    ]
   },
   {
    "key": "BEDOK",
    "name": "Bedok",
-   "rank": 4,
-   "rank_label": "4th",
-   "overall": "3.9",
+   "rank": 3,
+   "rank_label": "3rd",
+   "overall": "4.6",
    "flats_text": "64,414 flats in 530 blocks",
    "small_sample": false,
    "notes": [],
@@ -279,8 +232,8 @@
     {
      "key": "public_transport",
      "label": "Public Transport",
-     "score": "0.7",
-     "summary": "99.9% of flats are within a 10-minute walk of an MRT/LRT exit or a bus stop with 3 or more services; median walk 2.4 min"
+     "score": "3.5",
+     "summary": "MRT/LRT scores higher here: 49.2% of flats are within a 10-minute walk of an MRT/LRT exit; median walk 10.1 min"
     },
     {
      "key": "housing_affordability",
@@ -313,35 +266,73 @@
      "summary": "39.6 min by public transport from Blk 427 Bedok North Road"
     }
    ]
+  },
+  {
+   "key": "TAMPINES",
+   "name": "Tampines",
+   "rank": 4,
+   "rank_label": "4th",
+   "overall": "4.2",
+   "flats_text": "87,410 flats in 924 blocks",
+   "small_sample": false,
+   "notes": [],
+   "categories": [
+    {
+     "key": "public_transport",
+     "label": "Public Transport",
+     "score": "5.1",
+     "summary": "Bus scores higher here: a median of 16 different bus services stop within 400 m of a flat; median walk 2.4 min to a bus stop with 3 or more services"
+    },
+    {
+     "key": "housing_affordability",
+     "label": "Housing Affordability",
+     "score": "4.9",
+     "summary": "48.9% of 4-room resales with at least 60 years of lease left in the last 12 months (326 of 666) were within your budget"
+    },
+    {
+     "key": "amenities",
+     "label": "Amenities",
+     "score": "1.3",
+     "summary": "Flats here have on average 4.7 of the selected amenities within 800 m (each type counted up to 3)"
+    },
+    {
+     "key": "greenery",
+     "label": "Greenery",
+     "score": "2.3",
+     "summary": "66.8% of flats are within 400 m of a park or park connector"
+    },
+    {
+     "key": "healthcare",
+     "label": "Healthcare",
+     "score": "4.2",
+     "summary": "Half of flats are within 1,087 m of a polyclinic"
+    },
+    {
+     "key": "commute",
+     "label": "Commute",
+     "score": "6.0",
+     "summary": "43.9 min by public transport from Blk 508 Tampines Central 1"
+    }
+   ]
   }
  ],
  "dropped": [],
  "recommendation": {
-  "headline": "Pasir Ris ranks first with 4.5 out of 10.",
-  "because": "Pasir Ris ranks ahead of Punggol mainly because of Housing Affordability and Greenery.",
-  "winner": "Pasir Ris",
-  "runner_up": "Punggol",
-  "close_call": true,
-  "close_call_text": "Pasir Ris and Punggol are within 0.2 points of each other, so changing a single weight could swap them.",
+  "headline": "Punggol ranks first with 5.2 out of 10.",
+  "because": "Punggol ranks ahead of Pasir Ris mainly because of Public Transport and Healthcare.",
+  "winner": "Punggol",
+  "runner_up": "Pasir Ris",
+  "close_call": false,
+  "close_call_text": "",
   "reasons": [
    {
-    "label": "Housing Affordability",
-    "contribution": "12.8",
-    "favours": "Pasir Ris"
-   },
-   {
-    "label": "Greenery",
-    "contribution": "7.7",
-    "favours": "Pasir Ris"
-   },
-   {
-    "label": "Commute",
-    "contribution": "3.5",
-    "favours": "Pasir Ris"
-   },
-   {
     "label": "Public Transport",
-    "contribution": "3.9",
+    "contribution": "23.7",
+    "favours": "Punggol"
+   },
+   {
+    "label": "Healthcare",
+    "contribution": "9.7",
     "favours": "Punggol"
    },
    {
@@ -350,9 +341,19 @@
     "favours": "Punggol"
    },
    {
-    "label": "Healthcare",
-    "contribution": "9.7",
-    "favours": "Punggol"
+    "label": "Commute",
+    "contribution": "3.5",
+    "favours": "Pasir Ris"
+   },
+   {
+    "label": "Greenery",
+    "contribution": "7.7",
+    "favours": "Pasir Ris"
+   },
+   {
+    "label": "Housing Affordability",
+    "contribution": "12.8",
+    "favours": "Pasir Ris"
    }
   ]
  },
@@ -367,20 +368,10 @@
   ],
   "datasets": [
    {
-    "label": "Pasir Ris",
-    "data": [
-     4.1,
-     7.7,
-     2.9,
-     3.2,
-     2.9,
-     4.8
-    ]
-   },
-   {
     "label": "Punggol",
+    "colour": "#6940A5",
     "data": [
-     4.6,
+     7.9,
      5.9,
      4.5,
      1.3,
@@ -389,25 +380,39 @@
     ]
    },
    {
-    "label": "Tampines",
+    "label": "Pasir Ris",
+    "colour": "#B5651D",
     "data": [
-     4.2,
-     4.9,
-     1.3,
-     2.3,
-     4.2,
-     6.0
+     5.0,
+     7.7,
+     2.9,
+     3.2,
+     2.9,
+     4.8
     ]
    },
    {
     "label": "Bedok",
+    "colour": "#1F6C9F",
     "data": [
-     0.7,
+     3.5,
      1.9,
      6.5,
      3.5,
      6.5,
      6.7
+    ]
+   },
+   {
+    "label": "Tampines",
+    "colour": "#00897B",
+    "data": [
+     5.1,
+     4.9,
+     1.3,
+     2.3,
+     4.2,
+     6.0
     ]
    }
   ]
@@ -415,6 +420,246 @@
  "map": {
   "type": "FeatureCollection",
   "features": [
+   {
+    "type": "Feature",
+    "geometry": {
+     "type": "Polygon",
+     "coordinates": [
+      [
+       [
+        103.91081988924739,
+        1.4214692252861694
+       ],
+       [
+        103.9079335446417,
+        1.4210266107612408
+       ],
+       [
+        103.906956212895,
+        1.420024942562211
+       ],
+       [
+        103.90537281877945,
+        1.4203732078555844
+       ],
+       [
+        103.90392666908929,
+        1.4201839288451434
+       ],
+       [
+        103.90189643314214,
+        1.4191040974183367
+       ],
+       [
+        103.89994259064004,
+        1.4176456239623905
+       ],
+       [
+        103.89895067469439,
+        1.4164384006728257
+       ],
+       [
+        103.8981306231984,
+        1.414733466548694
+       ],
+       [
+        103.89746367464693,
+        1.415014818169143
+       ],
+       [
+        103.89571059639678,
+        1.4112135699953747
+       ],
+       [
+        103.89380473231996,
+        1.4088382557179717
+       ],
+       [
+        103.89110367282977,
+        1.406193397765072
+       ],
+       [
+        103.88832499761463,
+        1.4047221181814271
+       ],
+       [
+        103.88760733446348,
+        1.4041048553496251
+       ],
+       [
+        103.88700684156471,
+        1.402979093940322
+       ],
+       [
+        103.88680747870157,
+        1.401207473668898
+       ],
+       [
+        103.89595816025701,
+        1.399980064918207
+       ],
+       [
+        103.89857339062081,
+        1.3992238684318936
+       ],
+       [
+        103.90128479005075,
+        1.3981651901808458
+       ],
+       [
+        103.90447665794625,
+        1.3962809742218498
+       ],
+       [
+        103.90738705247003,
+        1.3938502083618354
+       ],
+       [
+        103.91432583081242,
+        1.3859263603270122
+       ],
+       [
+        103.9151403107199,
+        1.3871394386699316
+       ],
+       [
+        103.91648670254325,
+        1.3903224993520389
+       ],
+       [
+        103.9192996266051,
+        1.393708854313314
+       ],
+       [
+        103.92123368993727,
+        1.3955321709725306
+       ],
+       [
+        103.9240256854495,
+        1.3978125077210743
+       ],
+       [
+        103.9270404140037,
+        1.399304605409052
+       ],
+       [
+        103.93017854795147,
+        1.4005921206074503
+       ],
+       [
+        103.93011320358046,
+        1.4013467787694427
+       ],
+       [
+        103.92985086475277,
+        1.4013049321355093
+       ],
+       [
+        103.92981199345734,
+        1.401600607010521
+       ],
+       [
+        103.93039404247227,
+        1.4017832378568473
+       ],
+       [
+        103.9309051464755,
+        1.4021970528651388
+       ],
+       [
+        103.93114782303188,
+        1.4027456833573377
+       ],
+       [
+        103.9311584703492,
+        1.4032222395513387
+       ],
+       [
+        103.93070974561208,
+        1.4040471782666288
+       ],
+       [
+        103.92587726805024,
+        1.4085069552512435
+       ],
+       [
+        103.9235012403263,
+        1.411204312992837
+       ],
+       [
+        103.92133592658568,
+        1.4127108054634714
+       ],
+       [
+        103.91953053722204,
+        1.4133496196700317
+       ],
+       [
+        103.91910933376789,
+        1.4136342356632807
+       ],
+       [
+        103.91861447942509,
+        1.4141411277277438
+       ],
+       [
+        103.91880501451375,
+        1.4146509851230185
+       ],
+       [
+        103.9186824303624,
+        1.4150224612593976
+       ],
+       [
+        103.9174443186778,
+        1.4159539418247071
+       ],
+       [
+        103.91630185147075,
+        1.417234956428438
+       ],
+       [
+        103.91555159596939,
+        1.417293567079172
+       ],
+       [
+        103.9151810081636,
+        1.4169474579597772
+       ],
+       [
+        103.91503049644436,
+        1.4163789463569045
+       ],
+       [
+        103.91410751722647,
+        1.416249695695133
+       ],
+       [
+        103.91391954262589,
+        1.4185091022594216
+       ],
+       [
+        103.91305264941649,
+        1.4199184049946287
+       ],
+       [
+        103.9126425256328,
+        1.4210543778282698
+       ],
+       [
+        103.91081988924739,
+        1.4214692252861694
+       ]
+      ]
+     ]
+    },
+    "properties": {
+     "name": "Punggol",
+     "rank": 1,
+     "overall": "5.2",
+     "colour": "#6940A5"
+    }
+   },
    {
     "type": "Feature",
     "geometry": {
@@ -746,530 +991,9 @@
     },
     "properties": {
      "name": "Pasir Ris",
-     "rank": 1,
-     "overall": "4.5"
-    }
-   },
-   {
-    "type": "Feature",
-    "geometry": {
-     "type": "Polygon",
-     "coordinates": [
-      [
-       [
-        103.91081988924739,
-        1.4214692252861694
-       ],
-       [
-        103.9079335446417,
-        1.4210266107612408
-       ],
-       [
-        103.906956212895,
-        1.420024942562211
-       ],
-       [
-        103.90537281877945,
-        1.4203732078555844
-       ],
-       [
-        103.90392666908929,
-        1.4201839288451434
-       ],
-       [
-        103.90189643314214,
-        1.4191040974183367
-       ],
-       [
-        103.89994259064004,
-        1.4176456239623905
-       ],
-       [
-        103.89895067469439,
-        1.4164384006728257
-       ],
-       [
-        103.8981306231984,
-        1.414733466548694
-       ],
-       [
-        103.89746367464693,
-        1.415014818169143
-       ],
-       [
-        103.89571059639678,
-        1.4112135699953747
-       ],
-       [
-        103.89380473231996,
-        1.4088382557179717
-       ],
-       [
-        103.89110367282977,
-        1.406193397765072
-       ],
-       [
-        103.88832499761463,
-        1.4047221181814271
-       ],
-       [
-        103.88760733446348,
-        1.4041048553496251
-       ],
-       [
-        103.88700684156471,
-        1.402979093940322
-       ],
-       [
-        103.88680747870157,
-        1.401207473668898
-       ],
-       [
-        103.89595816025701,
-        1.399980064918207
-       ],
-       [
-        103.89857339062081,
-        1.3992238684318936
-       ],
-       [
-        103.90128479005075,
-        1.3981651901808458
-       ],
-       [
-        103.90447665794625,
-        1.3962809742218498
-       ],
-       [
-        103.90738705247003,
-        1.3938502083618354
-       ],
-       [
-        103.91432583081242,
-        1.3859263603270122
-       ],
-       [
-        103.9151403107199,
-        1.3871394386699316
-       ],
-       [
-        103.91648670254325,
-        1.3903224993520389
-       ],
-       [
-        103.9192996266051,
-        1.393708854313314
-       ],
-       [
-        103.92123368993727,
-        1.3955321709725306
-       ],
-       [
-        103.9240256854495,
-        1.3978125077210743
-       ],
-       [
-        103.9270404140037,
-        1.399304605409052
-       ],
-       [
-        103.93017854795147,
-        1.4005921206074503
-       ],
-       [
-        103.93011320358046,
-        1.4013467787694427
-       ],
-       [
-        103.92985086475277,
-        1.4013049321355093
-       ],
-       [
-        103.92981199345734,
-        1.401600607010521
-       ],
-       [
-        103.93039404247227,
-        1.4017832378568473
-       ],
-       [
-        103.9309051464755,
-        1.4021970528651388
-       ],
-       [
-        103.93114782303188,
-        1.4027456833573377
-       ],
-       [
-        103.9311584703492,
-        1.4032222395513387
-       ],
-       [
-        103.93070974561208,
-        1.4040471782666288
-       ],
-       [
-        103.92587726805024,
-        1.4085069552512435
-       ],
-       [
-        103.9235012403263,
-        1.411204312992837
-       ],
-       [
-        103.92133592658568,
-        1.4127108054634714
-       ],
-       [
-        103.91953053722204,
-        1.4133496196700317
-       ],
-       [
-        103.91910933376789,
-        1.4136342356632807
-       ],
-       [
-        103.91861447942509,
-        1.4141411277277438
-       ],
-       [
-        103.91880501451375,
-        1.4146509851230185
-       ],
-       [
-        103.9186824303624,
-        1.4150224612593976
-       ],
-       [
-        103.9174443186778,
-        1.4159539418247071
-       ],
-       [
-        103.91630185147075,
-        1.417234956428438
-       ],
-       [
-        103.91555159596939,
-        1.417293567079172
-       ],
-       [
-        103.9151810081636,
-        1.4169474579597772
-       ],
-       [
-        103.91503049644436,
-        1.4163789463569045
-       ],
-       [
-        103.91410751722647,
-        1.416249695695133
-       ],
-       [
-        103.91391954262589,
-        1.4185091022594216
-       ],
-       [
-        103.91305264941649,
-        1.4199184049946287
-       ],
-       [
-        103.9126425256328,
-        1.4210543778282698
-       ],
-       [
-        103.91081988924739,
-        1.4214692252861694
-       ]
-      ]
-     ]
-    },
-    "properties": {
-     "name": "Punggol",
      "rank": 2,
-     "overall": "4.4"
-    }
-   },
-   {
-    "type": "Feature",
-    "geometry": {
-     "type": "Polygon",
-     "coordinates": [
-      [
-       [
-        103.9706562026185,
-        1.3414623069664777
-       ],
-       [
-        103.96780596958824,
-        1.3456676780146988
-       ],
-       [
-        103.96653275147625,
-        1.3479594197115101
-       ],
-       [
-        103.96529641742511,
-        1.3497415174567804
-       ],
-       [
-        103.96261275719701,
-        1.3576417501284206
-       ],
-       [
-        103.96200607594393,
-        1.3588838806034287
-       ],
-       [
-        103.96063682587972,
-        1.360921014806396
-       ],
-       [
-        103.95906298165937,
-        1.3625550976171208
-       ],
-       [
-        103.95695202771508,
-        1.3640742539153978
-       ],
-       [
-        103.95490945304917,
-        1.365042485684602
-       ],
-       [
-        103.9467042666821,
-        1.3671089703598354
-       ],
-       [
-        103.94463928514494,
-        1.3679590255233753
-       ],
-       [
-        103.94326838349649,
-        1.3689741303525345
-       ],
-       [
-        103.94074480797731,
-        1.3712129482483857
-       ],
-       [
-        103.93510627194482,
-        1.374279322565997
-       ],
-       [
-        103.93188765443534,
-        1.3757820691034395
-       ],
-       [
-        103.93071225022136,
-        1.373136866020341
-       ],
-       [
-        103.93040215601278,
-        1.3718592182318765
-       ],
-       [
-        103.9309309574183,
-        1.3661099920430861
-       ],
-       [
-        103.9308258085319,
-        1.3594206410009233
-       ],
-       [
-        103.93026154656411,
-        1.3579134876373191
-       ],
-       [
-        103.92563902417632,
-        1.3494302479310043
-       ],
-       [
-        103.92497049593159,
-        1.3485850653920146
-       ],
-       [
-        103.92629803566533,
-        1.347443134941761
-       ],
-       [
-        103.9297566261523,
-        1.3452499343319224
-       ],
-       [
-        103.93864943740964,
-        1.3364911156415669
-       ],
-       [
-        103.94060445126466,
-        1.3359555671494596
-       ],
-       [
-        103.94897529981216,
-        1.3343343410077393
-       ],
-       [
-        103.95417182388485,
-        1.3266036383128121
-       ],
-       [
-        103.96039532566654,
-        1.321367081717673
-       ],
-       [
-        103.96363401398482,
-        1.3144195590395722
-       ],
-       [
-        103.96415534720042,
-        1.314131350225672
-       ],
-       [
-        103.9647086669373,
-        1.3141212545453196
-       ],
-       [
-        103.96606338512431,
-        1.3147752371568846
-       ],
-       [
-        103.96651357137073,
-        1.314543557026708
-       ],
-       [
-        103.96848459526703,
-        1.31536589007195
-       ],
-       [
-        103.96859030028075,
-        1.315129099686838
-       ],
-       [
-        103.96882577511101,
-        1.3150879519224796
-       ],
-       [
-        103.96944021137959,
-        1.3155573138789871
-       ],
-       [
-        103.97048844770349,
-        1.3158889083026768
-       ],
-       [
-        103.97112761001473,
-        1.3155270520663174
-       ],
-       [
-        103.97192990469046,
-        1.3159688198554136
-       ],
-       [
-        103.97245821447746,
-        1.3160729818061434
-       ],
-       [
-        103.97387791697876,
-        1.3159801205045445
-       ],
-       [
-        103.974722114742,
-        1.3162083243991727
-       ],
-       [
-        103.97516511111809,
-        1.315978965569787
-       ],
-       [
-        103.97598055847538,
-        1.3162293935524225
-       ],
-       [
-        103.97669741049563,
-        1.3161722733900203
-       ],
-       [
-        103.97669619110867,
-        1.3154314998239225
-       ],
-       [
-        103.97874286394747,
-        1.3161553466618887
-       ],
-       [
-        103.97862951681209,
-        1.3163448161939546
-       ],
-       [
-        103.97874462841288,
-        1.316476219535478
-       ],
-       [
-        103.97930464307835,
-        1.3165851377784306
-       ],
-       [
-        103.98161739431308,
-        1.3165440997810516
-       ],
-       [
-        103.9829359366454,
-        1.3163287571393236
-       ],
-       [
-        103.98347179675663,
-        1.3166957788624858
-       ],
-       [
-        103.9838196281951,
-        1.3166803591943281
-       ],
-       [
-        103.98481245800193,
-        1.3189869025252299
-       ],
-       [
-        103.98068278304817,
-        1.3207742511337028
-       ],
-       [
-        103.97856008192758,
-        1.322426072370684
-       ],
-       [
-        103.98356137214014,
-        1.3342763085090785
-       ],
-       [
-        103.98346857974884,
-        1.3350386095004978
-       ],
-       [
-        103.98083773301792,
-        1.3361621495426983
-       ],
-       [
-        103.97967535159775,
-        1.3364373968268943
-       ],
-       [
-        103.97990710726796,
-        1.336958258100115
-       ],
-       [
-        103.97241572172986,
-        1.3401602080987265
-       ],
-       [
-        103.9706562026185,
-        1.3414623069664777
-       ]
-      ]
-     ]
-    },
-    "properties": {
-     "name": "Tampines",
-     "rank": 3,
-     "overall": "4.0"
+     "overall": "4.7",
+     "colour": "#B5651D"
     }
    },
    {
@@ -1707,8 +1431,293 @@
     },
     "properties": {
      "name": "Bedok",
+     "rank": 3,
+     "overall": "4.6",
+     "colour": "#1F6C9F"
+    }
+   },
+   {
+    "type": "Feature",
+    "geometry": {
+     "type": "Polygon",
+     "coordinates": [
+      [
+       [
+        103.9706562026185,
+        1.3414623069664777
+       ],
+       [
+        103.96780596958824,
+        1.3456676780146988
+       ],
+       [
+        103.96653275147625,
+        1.3479594197115101
+       ],
+       [
+        103.96529641742511,
+        1.3497415174567804
+       ],
+       [
+        103.96261275719701,
+        1.3576417501284206
+       ],
+       [
+        103.96200607594393,
+        1.3588838806034287
+       ],
+       [
+        103.96063682587972,
+        1.360921014806396
+       ],
+       [
+        103.95906298165937,
+        1.3625550976171208
+       ],
+       [
+        103.95695202771508,
+        1.3640742539153978
+       ],
+       [
+        103.95490945304917,
+        1.365042485684602
+       ],
+       [
+        103.9467042666821,
+        1.3671089703598354
+       ],
+       [
+        103.94463928514494,
+        1.3679590255233753
+       ],
+       [
+        103.94326838349649,
+        1.3689741303525345
+       ],
+       [
+        103.94074480797731,
+        1.3712129482483857
+       ],
+       [
+        103.93510627194482,
+        1.374279322565997
+       ],
+       [
+        103.93188765443534,
+        1.3757820691034395
+       ],
+       [
+        103.93071225022136,
+        1.373136866020341
+       ],
+       [
+        103.93040215601278,
+        1.3718592182318765
+       ],
+       [
+        103.9309309574183,
+        1.3661099920430861
+       ],
+       [
+        103.9308258085319,
+        1.3594206410009233
+       ],
+       [
+        103.93026154656411,
+        1.3579134876373191
+       ],
+       [
+        103.92563902417632,
+        1.3494302479310043
+       ],
+       [
+        103.92497049593159,
+        1.3485850653920146
+       ],
+       [
+        103.92629803566533,
+        1.347443134941761
+       ],
+       [
+        103.9297566261523,
+        1.3452499343319224
+       ],
+       [
+        103.93864943740964,
+        1.3364911156415669
+       ],
+       [
+        103.94060445126466,
+        1.3359555671494596
+       ],
+       [
+        103.94897529981216,
+        1.3343343410077393
+       ],
+       [
+        103.95417182388485,
+        1.3266036383128121
+       ],
+       [
+        103.96039532566654,
+        1.321367081717673
+       ],
+       [
+        103.96363401398482,
+        1.3144195590395722
+       ],
+       [
+        103.96415534720042,
+        1.314131350225672
+       ],
+       [
+        103.9647086669373,
+        1.3141212545453196
+       ],
+       [
+        103.96606338512431,
+        1.3147752371568846
+       ],
+       [
+        103.96651357137073,
+        1.314543557026708
+       ],
+       [
+        103.96848459526703,
+        1.31536589007195
+       ],
+       [
+        103.96859030028075,
+        1.315129099686838
+       ],
+       [
+        103.96882577511101,
+        1.3150879519224796
+       ],
+       [
+        103.96944021137959,
+        1.3155573138789871
+       ],
+       [
+        103.97048844770349,
+        1.3158889083026768
+       ],
+       [
+        103.97112761001473,
+        1.3155270520663174
+       ],
+       [
+        103.97192990469046,
+        1.3159688198554136
+       ],
+       [
+        103.97245821447746,
+        1.3160729818061434
+       ],
+       [
+        103.97387791697876,
+        1.3159801205045445
+       ],
+       [
+        103.974722114742,
+        1.3162083243991727
+       ],
+       [
+        103.97516511111809,
+        1.315978965569787
+       ],
+       [
+        103.97598055847538,
+        1.3162293935524225
+       ],
+       [
+        103.97669741049563,
+        1.3161722733900203
+       ],
+       [
+        103.97669619110867,
+        1.3154314998239225
+       ],
+       [
+        103.97874286394747,
+        1.3161553466618887
+       ],
+       [
+        103.97862951681209,
+        1.3163448161939546
+       ],
+       [
+        103.97874462841288,
+        1.316476219535478
+       ],
+       [
+        103.97930464307835,
+        1.3165851377784306
+       ],
+       [
+        103.98161739431308,
+        1.3165440997810516
+       ],
+       [
+        103.9829359366454,
+        1.3163287571393236
+       ],
+       [
+        103.98347179675663,
+        1.3166957788624858
+       ],
+       [
+        103.9838196281951,
+        1.3166803591943281
+       ],
+       [
+        103.98481245800193,
+        1.3189869025252299
+       ],
+       [
+        103.98068278304817,
+        1.3207742511337028
+       ],
+       [
+        103.97856008192758,
+        1.322426072370684
+       ],
+       [
+        103.98356137214014,
+        1.3342763085090785
+       ],
+       [
+        103.98346857974884,
+        1.3350386095004978
+       ],
+       [
+        103.98083773301792,
+        1.3361621495426983
+       ],
+       [
+        103.97967535159775,
+        1.3364373968268943
+       ],
+       [
+        103.97990710726796,
+        1.336958258100115
+       ],
+       [
+        103.97241572172986,
+        1.3401602080987265
+       ],
+       [
+        103.9706562026185,
+        1.3414623069664777
+       ]
+      ]
+     ]
+    },
+    "properties": {
+     "name": "Tampines",
      "rank": 4,
-     "overall": "3.9"
+     "overall": "4.2",
+     "colour": "#00897B"
     }
    }
   ]

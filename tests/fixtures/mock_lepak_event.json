@@ -2,6 +2,15 @@
  "id": 1,
  "title": "Anime Earth",
  "category": "Arts & Culture",
+ "category_slug": "arts-culture",
+ "image": {
+  "alt": "Arts & Culture event",
+  "kind": "artwork",
+  "credit": null,
+  "licence": null,
+  "source_url": null,
+  "url": "/static/img/category/arts-culture.svg"
+ },
  "when": "On now until Sun 4 Oct",
  "venue": "City Square Mall",
  "address": null,

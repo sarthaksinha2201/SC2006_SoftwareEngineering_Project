@@ -1,35 +1,74 @@
 {% extends "base.html" %}
 {% from "_macros.html" import note %}
 {% block title %}Where to Live · GoWhere{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/maplibre/maplibre-gl.css') }}">
+{% endblock %}
+{% block scripts %}
+{# Loaded only on this screen: it is the largest asset in the app and no other page
+   draws a 3D map. Deferred, so it never blocks the form rendering. #}
+<script defer src="{{ url_for('static', filename='vendor/maplibre/maplibre-gl.js') }}"></script>
+{% endblock %}
+{% block credits %} · 3D map by MapLibre GL JS{% endblock %}
 {% block content %}
 <h1>Where to Live</h1>
-<p><small>Data as of {{ view.snapshot_date }}.</small></p>
+<p class="lede">Pick 2 to 4 neighbourhoods, then weight what matters to you.
+  <small>Data as of {{ view.snapshot_date }}.</small></p>
 {% if view.error %}{{ note(view.error, 'warning') }}{% endif %}
 <form id="live-form" method="post" action="{{ url_for('web.live_submit') }}"
-      data-check-url="{{ url_for('web.live_check') }}">
-  <fieldset>
-    <legend>Neighbourhoods ({{ view.min_areas }} to {{ view.max_areas }})</legend>
-    <div class="checkbox-row">
-      {% for a in view.areas %}
-      <label>
-        <input type="checkbox" name="areas" value="{{ a.key }}" {% if a.selected %}checked{% endif %}>
-        {{ a.name }} <small>({{ a.flats_text }}{% if a.small_sample %}, small sample{% endif %})</small>
-      </label>
-      {% endfor %}
+      data-check-url="{{ url_for('web.live_check') }}"
+      {# Only reached when the request is actually slow, which for this screen means
+         Commute is on and OneMap is being called once per area. With Commute off the
+         comparison answers from the local snapshot and no overlay ever appears. #}
+      data-loading-stages='[[0, "Scoring your neighbourhoods"],
+                            [900, "Comparing them factor by factor"],
+                            [2600, "Working out travel times to your destination"],
+                            [6000, "Ranking them"]]'>
+  {# The map is an enhancement over the checkbox list, not a replacement: the boxes are
+     the form's real state and stay in the DOM. app.js hides them behind a disclosure
+     and drives them from the map. With JS off, the list is simply the control. #}
+  <div class="picker" id="area-picker"
+       data-areas-url="{{ url_for('web.live_areas') }}"
+       data-min="{{ view.min_areas }}" data-max="{{ view.max_areas }}">
+    <div class="picker-map" id="area-map" hidden>
+      <p class="picker-hint" id="picker-hint">Scroll to tilt the map · click a town to compare it</p>
     </div>
-  </fieldset>
+    <div class="picker-bar" id="picker-bar" hidden>
+      <span class="picker-count" id="picker-count"></span>
+      <div class="picker-chosen" id="picker-chosen"></div>
+      <button type="button" class="pill" id="picker-tilt" aria-pressed="false">3D</button>
+    </div>
+    <details class="picker-fallback" id="picker-fallback" open>
+      <summary>Neighbourhoods ({{ view.min_areas }} to {{ view.max_areas }})</summary>
+      <div class="checkbox-row">
+        {% for a in view.areas %}
+        <label>
+          <input type="checkbox" name="areas" value="{{ a.key }}" {% if a.selected %}checked{% endif %}>
+          {{ a.name }} <small>({{ a.flats_text }}{% if a.small_sample %}, small sample{% endif %})</small>
+        </label>
+        {% endfor %}
+      </div>
+    </details>
+  </div>
 
   {% for f in view.factors %}
   <fieldset class="factor{% if not f.included %} factor--off{% endif %}" data-factor="{{ f.key }}">
     <legend>{{ f.label }}</legend>
     <div class="factor-head">
-      <label style="display:inline-flex;align-items:center;gap:.35rem;margin:0">
+      <label class="factor-include">
         <input type="checkbox" name="include_{{ f.key }}" value="1" {% if f.included %}checked{% endif %}>
         Include
       </label>
-      <label style="display:inline-flex;align-items:center;gap:.35rem;margin:0">
-        Weight
-        <input type="number" name="weight_{{ f.key }}" min="1" max="10" value="{{ f.weight }}">
+      <label class="weight">
+        <span class="weight-label">Weight</span>
+        {# A slider rather than a number box: the value is a relative importance from
+           1 to 10, which is a thing you feel out against the others, not a figure you
+           type. The server still validates the range, so a posted 0 or 11 is rejected
+           exactly as before. #}
+        <input type="range" name="weight_{{ f.key }}" min="1" max="10" step="1"
+               value="{{ f.weight }}" class="weight-slider"
+               aria-label="{{ f.label }} weight, 1 to 10">
+        <output class="weight-value tabular">{{ f.weight }}</output>
       </label>
     </div>
     {% set c = f.controls %}

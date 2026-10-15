@@ -4,5 +4,5 @@
 {% block content %}
 <h1>{{ title }}</h1>
 {% for m in messages %}{{ note(m, 'warning') }}{% endfor %}
-<p><a class="btn-secondary link-muted" href="{{ url_for('web.live_setup') }}">Back to Where to Live</a></p>
+<p><a class="btn btn-secondary" href="{{ url_for('web.live_setup') }}">Back to Where to Live</a></p>
 {% endblock %}

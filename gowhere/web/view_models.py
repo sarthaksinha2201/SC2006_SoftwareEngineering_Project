@@ -20,6 +20,13 @@ from gowhere.web.forms import FACTOR_ORDER
 CLOSE_CALL_POINTS = "0.2"
 STALE_AFTER = timedelta(days=365)       # FR 3.1.6: warn when the snapshot is over 12 months old
 MAP_TOLERANCE_DEG = 0.0001   # ~11 m: boundaries stay accurate at street zoom, page stays light
+PICKER_TOLERANCE_DEG = 0.0006   # ~66 m: the setup picker is only ever seen at island zoom
+# One hue per compared neighbourhood, at most four because that is the comparison cap,
+# so the list is never cycled. Checked with the dataviz validator against the page's
+# #FBFBFA surface: all four inside the lightness band, above the chroma floor, worst
+# adjacent pair deltaE 16.5 under deuteranopia and 24.0 with normal vision, all above
+# 3:1 contrast. Changing any value means re-running that check.
+CHART_COLOURS = ("#1F6C9F", "#B5651D", "#6940A5", "#00897B")
 # DECISIONS.md section 16: five factors on by default; Commute off (it needs a destination
 # only the user can give, and switching it on reveals that field); every amenity type
 # ticked (FR 1.2.6.2); GP clinics for healthcare (FR 1.2.7.1).
@@ -171,6 +178,11 @@ def results_view(result, snapshot, all_factors=None, now=None):
                             "summary": a["raw"].get(f["key"], {}).get("summary", "")}
                            for f in factors],
         })
+    # A neighbourhood's colour follows the neighbourhood, not its position in the
+    # ranking: re-weighting the factors reorders `rows`, and if colour came from that
+    # order every town on the chart would change colour for no reason the reader can
+    # see. Alphabetical within the selection is stable against any re-weighting.
+    chart_slot = {name: i for i, name in enumerate(sorted(r["name"] for r in rows))}
     geometry = {r["name"]: _simplified(r["geometry_geojson"]) for r in snapshot.query(
         f"SELECT name, geometry_geojson FROM planning_area WHERE name IN "
         f"({', '.join('?' for _ in rows)})", tuple(r["key"] for r in rows))}
@@ -185,18 +197,49 @@ def results_view(result, snapshot, all_factors=None, now=None):
         "recommendation": recommendation(result),
         "chart": {"labels": [f["label"] for f in factors],
                   "datasets": [{"label": r["name"],
+                                "colour": CHART_COLOURS[chart_slot[r["name"]]],
                                 "data": [float(c["score"]) for c in r["categories"]]}
                                for r in rows]},
+        # The same colour the chart gives this neighbourhood, so a reader moving between
+        # the chart, the map and the table tracks one town by one hue.
         "map": {"type": "FeatureCollection", "features": [
             {"type": "Feature", "geometry": geometry[r["key"]],
-             "properties": {"name": r["name"], "rank": r["rank"], "overall": r["overall"]}}
+             "properties": {"name": r["name"], "rank": r["rank"], "overall": r["overall"],
+                            "colour": CHART_COLOURS[chart_slot[r["name"]]]}}
             for r in rows]},
     }
 
 
-def _simplified(geojson_text):
-    geom = shape(json.loads(geojson_text)).simplify(MAP_TOLERANCE_DEG, preserve_topology=True)
+def _simplified(geojson_text, tolerance=MAP_TOLERANCE_DEG):
+    geom = shape(json.loads(geojson_text)).simplify(tolerance, preserve_topology=True)
     return json.loads(json.dumps(mapping(geom)))   # tuples -> lists, as JSON has them
+
+
+def picker_map(snapshot):
+    """Every in-scope neighbourhood as a polygon, for the setup screen's map picker.
+
+    Served from its own endpoint rather than inlined: it is the same for every visitor
+    and every session, so the browser caches it once instead of re-parsing it on each
+    page load. Simplified harder than the results map (PICKER_TOLERANCE_DEG) because it
+    is only ever seen at island zoom, which cuts it to a fraction of the size.
+
+    `flats` drives the 3D extrusion height, so the taller blocks are the bigger towns.
+    """
+    areas = snapshot.areas()
+    rows = snapshot.query("SELECT name, geometry_geojson FROM planning_area WHERE in_scope = 1")
+    return {"type": "FeatureCollection", "features": [
+        {"type": "Feature",
+         "id": index,                      # feature-state needs an id; names are not numeric
+         "geometry": _simplified(r["geometry_geojson"], PICKER_TOLERANCE_DEG),
+         "properties": {
+             "key": r["name"],
+             "name": area_name(r["name"]),
+             "flats": areas[r["name"]]["n_flats"],
+             "small_sample": bool(areas[r["name"]]["small_sample"]),
+             "flats_text": f"{areas[r['name']]['n_flats']:,} flats in "
+                           f"{areas[r['name']]['n_blocks']} blocks",
+         }}
+        for index, r in enumerate(sorted(rows, key=lambda r: r["name"]))]}
 
 
 # ---- setup --------------------------------------------------------------------

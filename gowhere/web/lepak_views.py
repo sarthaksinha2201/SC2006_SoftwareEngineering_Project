@@ -14,6 +14,7 @@ from datetime import datetime
 from flask import url_for
 
 from gowhere.lepak.categories import CATEGORIES, MAX_SELECTED, MIN_SELECTED
+from gowhere.lepak.images import default_images, slugify
 from gowhere.lepak.routing import MODES
 from gowhere.lepak.search import (DATE_OPTIONS, MAX_MINUTES_CHOICES, ROUTE_CAP, SORTS,
                                   InvalidSearch, sort_and_filter)
@@ -106,12 +107,25 @@ def _source(url):
     return {"url": url, "label": url.replace("https://", "")}
 
 
+def image_for(venue, category):
+    """The card picture: a freely-licensed photograph of the venue, or the category's
+    artwork when no confident match exists. Resolved offline by
+    `python -m gowhere.lepak.images`, so this reads a manifest and makes no call."""
+    record = dict(default_images().for_event(venue, category))
+    record["url"] = url_for("static", filename=record.pop("path"))
+    return record
+
+
 def card(r, mode, now):
     route = r.get("route")
     parking = r.get("parking")
+    venue = r["venue"] or r["address"]
     return {
         "id": r["id"], "title": r["title"], "category": r["category"],
-        "when": when_text(r, now), "venue": r["venue"] or r["address"],
+        # The tag's washed pastel is picked in app.css from this slug.
+        "category_slug": slugify(r["category"]),
+        "image": image_for(r["venue"], r["category"]),
+        "when": when_text(r, now), "venue": venue,
         "address": r["address"] if r["venue"] else None,
         "summary": r["summary"],
         "travel": travel_text(r, mode),
@@ -133,7 +147,10 @@ def setup_view(form=None, error=None):
     max_minutes = str(get("max_minutes", DEFAULTS["max_minutes"]))
     return {
         "min_categories": MIN_SELECTED, "max_categories": MAX_SELECTED,
-        "categories": [{"value": c, "label": c, "checked": c in chosen} for c in CATEGORIES],
+        # `short` is what fits inside a wheel segment; `label` stays the full name and
+        # is what the segment announces to a screen reader.
+        "categories": [{"value": c, "label": c, "short": c.split(" & ")[0],
+                        "slug": slugify(c), "checked": c in chosen} for c in CATEGORIES],
         "date_options": [{"value": k, "label": v, "selected": k == date_option}
                          for k, v in DATE_OPTIONS.items()],
         "modes": [{"value": k, "label": v[0].upper() + v[1:], "selected": k == mode}

@@ -6,3 +6,40 @@
 <p class="note{% if kind == 'warning' %} note--warning{% endif %}"
    {% if kind == 'warning' %}role="alert"{% endif %}>{{ text }}</p>
 {% endmacro %}
+
+{# The waiting orb. Three orbits of dots, tilted so they read as a sphere, around a
+   pulsing core. Markup only -- app.css animates it, app.js shows it.
+   Rendered once in base.html and shown on submits that genuinely take seconds: the
+   Lepak search routes up to 50 events through OneMap (measured median 5.1 s), and
+   Where to Live calls OneMap per area when Commute is on. Everything else answers from
+   the local snapshot in milliseconds and must never see this. #}
+{% macro orb() %}
+<div class="orb" aria-hidden="true">
+  <span class="orb-glow"></span>
+  <span class="orb-wave"></span>
+  <span class="orb-wave orb-wave--2"></span>
+  {# The rings spin; this wrapper carries the heartbeat, because one element cannot
+     run two transform animations at once. #}
+  <span class="orb-rings">
+    {% for radius, count in [(62, 22), (46, 16), (28, 10)] %}
+    <span class="orb-ring orb-ring--{{ loop.index }}" style="--r: {{ radius }}px">
+      {% for i in range(count) %}<i style="--a: {{ (360.0 / count * i)|round(1) }}deg; --i: {{ i }}"></i>{% endfor %}
+    </span>
+    {% endfor %}
+  </span>
+  <span class="orb-core"></span>
+</div>
+{% endmacro %}
+
+{# `stages` is a JSON array of [delay_ms, text] written by the calling template, so the
+   wording lives with the screen it describes rather than in app.js. #}
+{% macro loader() %}
+<div class="loader-overlay" id="page-loader" hidden>
+  <div class="loader-panel">
+    {{ orb() }}
+    <p class="loader-state" id="loader-state" role="status" aria-live="polite"></p>
+    <p class="loader-slow" id="loader-slow" hidden>This is taking longer than usual.
+      It is still working &mdash; OneMap can be slow at busy times.</p>
+  </div>
+</div>
+{% endmacro %}

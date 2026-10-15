@@ -12,7 +12,7 @@ from gowhere.scoring.registry import default_strategies
 from gowhere.services.location import OfflinePostalNotFound
 from gowhere.web.forms import FormError, parse_live_form
 from gowhere.web import lepak_views
-from gowhere.web.view_models import dropped_messages, results_view, setup_view
+from gowhere.web.view_models import dropped_messages, picker_map, results_view, setup_view
 
 bp = Blueprint("web", __name__)
 
@@ -40,6 +40,21 @@ def live_setup():
     state = _state()
     engine, snapshot = _engine(state)
     return render_template("live_setup.html", view=setup_view(engine, snapshot, state.last_request))
+
+
+@bp.get("/live/areas.geojson")
+def live_areas():
+    """The setup screen's map picker reads its polygons here.
+
+    The same bytes for everyone and fixed by the snapshot, so it is cached hard; the
+    snapshot's build date busts it. Same-origin, so the picker still loads with the
+    network off.
+    """
+    snapshot = current_app.extensions["gowhere"]["snapshot"]
+    response = jsonify(picker_map(snapshot))
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    response.headers["ETag"] = f'"areas-{snapshot.meta()["generated_at"]}"'
+    return response
 
 
 def as_sentence(error):

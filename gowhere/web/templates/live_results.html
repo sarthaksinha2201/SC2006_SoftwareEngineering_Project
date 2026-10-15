@@ -2,18 +2,19 @@
 {% from "_macros.html" import note %}
 {% block title %}Results · GoWhere{% endblock %}
 {% block content %}
-<h1>Where to Live: results</h1>
-<p><small>Data as of {{ view.snapshot_date }}.</small></p>
+<h1>Where to Live</h1>
+<p class="lede">How the neighbourhoods you picked compare.
+  <small>Data as of {{ view.snapshot_date }}.</small></p>
 
 {% if view.stale_warning %}{{ note(view.stale_warning, 'warning') }}{% endif %}
 {% for m in view.dropped %}{{ note(m, 'warning') }}{% endfor %}
 
 {% set rec = view.recommendation %}
-<section class="recommendation">
+<section class="recommendation" data-reveal>
   <h2>{{ rec.headline }}</h2>
   {% if rec.because %}<p>{{ rec.because }}</p>{% endif %}
   {% if rec.close_call %}{{ note(rec.close_call_text, 'warning') }}{% endif %}
-  <button type="button" class="btn-secondary link-muted" data-open-dialog="breakdown">
+  <button type="button" class="btn btn-secondary" data-open-dialog="breakdown">
     See how this was calculated
   </button>
 </section>
@@ -21,7 +22,7 @@
 {% set b = view.breakdown %}
 <dialog id="breakdown" class="modal modal--wide">
   <div class="modal-head">
-    <h2 style="margin:0">How the ranking was calculated</h2>
+    <h2>How the ranking was calculated</h2>
     <button type="button" class="modal-close" data-close-dialog aria-label="Close">&times;</button>
   </div>
   <p>{{ b.winner }} (recommended) against {{ b.runner_up }} (runner-up), largest difference first.
@@ -50,21 +51,21 @@
   {% endif %}
 </dialog>
 
-<h2>Scores by factor</h2>
+<h2 class="section-head">Scores by factor</h2>
 <div class="chart-toolbar">
   <button type="button" class="pill is-selected" data-chart-type="bar" aria-pressed="true">Bar chart</button>
   <button type="button" class="pill" data-chart-type="radar" aria-pressed="false">Radar</button>
 </div>
-<div class="chart-container chart-container--bars">
+<div class="chart-container chart-container--bars" data-reveal>
   <canvas id="scores-chart" role="img"
           aria-label="Grouped bar chart of each neighbourhood's score on every included factor"></canvas>
 </div>
 
-<h2>Map</h2>
-<div id="map" class="map-container" role="img" aria-label="Map of the compared neighbourhoods"></div>
+<h2 class="section-head">Map</h2>
+<div id="map" class="map-container" data-reveal role="img" aria-label="Map of the compared neighbourhoods"></div>
 
-<h2>Comparison</h2>
-<div class="table-scroll">
+<h2 class="section-head">Comparison</h2>
+<div class="table-scroll" data-reveal>
 <table class="results">
   <tr>
     <th>Rank</th><th>Neighbourhood</th><th>Overall</th>
@@ -72,7 +73,7 @@
   </tr>
   {% for a in view.areas %}
   <tr>
-    <td><span class="rank-badge">{{ a.rank_label }}</span></td>
+    <td><span class="rank-badge" data-rank="{{ loop.index }}">{{ a.rank_label }}</span></td>
     <td>{{ a.name }}<br><small>{{ a.flats_text }}</small></td>
     <td><strong>{{ a.overall }}</strong></td>
     {% for c in a.categories %}
@@ -98,5 +99,5 @@
 <script type="application/json" id="chart-data">{{ view.chart|tojson }}</script>
 <script type="application/json" id="map-data">{{ view.map|tojson }}</script>
 
-<p><a class="btn" href="{{ url_for('web.live_setup') }}">Change the comparison</a></p>
+<p class="detail-foot"><a class="btn" href="{{ url_for('web.live_setup') }}">Change the comparison</a></p>
 {% endblock %}

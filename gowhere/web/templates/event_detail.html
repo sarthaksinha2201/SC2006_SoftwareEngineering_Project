@@ -1,30 +1,65 @@
 {% extends "base.html" %}
 {% block title %}{{ view.title }} · GoWhere{% endblock %}
 {% block content %}
-<h1>{{ view.title }}</h1>
-<p class="event-meta">{{ view.category }} · {{ view.when }}</p>
-<p class="event-meta">{{ view.venue }}{% if view.address %}, {{ view.address }}{% endif %}</p>
-{% if view.travel %}
-<p class="event-meta">{{ view.travel }}{% if view.route_summary %}: {{ view.route_summary }}{% endif %}</p>
-{% endif %}
-{% if view.parking %}
-<p class="event-meta">{{ view.parking }}</p>
-{% if view.carparks %}
-<ul>{% for c in view.carparks %}<li>{{ c.name }}: {{ c.lots }} lots, {{ c.distance }}</li>{% endfor %}</ul>
-{% endif %}
-{% endif %}
+
+<div class="event-hero">
+  <img src="{{ view.image.url }}" alt="{{ view.image.alt }}" width="800" height="450">
+</div>
+
+<div class="event-detail-head">
+  <p class="event-kicker"><span class="cat-tag" data-cat="{{ view.category_slug }}">{{ view.category }}</span></p>
+  <h1>{{ view.title }}</h1>
+  <p class="lede">{{ view.summary }}</p>
+</div>
+
+<dl class="event-facts">
+  <div class="event-fact">
+    <dt>When</dt>
+    <dd>{{ view.when }}</dd>
+  </div>
+  <div class="event-fact">
+    <dt>Where</dt>
+    <dd>{{ view.venue }}{% if view.address %}<br><small>{{ view.address }}</small>{% endif %}</dd>
+  </div>
+  {% if view.travel %}
+  <div class="event-fact">
+    <dt>Getting there</dt>
+    <dd>{{ view.travel }}{% if view.route_summary %}<br><small>{{ view.route_summary }}</small>{% endif %}</dd>
+  </div>
+  {% endif %}
+  {% if view.parking %}
+  <div class="event-fact">
+    <dt>Parking</dt>
+    <dd>{{ view.parking }}
+      {% if view.carparks %}
+      <ul class="carpark-list">
+        {% for c in view.carparks %}<li>{{ c.name }} <span class="tabular">{{ c.lots }} lots · {{ c.distance }}</span></li>{% endfor %}
+      </ul>
+      {% endif %}
+    </dd>
+  </div>
+  {% endif %}
+</dl>
+
+<h2 class="section-head">Map</h2>
+<div id="map" class="map-container" role="img"
+     aria-label="Map of the venue{% if view.travel %} and route{% endif %}"></div>
 
 {% if view.steps %}
-<h2>Directions</h2>
+<h2 class="section-head">Directions</h2>
 <ol class="directions">{% for st in view.steps %}<li>{{ st }}</li>{% endfor %}</ol>
 {% endif %}
-<div id="map" class="map-container" role="img" aria-label="Map of the venue{% if view.travel %} and route{% endif %}"></div>
 
-<p class="event-summary">{{ view.summary }}</p>
-<p class="event-sources">Source:
+<h2 class="section-head">Source</h2>
+<p class="event-sources">
   {% for s in view.sources %}<a href="{{ s.url }}" rel="noopener noreferrer" target="_blank">{{ s.label }}</a>{% if not loop.last %}, {% endif %}{% endfor %}
+  {% if view.image.kind == 'photo' and view.image.credit %}
+  <br>Photo: {{ view.image.credit }}{% if view.image.licence %} ({{ view.image.licence }}){% endif %},
+  via <a href="{{ view.image.source_url }}" rel="noopener noreferrer" target="_blank">Wikipedia</a>
+  {% endif %}
 </p>
+
 <script type="application/json" id="map-data">{{ view.map|tojson }}</script>
-<p><a class="link-muted" href="{{ view.back_url }}">Back to results</a> ·
+<p class="detail-foot"><a class="link-muted" href="{{ view.back_url }}">Back to results</a> ·
    <a class="link-muted" href="{{ view.search_url }}">New search</a></p>
 {% endblock %}

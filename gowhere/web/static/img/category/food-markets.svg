@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450" role="img" aria-label="Food and Markets">
+  <title>Food and Markets</title>
+  <rect width="800" height="450" fill="#FBFBFA"/>
+  <g fill="#FBF3DB"><circle cx="612" cy="140" r="150"/></g>
+  <g transform="translate(240 108)" fill="none" stroke="#1F1F1D" stroke-width="5"
+     stroke-linecap="round" stroke-linejoin="round" opacity="0.88"><path d="M22 118 q138 -34 276 0 q-16 86 -138 86 q-122 0 -138 -86 Z"/><path d="M8 118 h304"/><path d="M96 96 q8 -30 -10 -48 q-18 -18 -8 -44"/><path d="M152 92 q9 -33 -11 -53 q-20 -20 -9 -48"/><path d="M208 96 q8 -30 -10 -48 q-18 -18 -8 -44"/><path d="M60 228 h200"/></g>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450" role="img" aria-label="Sales and Pop-ups">
+  <title>Sales and Pop-ups</title>
+  <rect width="800" height="450" fill="#FBFBFA"/>
+  <g fill="#FAF1F5"><rect x="560" y="150" width="310" height="310" transform="rotate(-12 715 305)" rx="10"/></g>
+  <g transform="translate(240 108)" fill="none" stroke="#1F1F1D" stroke-width="5"
+     stroke-linecap="round" stroke-linejoin="round" opacity="0.88"><path d="M36 128 l92 -92 h110 v110 l-92 92 Z"/><circle cx="202" cy="72" r="17"/><path d="M36 128 l110 110"/><path d="M16 206 q56 -28 112 0 q56 28 112 0"/><path d="M68 240 h200"/></g>
+</svg>

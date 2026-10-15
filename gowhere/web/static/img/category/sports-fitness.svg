@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450" role="img" aria-label="Sports and Fitness">
+  <title>Sports and Fitness</title>
+  <rect width="800" height="450" fill="#FBFBFA"/>
+  <g fill="#E1F3FE"><rect x="500" y="-40" width="330" height="330" transform="rotate(14 665 125)" rx="10"/></g>
+  <g transform="translate(240 108)" fill="none" stroke="#1F1F1D" stroke-width="5"
+     stroke-linecap="round" stroke-linejoin="round" opacity="0.88"><circle cx="196" cy="42" r="26"/><path d="M186 80 l-40 62 l-52 24"/><path d="M186 80 l44 48 l-18 66 l54 44"/><path d="M212 194 l-74 46"/><path d="M146 142 l40 10"/><path d="M14 120 h58"/><path d="M22 160 h42"/></g>
+</svg>

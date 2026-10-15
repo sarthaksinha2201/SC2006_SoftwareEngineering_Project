@@ -1,0 +1,4 @@
+MapLibre GL JS v5.6.0 — 3-Clause BSD licence.
+https://github.com/maplibre/maplibre-gl-js/blob/v5.6.0/LICENSE.txt
+Vendored (not fetched from a CDN) so a clean clone runs with no network,
+matching the Leaflet and Chart.js copies beside it.

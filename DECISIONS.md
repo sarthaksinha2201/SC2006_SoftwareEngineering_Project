@@ -514,3 +514,205 @@ Six confirmed: @sgweekend, @sgwhereto, @SGArtsChannel, @sgconcerts, @dateideas, 
 **Recorded honestly alongside it:** one browser attempt out of 20 returned no page within 60 seconds, while the server stayed responsive and the six HTTP runs immediately afterwards took 4.1–7.2 s — cause undetermined, most likely the headless browser, which dropped a connection in another batch. And OneMap answered some routing calls with HTTP 429 when searches were repeated every 10–15 seconds; the retry recovered every time. Neither is hidden in the write-up.
 
 **Finding worth keeping:** Puppeteer's **full-page screenshots silently drop Leaflet's SVG layer and map tiles**, which is why earlier online screenshots showed grey backgrounds even though 14–15 tiles had loaded. Element screenshots are reliable. A screenshot is evidence about the screenshot tool as much as about the page — worth remembering before reporting a visual defect that is an artefact of how it was captured.
+
+## 22. Interface redesign (15 Oct 2026)
+
+The two screens the team found dullest were the Where to Live setup — 32 checkboxes in
+a block — and the Where to Lepak results, which were unbroken grey text. Both are now
+rebuilt. The visual system is editorial minimalism: a warm monochrome canvas, one serif
+(Instrument Serif, SIL OFL, vendored) for display type, colour reserved for category
+tags and semantic state.
+
+### Event pictures: Wikipedia venue photographs, not Street View
+
+**Decision:** Each event card carries a **freely-licensed photograph of its venue**,
+taken from the English Wikipedia article that sits at the event's own coordinates, with
+generated **category artwork** as the fallback. Resolution is an offline step
+(`python -m gowhere.lepak.images`) that downloads into `gowhere/web/static/venues/` and
+writes a manifest; rendering only reads the manifest.
+
+**Reason Street View was rejected**, although it was the original proposal:
+
+| | Street View Static API | Wikipedia geosearch |
+|---|---|---|
+| Key | Required, **with billing enabled** | None |
+| Key exposure | In the image URL, visible in page source | — |
+| Caching the image | **Forbidden** (Maps Platform terms §3.2.3(b); only `pano_id` may be stored) | Permitted; CC licences |
+| Offline | **Breaks** — every card calls Google on every page view | Works; files are in the repo |
+| Cost | Pro-tier SKU, paid beyond a small monthly free allowance | Free |
+| What you see | Whatever road is nearest the centroid | The building itself |
+
+The last row decided it as much as the licence. Our events cluster in the CBD, so
+centroid Street View would have returned the same few expressways and carpark ramps
+over and over. The Esplanade card now shows the Esplanade.
+
+**Decision:** A match is accepted at **0.62** on a score that is half character
+similarity and half token overlap (`gowhere/lepak/images.py::match_score`).
+**Reason:** Character similarity alone scores "Singapore National Stadium" at 0.73
+against *Singapore National Eye Centre*, which is next door — a confidently wrong
+photograph is worse than no photograph. Token overlap alone punishes "Fort Canning
+Park" against *Fort Canning Hill*, which is right. Together they separate the two. On
+the 33 venues in the store the automatic pass took 13; `data/reference/venue_images.csv`
+names a Wikipedia article for 15 more the geosearch missed or scored just under, giving
+**28 of 33**. The remaining 5 show category artwork.
+
+**Decision:** Images are named after the **article**, cropped to **800x450** and
+recompressed locally before being committed.
+**Reason:** Three separate kinds of waste, found when the 5.2 MB directory was
+questioned. Naming files after the *venue* stored four byte-identical copies of the one
+Esplanade photograph, and two more pairs besides. Commons does not resize on demand --
+it serves the nearest pre-rendered bucket while *reporting* the size asked for, so
+requesting 640 px still returned the 960 px file; the trimming has to be done locally.
+And those files are often tall portraits, of which the card only ever shows a 16:9
+slice. Cropping to the shape actually displayed, at the size actually displayed, took
+the worst file from 513 KB to 153 KB. Together: **5.2 MB over 28 files to 2.5 MB over
+23**, with no visible change. The crop uses `sips`, which ships with macOS, so nothing
+is added to `requirements.txt`; where it is absent the step is skipped and the
+full-size download kept. The committed images are already trimmed, so no one else needs
+to run it.
+
+**Decision:** The override file names a **Wikipedia article title**, not an image URL.
+**Reason:** All four Esplanade halls are rooms in one building; correcting them is one
+article name each. Attribution stays automatic, which an image URL would not.
+
+### The neighbourhood picker: MapLibre, not Mapbox
+
+**Decision:** The 32 checkboxes are replaced by a **3D map picker** built on **MapLibre
+GL JS** (3-Clause BSD), vendored beside Leaflet and Chart.js. Scrolling the page tilts
+the camera from flat to 55°; clicking a town selects it; extrusion height is the town's
+number of flats.
+
+**Reason MapLibre rather than Mapbox**, which was what was asked for: Mapbox GL JS needs
+a public access token and fetches its style and tiles from Mapbox, so it cannot be
+vendored — a clean clone would need a network and an account, and the offline rehearsal
+(section 14) would fail. MapLibre renders our *own* polygons from `snapshot.db`, so with
+the network off the basemap tiles simply do not arrive and the towns draw on blank,
+exactly as Leaflet already degrades. Verified: with every external host blocked the
+picker still renders, hovers and selects.
+
+**Decision:** The checkboxes **stay in the DOM**, hidden behind an "Or choose from a
+list" disclosure, and remain the form's state; the map only drives them.
+**Reason:** The POST contract, the selection-time `/live/check` call and the existing
+tests are untouched, and the screen still works with JavaScript off or WebGL missing.
+
+**Decision:** Polygons are served from **`GET /live/areas.geojson`**, simplified to ~66 m.
+**Reason:** 42 KB, identical for every visitor, cached for a day — rather than inlining
+it into every render of the setup page.
+
+### Chart colour
+
+**Decision:** The chart palette is `#1F6C9F, #B5651D, #6940A5, #00897B`, and a
+neighbourhood's colour **follows the neighbourhood, not its rank**.
+**Reason:** The old palette was assigned by position in the ranked list, so changing a
+weight repainted every town for no reason the reader could see. Colour is now assigned
+alphabetically within the selection, and the map polygons reuse it, so one town is one
+hue across chart, map and table. The four hues were checked with a validator rather than
+by eye: all inside the lightness band, above the chroma floor, worst adjacent pair ΔE
+16.5 under deuteranopia and 24.0 with normal vision, all above 3:1 against the page.
+Changing any value means re-running that check.
+
+## 23. Waiting state and the category wheel (15 Oct 2026)
+
+**Decision:** A full-screen **waiting orb** on the two submits that genuinely take
+seconds, and nothing anywhere else.
+**Reason:** Lepak search routes up to 50 events through OneMap — measured median 5.1 s,
+90th percentile 6.1 s (section 21) — and until now the page simply sat there with no
+sign it was working. Where to Live does the same per area when Commute is on.
+Everything else answers from the local snapshot in milliseconds and must not show a
+spinner at all.
+
+**Decision:** The overlay appears only after **320 ms**.
+**Reason:** A Where to Live comparison with Commute off finishes faster than that.
+Showing instantly would flash a spinner that is gone before it can be read, which looks
+like a fault. Below the threshold nothing appears; above it, something always does.
+
+**Decision:** The stages are **elapsed-time cues, and deliberately not a progress bar**.
+**Reason:** The browser is doing a plain form POST; the server reports nothing until it
+redirects, so there is no real percentage to show. The labels name the phases the
+request actually passes through, in order ("Finding your starting point", "Working out
+how long each one takes"). A bar would claim a precision we do not have. Past 12 s the
+overlay says plainly that the wait is abnormal rather than inventing another
+reassuring stage, and at 60 s it gives the page back rather than trapping the user.
+
+**Verified across a real navigation** (the page recorded its own timeline into
+sessionStorage, which survives the redirect): overlay at 364 ms, stages at 1.3 s, 2.6 s
+and 5.6 s, "Ready" at 7.3 s as the response landed, and gone on the results page. Back
+navigation restoring from the bfcache clears it, so no one lands on a page stuck behind
+a spinner.
+
+**Decision:** The core beats like a **heart** — a quick lub, a softer dub before the
+first has relaxed, then a long rest — rather than on an even sine pulse, and two rings
+of wake expand out of it on each beat. Measured over one period: the core runs 15 px at
+rest, peaks at 21 px, falls to 16, rises again to 19, then holds at 15 for the rest of
+the cycle.
+**Reason:** An even pulse reads as a machine idling. The asymmetry is the whole effect,
+and the long rest is what makes the next beat land. The rings carry only a 5 % swell on
+the same rhythm; more and they collide with the dots. The beat is one `--beat` custom
+property, so core, glow, wake, ring swell and the brightness wave through the dots all
+stay locked together.
+
+**Decision:** The rings spin on a **wrapper element**, separate from the one that beats.
+**Reason:** One element cannot run two transform animations at once; the spin would
+simply replace the swell.
+
+**Decision:** Under `prefers-reduced-motion` there is **no heartbeat at all** — one slow
+breath, no spin, no wake.
+**Reason:** A pulsing heartbeat is precisely the kind of motion that setting exists to
+turn off. The stage text still updates, so nothing is carried by animation alone.
+
+**Decision:** The orb's rings rotate **in-plane only**.
+**Reason:** Tilting them on X to fake a sphere foreshortens the dots along with the
+rings, and they stop being dots and become dashes. Depth comes instead from dot size
+falling off with radius and a brightness wave running round each ring.
+
+### The category wheel
+
+**Decision:** Where to Lepak opens with a **ring of eight category discs** rather than
+eight checkboxes, and **When, Travel by, At most and the starting point appear only
+once a category is chosen**.
+**Reason:** The old screen asked for five unrelated decisions at once, led by a row of
+identical checkboxes. The wheel makes the first decision the only visible one, and each
+disc carries the category's own line icon and washed pastel — the same pair already
+used by its result-card tag and its fallback artwork, so the colour means the same
+thing on every screen.
+
+**Decision:** As with the neighbourhood map, the **checkboxes stay in the DOM** and
+remain the form's state; the wheel only drives them.
+**Reason:** The POST contract, the validation messages and the tests are untouched, and
+with JavaScript off the wheel never appears, the checkbox list is the control, and the
+rest of the form is visible from the start. Verified with scripting disabled.
+
+**Found while building it:** a stacked `.form-row` set `flex: 1 1 10rem` on fields whose
+main axis had become vertical, so flex-basis was setting each field's **height** — about
+10 rem of dead space under every select on a phone. It predates this work and affects
+both setup screens; fixed at the same breakpoint.
+
+
+## 24. Where to Live setup controls (15 Oct 2026)
+
+**Decision:** Each factor's **name is set as a heading** — serif, 1.5 rem, full strength
+ink — instead of the small uppercase label every other legend uses.
+**Reason:** Six near-identical cards ran down the page under 11 px grey uppercase
+legends, so "Commute" and "Greenery" were the least visible words on the screen despite
+being the thing each card is about. Every other legend on the site keeps the small
+uppercase treatment; only `.factor legend` is promoted, so the contrast between a
+section label and a factor name does the work.
+
+**Decision:** Weight is a **slider**, styled like the iOS volume control, not a number
+box.
+**Reason:** The value is a relative importance from 1 to 10 — something you feel out
+against the other five factors, not a figure you type. A slider also makes the whole set
+comparable at a glance, which a column of identical number boxes never did. The current
+number still shows beside it, and the server validation is untouched, so a posted 0 or
+11 is rejected exactly as before and the existing boundary tests still pass.
+
+**Decision:** The filled part of the track is painted as a **gradient driven by a
+`--fill` custom property** set in JavaScript.
+**Reason:** WebKit has no selector for the part of a range track the thumb has already
+passed. Firefox does (`::-moz-range-progress`) and is styled natively. Setting the
+variable costs nothing on either, and with JavaScript off the slider still works — the
+track is simply uniform, which is how an unstyled range input looks anyway.
+
+**Decision:** The slider is held to **20 rem and may shrink but not grow**.
+**Reason:** Stretched across the full card it read as a progress bar reporting
+something, rather than as a control you set.

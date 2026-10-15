@@ -19,6 +19,7 @@ GOWHERE_SECRET_KEY=<random string> flask --app "gowhere.web:create_app()" run
 | `POST /live` | Validates the form and runs the comparison (Commute routes here, into the session cache), then redirects 303 to results. An invalid form re-renders setup with a 400 and a message. |
 | `GET /live/results` | Results for this session's last submission |
 | `POST /live/check` | Selection-time warning: JSON `{"warnings": [...], "incomplete": msg or null}`. Never checks Commute. |
+| `GET /live/areas.geojson` | The setup screen's map picker reads its polygons here: every in-scope area, simplified to ~66 m, with `key`, `name`, `flats` and `flats_text`. Identical for every visitor and cached for a day. |
 | `GET /lepak` | Where to Lepak search, refilled from this session's last search |
 | `POST /lepak` | Validates, looks up the starting point, filters by straight line, routes (at most 50), then redirects 303 to results. An invalid search, an unknown postal code, OneMap being down, or more than 50 candidates re-renders the search page with a 400 and a message. |
 | `GET /lepak/results?sort=&hide=&page=` | This session's last search, reordered. `hide` repeats once per hidden category (FR 2.4.2). Sort, hidden categories and page only reorder the saved results and make no external call. The view is remembered, so an event's **Back to results** restores it (FR 2.5.3). |
@@ -32,7 +33,7 @@ docs/demo.md.
 
 ## Templates and the contract
 
-- **Placeholders:** the templates in `gowhere/web/templates/` are unstyled and marked as such; Sarthak's S3 templates replace them.
+- **Styling:** `static/css/app.css` is the whole visual system (editorial minimalism; see DECISIONS.md section 22). Fonts, Leaflet, Chart.js and MapLibre are all vendored under `static/`, so a clean clone renders identically with no network.
 - **Context:** templates receive `view`:
   - on the setup page, `view_models.setup_view()`;
   - on the results page, `view_models.results_view()`.
@@ -62,6 +63,11 @@ It can't also show the housing-window note, because every small area lacks resal
   - the sort links.
 - **What the detail fixture shows:** drive mode, with "Parking information unavailable". That is what every drive search shows until there is a DataMall key.
 - **The map:** `view.map` is GeoJSON in lon/lat order. It holds the route line (`kind: "route"`, when there is one) and the venue point (`kind: "venue"`).
+- **The picture:** every card and the detail view carry `image` —
+  `{url, alt, kind, credit, licence, source_url}`. `kind` is `"photo"` (a Wikipedia
+  venue photograph; show the credit) or `"artwork"` (the category banner; no credit).
+  `category_slug` picks the tag's pastel in `app.css`. Both come from the manifest
+  written by `python -m gowhere.lepak.images`; rendering makes no outbound call.
 - **Starting point:** it is posted with the form. "Use my location" fills the hidden `lat` and `lon` fields from the browser. Neither the postal code nor the coordinates may ever go into a link, a query string or the cookie.
 - **Escaping:** event text comes from public posts. Jinja escapes it; keep it that way and never use `|safe` on event fields.
 

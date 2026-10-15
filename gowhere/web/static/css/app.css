@@ -1,20 +1,66 @@
-/* GoWhere — shared styles. Clean/minimal, light, mobile-first. */
+/* GoWhere — shared styles.
+   Editorial minimalism: warm monochrome canvas, one serif for display type, colour
+   reserved for category tags and semantic state. Flat surfaces, 1px rules, no
+   gradients, no heavy shadows. Mobile-first.
+
+   Fonts are vendored (static/fonts/), as Leaflet, MapLibre and Chart.js are, so a
+   clean clone renders identically with no network. */
+
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/instrument-serif-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/instrument-serif-latin-italic.woff2") format("woff2");
+}
 
 :root {
-  --bg: #f7f7f5;
+  /* canvas and surfaces */
+  --bg: #fbfbfa;
   --surface: #ffffff;
-  --text: #1c1c1e;
-  --text-muted: #5f6368;
-  --border: #e3e2de;
-  --accent: #1d6f5c;
-  --accent-contrast: #ffffff;
-  --accent-soft: #e4f1ed;
-  --warning-bg: #fdf3e3;
-  --warning-border: #e4a93b;
-  --warning-text: #6b4a05;
-  --radius: 10px;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.05);
-  --max-width: 1080px;
+  --surface-sunk: #f7f6f3;
+  --border: #eaeaea;
+  --border-strong: #dcdcd8;
+
+  /* ink */
+  --text: #1f1f1d;
+  --text-muted: #787774;
+  --text-faint: #9b9a96;
+
+  /* the one near-black action colour */
+  --ink: #111111;
+  --ink-hover: #333333;
+  --on-ink: #ffffff;
+
+  /* semantic (scarce) */
+  --good-bg: #edf3ec;
+  --good-text: #346538;
+  --warning-bg: #fbf3db;
+  --warning-border: #e3c67a;
+  --warning-text: #956400;
+
+  /* type */
+  --sans: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+          "Segoe UI", Helvetica, Arial, sans-serif;
+  --serif: "Instrument Serif", "Iowan Old Style", "Palatino Linotype", Palatino,
+           Georgia, serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, "JetBrains Mono", monospace;
+
+  --radius: 12px;
+  --radius-sm: 6px;
+  --max-width: 68rem;
+  --prose-width: 46rem;
+
+  --lift: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * { box-sizing: border-box; }
@@ -23,40 +69,116 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  font-family: var(--sans);
+  font-size: 1rem;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-a { color: var(--accent); }
-a:hover { text-decoration: none; }
+/* A single very slow warm light spot, behind everything, so large pages never read
+   as a flat grey sheet. Fixed and non-interactive, animated on transform only. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20vmax;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(42vmax 42vmax at 18% 8%, rgba(190, 170, 130, 0.055), transparent 70%),
+    radial-gradient(38vmax 38vmax at 86% 72%, rgba(120, 150, 140, 0.045), transparent 70%);
+  animation: drift 48s var(--ease) infinite alternate;
+}
 
-h1, h2, h3 { line-height: 1.25; }
-h1 { font-size: 1.6rem; margin: 0 0 0.5rem; }
-h2 { font-size: 1.2rem; margin: 0 0 0.4rem; }
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(2.5%, -2%, 0) scale(1.08); }
+}
 
-small { color: var(--text-muted); }
+body > * { position: relative; z-index: 1; }
+
+a { color: var(--text); text-underline-offset: 0.18em; text-decoration-color: var(--border-strong); }
+a:hover { text-decoration-color: currentColor; }
+
+/* ---- type scale ---------------------------------------------------------- */
+
+h1, h2, h3 { margin: 0 0 0.5rem; }
+
+h1 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2.1rem, 1.4rem + 2.6vw, 3.1rem);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+}
+
+h2 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.008em;
+}
+
+h3 { font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.005em; }
+
+/* A section rule: small uppercase label with a hairline running to the margin. */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 3.25rem 0 1.1rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.section-head::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.lede {
+  font-size: 1.0625rem;
+  color: var(--text-muted);
+  max-width: var(--prose-width);
+  margin: 0 0 2rem;
+}
+
+small { color: var(--text-muted); font-size: 0.8125rem; }
+
+/* Figures, counts and timings read as data, not prose. */
+.tabular { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
 /* ---- layout ------------------------------------------------------------- */
 
 header.site-header {
-  background: var(--surface);
+  background: rgba(251, 251, 250, 0.82);
+  backdrop-filter: saturate(1.4) blur(12px);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
   border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 40;
 }
 
 .site-header nav {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 0.9rem 1.25rem;
+  padding: 0.85rem 1.75rem;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem 1.25rem;
+  gap: 0.4rem 1.5rem;
 }
 
 .site-header .brand {
-  font-weight: 700;
-  font-size: 1.1rem;
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  letter-spacing: -0.02em;
   color: var(--text);
   text-decoration: none;
   margin-right: auto;
@@ -65,23 +187,28 @@ header.site-header {
 .site-header a.nav-link {
   color: var(--text-muted);
   text-decoration: none;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid transparent;
+  transition: color 160ms var(--ease), border-color 160ms var(--ease);
 }
 
-.site-header a.nav-link:hover { color: var(--accent); }
+.site-header a.nav-link:hover { color: var(--text); border-bottom-color: var(--text); }
 
 main.container {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 1.5rem 1.25rem 3rem;
+  padding: 3.5rem 1.75rem 6rem;
 }
 
 footer.site-footer {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 1.25rem 1.25rem 2.5rem;
-  color: var(--text-muted);
-  font-size: 0.8rem;
+  padding: 2rem 1.75rem 3.5rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-faint);
+  font-size: 0.75rem;
+  line-height: 1.7;
 }
 
 /* ---- buttons & links ------------------------------------------------------ */
@@ -89,48 +216,67 @@ footer.site-footer {
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: var(--accent-contrast);
-  padding: 0.55rem 1.1rem;
-  border-radius: var(--radius);
-  font-size: 0.95rem;
-  font-weight: 600;
+  gap: 0.45rem;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--on-ink);
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.005em;
   cursor: pointer;
   text-decoration: none;
+  transition: background-color 160ms var(--ease), transform 120ms var(--ease);
 }
 
-.btn:hover { opacity: 0.92; }
+.btn:hover { background: var(--ink-hover); border-color: var(--ink-hover); }
+.btn:active { transform: scale(0.98); }
+.btn[disabled], .btn[aria-disabled="true"] {
+  background: var(--surface-sunk);
+  border-color: var(--border);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
 
 .btn-secondary {
   background: var(--surface);
-  color: var(--accent);
+  border-color: var(--border-strong);
+  color: var(--text);
 }
+
+.btn-secondary:hover { background: var(--surface-sunk); border-color: var(--text-faint); }
 
 .link-muted {
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   text-decoration: underline;
+  text-decoration-color: var(--border-strong);
 }
+
+.link-muted:hover { color: var(--text); }
 
 /* ---- notes (one reused component) ---------------------------------------- */
 
 .note {
   margin: 0.5rem 0;
-  padding: 0.6rem 0.9rem;
-  border-radius: 8px;
-  border-left: 3px solid var(--border);
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--border-strong);
   background: var(--surface);
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.8438rem;
+  line-height: 1.55;
 }
 
 .note--warning {
-  border-left-color: var(--warning-border);
+  border-color: var(--warning-border);
+  border-left-color: var(--warning-text);
   background: var(--warning-bg);
   color: var(--warning-text);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .note-list { margin: 0.5rem 0; padding: 0; list-style: none; }
@@ -138,173 +284,447 @@ footer.site-footer {
 
 /* ---- home ----------------------------------------------------------------- */
 
+/* The one place the serif is allowed to run large. The italics mark the two questions
+   the whole app answers, so the nav labels below read as answers to them. */
+.home-title {
+  font-size: clamp(2.4rem, 1.1rem + 5.2vw, 4.5rem);
+  max-width: 18ch;
+  margin-top: 1.5rem;
+}
+
+.home-title em { font-style: italic; color: var(--text-muted); }
+
 .home-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
   gap: 1rem;
-  margin-top: 1rem;
+  margin-top: 2.5rem;
 }
 
 .home-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 1.25rem;
+  padding: 2rem 1.75rem 1.75rem;
   text-decoration: none;
   color: var(--text);
+  min-height: 13rem;
+  transition: box-shadow 200ms var(--ease), border-color 200ms var(--ease);
 }
 
-.home-card h2 { color: var(--accent); }
-.home-card p { margin: 0; color: var(--text-muted); }
+.home-card:hover { box-shadow: var(--lift); border-color: var(--border-strong); }
+
+.home-card h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.home-card p { margin: 0; color: var(--text-muted); font-size: 0.9375rem; }
+
+/* The arrow sits at the card foot and nudges on hover. */
+.home-card::after {
+  content: "";
+  margin-top: auto;
+  align-self: flex-start;
+  width: 1.25rem;
+  height: 1.25rem;
+  background: currentColor;
+  color: var(--text-faint);
+  -webkit-mask: var(--arrow) center / contain no-repeat;
+  mask: var(--arrow) center / contain no-repeat;
+  transition: transform 220ms var(--ease), color 220ms var(--ease);
+  --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E");
+}
+
+.home-card:hover::after { transform: translateX(4px); color: var(--text); }
 
 /* ---- forms ------------------------------------------------------------- */
 
 fieldset {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1rem;
+  padding: 1.5rem 1.5rem 1.35rem;
   margin: 0 0 1rem;
   background: var(--surface);
 }
 
-legend { font-weight: 600; padding: 0 0.4rem; }
+legend {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 0 0.5rem;
+  margin-left: -0.5rem;
+}
 
-label { display: block; font-size: 0.9rem; margin: 0.5rem 0 0.3rem; }
+label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin: 0.75rem 0 0.3rem;
+}
 
 input[type="text"], input[type="number"], input:not([type]), select {
   width: 100%;
-  padding: 0.5rem 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 0.95rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.9375rem;
   background: var(--surface);
   color: var(--text);
+  transition: border-color 140ms var(--ease), box-shadow 140ms var(--ease);
 }
+
+input[type="number"], input[inputmode="numeric"] { font-family: var(--mono); }
+
+input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+input:focus, select:focus { border-color: var(--text-faint); outline-offset: 1px; }
 
 select[multiple] { height: auto; }
 
 .checkbox-row, .radio-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem 1rem;
+  gap: 0.5rem 1.25rem;
   align-items: center;
 }
 
 .checkbox-row label, .radio-row label {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   margin: 0.2rem 0;
-  font-weight: normal;
+  font-weight: 400;
+  font-size: 0.875rem;
+  color: var(--text);
 }
+
+input[type="checkbox"], input[type="radio"] { accent-color: var(--ink); }
 
 .form-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1rem 1.25rem;
   align-items: flex-end;
 }
 
-.form-row > div { flex: 1 1 160px; }
+.form-row > div { flex: 1 1 10rem; }
+.form-row label { margin-top: 0; }
+
+/* The factor's name is the first thing to read on the card, so it is set like a
+   heading rather than like the small uppercase label every other legend uses: six
+   fieldsets in a column all look alike until their names carry some weight. */
+.factor legend {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  color: var(--text);
+  padding: 0 0.55rem;
+  margin-left: -0.55rem;
+}
 
 .factor-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.6rem 1.2rem;
+  gap: 0.75rem 1.75rem;
+  margin-top: 0.35rem;
 }
 
-.factor-head input[type="number"] { width: 5rem; display: inline-block; }
+.factor-include {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  flex: none;
+}
+
+/* ---- the weight slider ------------------------------------------------- */
+
+/* An iOS volume slider: one rounded track that fills behind the thumb, a white disc
+   on top. --fill is the filled fraction as a percentage, set by app.js on input and
+   on load, because no browser gives you a styleable "part already passed". */
+.weight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  /* Held to a hand's width. Allowed to shrink, never to grow: stretched across the
+     whole card the track reads as a progress bar, not as a control you set. */
+  flex: 0 1 20rem;
+  min-width: 11rem;
+}
+
+.weight-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  flex: none;
+}
+
+.weight-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 1.25rem;        /* holds its place from 1 to 10 */
+  text-align: right;
+  flex: none;
+}
+
+.weight-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  height: 1.5rem;            /* the touch target; the track is drawn inside it */
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.weight-slider:focus { outline: none; }
+.weight-slider:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 4px;
+  border-radius: 999px;      /* follows the track rather than boxing it in */
+}
+
+/* WebKit and Firefox need the track and thumb declared separately; a combined
+   selector list is dropped whole by both if either half is unknown. */
+.weight-slider::-webkit-slider-runnable-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(to right,
+              var(--ink) 0 var(--fill, 50%), var(--border-strong) var(--fill, 50%) 100%);
+}
+
+.weight-slider::-moz-range-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--border-strong);
+}
+
+.weight-slider::-moz-range-progress {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--ink);
+}
+
+.weight-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: -0.375rem;     /* centres the thumb on the 0.5rem track */
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  transition: transform 120ms var(--ease);
+}
+
+.weight-slider::-moz-range-thumb {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.weight-slider:active::-webkit-slider-thumb { transform: scale(1.12); }
+
+.factor-hint { margin: 0.4rem 0 0; color: var(--text-faint); }
+
+/* An excluded factor is greyed; its include toggle stays at full strength. */
+.factor--off > *:not(legend):not(.factor-head),
+.factor--off .factor-head .weight { opacity: 0.4; }
+.factor--off legend { color: var(--text-faint); }
+.factor { transition: opacity 200ms var(--ease); }
 
 /* ---- Where to Live results table ----------------------------------------- */
 
-.table-scroll { overflow-x: auto; margin: 1rem 0; -webkit-overflow-scrolling: touch; }
+.table-scroll {
+  overflow-x: auto;
+  margin: 1rem 0 0;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
 
 table.results {
   border-collapse: collapse;
   width: 100%;
-  min-width: 560px;
+  min-width: 36rem;
   background: var(--surface);
-  border-radius: var(--radius);
-  overflow: hidden;
 }
 
 table.results th, table.results td {
-  padding: 0.6rem 0.75rem;
+  padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--border);
   text-align: left;
   vertical-align: top;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
 
-table.results thead th {
-  background: var(--accent-soft);
-  color: var(--text);
+/* The templates emit a bare <tr><th> with no <thead>, so target th directly. */
+table.results th {
+  background: var(--surface-sunk);
+  color: var(--text-muted);
+  font-size: 0.6875rem;
   font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
   white-space: nowrap;
+  position: sticky;
+  top: 0;
 }
 
-table.results tbody tr:last-child td { border-bottom: none; }
+table.results td strong { font-family: var(--mono); font-size: 0.9375rem; font-weight: 600; }
+table.results td small { display: inline-block; margin-top: 0.15rem; line-height: 1.45; }
+table.results tr:last-child td { border-bottom: none; }
+table.results tbody tr:hover td { background: #fcfcfb; }
 
 .rank-badge {
-  display: inline-block;
-  min-width: 1.6rem;
-  text-align: center;
-  padding: 0.1rem 0.4rem;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-sunk);
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
-.notes-row td { background: var(--bg); }
+/* Rank 1 is the only row that earns ink. */
+tr:first-of-type .rank-badge, .rank-badge[data-rank="1"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-ink);
+}
+
+.notes-row td { background: var(--surface-sunk); }
+.notes-row .note { background: var(--surface); }
 
 /* ---- recommendation panel -------------------------------------------------- */
 
 .recommendation {
-  background: var(--accent-soft);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1rem 1.25rem;
-  margin: 1rem 0;
+  padding: 2.25rem 2rem 1.75rem;
+  margin: 2rem 0 0;
+  position: relative;
+  overflow: hidden;
 }
 
-.recommendation h2 { color: var(--accent); }
-
-details.breakdown summary {
-  cursor: pointer;
-  color: var(--accent);
+.recommendation::before {
+  content: "Recommended";
+  display: block;
+  font-size: 0.6875rem;
   font-weight: 600;
-  margin-top: 0.4rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--good-text);
+  margin-bottom: 0.6rem;
+}
+
+.recommendation h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.6rem, 1.2rem + 1.4vw, 2.2rem);
+  letter-spacing: -0.022em;
+  line-height: 1.12;
+  margin: 0 0 0.6rem;
+}
+
+.recommendation > p {
+  color: var(--text-muted);
+  max-width: var(--prose-width);
+  margin: 0 0 1.25rem;
 }
 
 /* ---- dialog / modal --------------------------------------------------- */
 
 dialog.modal {
-  border: none;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 1.25rem;
-  width: min(640px, 92vw);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.02), 0 12px 40px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  width: min(40rem, 92vw);
+  color: var(--text);
+  background: var(--surface);
 }
 
-dialog.modal::backdrop { background: rgba(0, 0, 0, 0.45); }
+dialog.modal::backdrop { background: rgba(31, 31, 29, 0.32); backdrop-filter: blur(2px); }
 
 .modal-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.modal-head h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
 }
 
 .modal-close {
-  border: none;
-  background: none;
-  font-size: 1.2rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 1rem;
   cursor: pointer;
   color: var(--text-muted);
   line-height: 1;
+  flex: none;
+}
+
+.modal-close:hover { background: var(--surface-sunk); color: var(--text); }
+
+dialog.modal code {
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  background: var(--surface-sunk);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.12rem 0.4rem;
 }
 
 /* ---- map / chart containers -------------------------------------------- */
@@ -312,21 +732,27 @@ dialog.modal::backdrop { background: rgba(0, 0, 0, 0.45); }
 .map-container {
   width: 100%;
   aspect-ratio: 4 / 3;
-  max-height: 420px;
+  max-height: 26rem;
   border-radius: var(--radius);
   overflow: hidden;
   border: 1px solid var(--border);
-  margin: 0.75rem 0;
-  background: #eef1ee;
+  margin: 0;
+  background: var(--surface-sunk);
 }
 
-.chart-container {
-  width: 100%;
-  max-width: 520px;
-  margin: 0.5rem auto;
-}
+/* Leaflet's OSM tiles arrive at full saturation and fight the washed palette. Only
+   the tile pane is toned: the route line and markers sit in the overlay pane and keep
+   their colour, which is the point of drawing them. Matches the raster treatment the
+   MapLibre picker gives the same tiles. */
+.map-container .leaflet-tile-pane { filter: saturate(0.18) contrast(0.88) brightness(1.06); }
 
-/* ---- Where to Lepak search -------------------------------------------- */
+.chart-container { width: 100%; max-width: 34rem; margin: 0.5rem auto; }
+.chart-container--bars { position: relative; height: 26rem; max-width: none; }
+
+.chart-toolbar { display: flex; gap: 0.4rem; margin: 0 0 1rem; }
+.chart-toolbar .pill { cursor: pointer; font: inherit; font-size: 0.75rem; }
+
+/* ---- pills, tags, chips -------------------------------------------- */
 
 .sort-chip-row {
   display: flex;
@@ -336,62 +762,878 @@ dialog.modal::backdrop { background: rgba(0, 0, 0, 0.45); }
 }
 
 .pill {
-  display: inline-block;
-  padding: 0.3rem 0.8rem;
-  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-muted);
   text-decoration: none;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: border-color 160ms var(--ease), color 160ms var(--ease),
+              background-color 160ms var(--ease);
 }
 
+.pill:hover { border-color: var(--text-faint); color: var(--text); }
+
 .pill.is-selected {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-contrast);
-  font-weight: 600;
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-ink);
+  font-weight: 500;
 }
+
+.pill.is-selected:hover { color: var(--on-ink); border-color: var(--ink-hover); background: var(--ink-hover); }
+
+/* A category tag: tiny, uppercase, wide-tracked, washed pastel. One per category,
+   set from gowhere/lepak/categories.py via a slug on the element. */
+.cat-tag {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: var(--surface-sunk);
+  color: var(--text-muted);
+}
+
+.cat-tag[data-cat="food-markets"]        { background: #fbf3db; color: #956400; }
+.cat-tag[data-cat="arts-culture"]        { background: #f4f0f9; color: #6940a5; }
+.cat-tag[data-cat="music-performances"]  { background: #fdebec; color: #9f2f2d; }
+.cat-tag[data-cat="sports-fitness"]      { background: #e1f3fe; color: #1f6c9f; }
+.cat-tag[data-cat="family-kids"]         { background: #faebdd; color: #a8553a; }
+.cat-tag[data-cat="workshops-classes"]   { background: #edf3ec; color: #346538; }
+.cat-tag[data-cat="community"]           { background: #e6f2f1; color: #246b63; }
+.cat-tag[data-cat="sales-pop-ups"]       { background: #faf1f5; color: #ad1a72; }
+
+/* ---- Where to Lepak: the category wheel --------------------------------- */
+
+/* Eight categories on a ring instead of eight checkboxes in a row. Each segment is
+   placed by rotating it out to the radius and then counter-rotating its contents, so
+   every icon and label stays upright. --seg is the segment's index, written by the
+   template. */
+
+.wheel-wrap { margin: 0 0 1rem; }
+
+.wheel {
+  position: relative;
+  width: min(30rem, 100%);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  /* An absolute radius, not a percentage: percentages in translateY resolve against
+     the moving element's own height, not the container, which collapses the ring.
+     At the wheel's 30rem width the centre is 15rem out, a segment reaches 3.25rem
+     past this radius and the hub reaches 4.75rem in, so both clear comfortably.
+     Below 34rem the ring is dropped for a grid, so this never has to shrink. */
+  --ring: 11rem;
+}
+
+.wheel[hidden] { display: none; }
+
+.wheel-seg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6.5rem;
+  height: 6.5rem;
+  margin: -3.25rem 0 0 -3.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.4rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  /* Out to the ring, then straight back up, so the disc never tilts. */
+  transform:
+    rotate(calc(var(--seg) * 45deg))
+    translateY(calc(var(--ring) * -1))
+    rotate(calc(var(--seg) * -45deg));
+  transition: border-color 200ms var(--ease), background-color 200ms var(--ease),
+              color 200ms var(--ease), box-shadow 200ms var(--ease);
+}
+
+.wheel-seg img {
+  width: 2.25rem;
+  height: 1.8rem;
+  opacity: 0.55;
+  transition: opacity 200ms var(--ease);
+}
+
+.wheel-seg-label { line-height: 1.1; text-align: center; }
+
+.wheel-seg:hover {
+  border-color: var(--text-faint);
+  color: var(--text);
+  box-shadow: var(--lift);
+}
+
+.wheel-seg:hover img { opacity: 0.85; }
+
+/* Chosen: the category's own washed pastel, the one its tag and artwork already use. */
+.wheel-seg[aria-pressed="true"] {
+  border-color: currentColor;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+.wheel-seg[aria-pressed="true"] img { opacity: 1; }
+
+.wheel-seg[data-cat="food-markets"][aria-pressed="true"]       { background: #fbf3db; color: #956400; }
+.wheel-seg[data-cat="arts-culture"][aria-pressed="true"]       { background: #f4f0f9; color: #6940a5; }
+.wheel-seg[data-cat="music-performances"][aria-pressed="true"] { background: #fdebec; color: #9f2f2d; }
+.wheel-seg[data-cat="sports-fitness"][aria-pressed="true"]     { background: #e1f3fe; color: #1f6c9f; }
+.wheel-seg[data-cat="family-kids"][aria-pressed="true"]        { background: #faebdd; color: #a8553a; }
+.wheel-seg[data-cat="workshops-classes"][aria-pressed="true"]  { background: #edf3ec; color: #346538; }
+.wheel-seg[data-cat="community"][aria-pressed="true"]          { background: #e6f2f1; color: #246b63; }
+.wheel-seg[data-cat="sales-pop-ups"][aria-pressed="true"]      { background: #faf1f5; color: #ad1a72; }
+
+/* A segment that cannot be chosen because four already are. Still focusable, and
+   still explains itself when pressed -- never simply inert. */
+.wheel-seg.is-blocked { opacity: 0.4; }
+
+.wheel-hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 9.5rem;
+  height: 9.5rem;
+  margin: -4.75rem 0 0 -4.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.wheel-hub strong {
+  display: block;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+/* JS replaces the checkbox list with the wheel; without it the list is the control. */
+.wheel-fallback[hidden] { display: none; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The rest of the search, revealed once a category is chosen. */
+.lepak-rest[hidden] { display: none; }
+
+.lepak-rest.is-revealed {
+  animation: lepak-reveal 480ms var(--ease) both;
+}
+
+@keyframes lepak-reveal {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (max-width: 34rem) {
+  /* Below this the ring cramps: the discs start to overlap and the labels collide.
+     A plain grid of the same discs keeps every target full size. */
+  .wheel {
+    aspect-ratio: auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    width: 100%;
+  }
+  .wheel-seg {
+    position: static;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    margin: 0;
+    transform: none;
+    font-size: 0.6875rem;
+  }
+  .wheel-hub {
+    position: static;
+    grid-column: 1 / -1;
+    width: auto;
+    height: auto;
+    margin: 0.25rem 0 0;
+    border-radius: var(--radius);
+    padding: 0.75rem;
+  }
+  .wheel-hub strong { display: inline; font-size: 1.1rem; margin-right: 0.3rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lepak-rest.is-revealed { animation: none; }
+}
+
+/* ---- Where to Lepak event cards -------------------------------------- */
 
 .event-cards {
   display: grid;
-  gap: 0.9rem;
-  margin: 1rem 0;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0 0;
 }
 
 /* The card markup is a bare <article> with no attributes: tests/test_web_lepak.py
    counts the literal substring "<article>" to check how many results render. */
 .event-cards article {
+  display: flex;
+  flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 1rem 1.15rem;
+  overflow: hidden;
+  transition: box-shadow 200ms var(--ease), border-color 200ms var(--ease);
 }
 
-.event-cards article h2 { font-size: 1.05rem; margin-bottom: 0.2rem; }
-.event-cards article h2 a { color: var(--text); text-decoration: none; }
-.event-cards article h2 a:hover { color: var(--accent); }
+.event-cards article:hover { box-shadow: var(--lift); border-color: var(--border-strong); }
 
-.event-meta { color: var(--text-muted); font-size: 0.85rem; margin: 0.1rem 0; }
-.event-summary { margin: 0.5rem 0; font-size: 0.92rem; }
-.event-sources { font-size: 0.8rem; color: var(--text-muted); }
+.event-media {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  background: var(--surface-sunk);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.event-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  /* Warm the photography down so it sits in the monochrome palette. */
+  filter: saturate(0.82) contrast(1.02);
+  transition: transform 600ms var(--ease);
+}
+
+article:hover .event-media img { transform: scale(1.03); }
+
+/* A warm grain wash over every photo, so stock-bright images never jar. */
+.event-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(190, 170, 130, 0.06);
+  mix-blend-mode: multiply;
+}
+
+.event-media .cat-tag {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.event-body { padding: 1.1rem 1.25rem 1.25rem; display: flex; flex-direction: column; flex: 1; }
+
+.event-cards article h2 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  line-height: 1.3;
+  margin: 0 0 0.5rem;
+}
+
+.event-cards article h2 a { color: var(--text); text-decoration: none; }
+.event-cards article h2 a:hover { text-decoration: underline; text-decoration-color: var(--border-strong); }
+
+.event-meta {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  margin: 0.1rem 0;
+}
+
+/* When, and how long it takes, are the two things people scan for. */
+.event-when { color: var(--text); font-weight: 500; }
+.event-travel { font-family: var(--mono); font-size: 0.75rem; color: var(--text-muted); }
+.event-travel strong { color: var(--text); font-weight: 600; }
+
+.event-summary {
+  margin: 0.7rem 0 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.event-sources {
+  margin: 0.9rem 0 0;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
+.event-sources a { color: var(--text-muted); }
+.event-body .event-summary { flex: 1; }
 
 .pagination {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin: 1.25rem 0;
-  font-size: 0.9rem;
+  gap: 1rem;
+  margin: 2rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+
+/* Step-by-step directions on the event page (FR 2.5.2) */
+.directions {
+  padding-left: 0;
+  list-style: none;
+  counter-reset: step;
+  margin: 0;
+  border-left: 1px solid var(--border);
+}
+
+.directions li {
+  counter-increment: step;
+  position: relative;
+  padding: 0.5rem 0 0.5rem 2.5rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.directions li::before {
+  content: counter(step);
+  position: absolute;
+  left: -0.8125rem;
+  top: 0.6rem;
+  width: 1.625rem;
+  height: 1.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+/* The filter rail: sort on one line, category chips on the next, each labelled so
+   the two rows of pills are never mistaken for one another. */
+.filter-bar {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 0.5rem 1.1rem 0.75rem;
+  margin: 1.5rem 0 0;
+}
+
+.filter-bar .sort-chip-row { margin: 0.25rem 0; align-items: center; }
+
+.filter-label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  width: 3rem;
+  flex: none;
+}
+
+.pill-count { font-family: var(--mono); font-size: 0.6875rem; opacity: 0.7; }
+
+/* ---- event detail header ------------------------------------------------ */
+
+.event-hero {
+  margin: 0 0 2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  aspect-ratio: 21 / 9;
+  background: var(--surface-sunk);
+  position: relative;
+}
+
+.event-hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: saturate(0.82) contrast(1.02);
+}
+
+.event-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(190, 170, 130, 0.06);
+  mix-blend-mode: multiply;
+}
+
+.event-detail-head { margin-bottom: 1.5rem; max-width: var(--prose-width); }
+.event-detail-head h1 { margin-bottom: 0.75rem; }
+.event-kicker { margin: 0 0 0.9rem; }
+.event-detail-head .lede { margin-bottom: 0; }
+
+.carpark-list { margin: 0.5rem 0 0; padding-left: 1.1rem; font-size: 0.8125rem; }
+.carpark-list li { margin: 0.2rem 0; }
+.carpark-list .tabular { color: var(--text-muted); }
+
+.detail-foot { margin-top: 2.5rem; }
+
+.event-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 1.5rem 0;
+}
+
+.event-fact { background: var(--surface); padding: 1rem 1.25rem; }
+
+.event-fact dt {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 0.3rem;
+}
+
+.event-fact dd { margin: 0; font-size: 0.875rem; line-height: 1.5; }
+
+/* ---- Where to Live: the neighbourhood picker --------------------------- */
+
+.picker {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  margin: 0 0 1rem;
+}
+
+.picker-map {
+  width: 100%;
+  height: clamp(20rem, 52vh, 34rem);
+  background: var(--surface-sunk);
+  position: relative;
+}
+
+/* MapLibre paints its own canvas; keep its controls in the house style. */
+.picker-map .maplibregl-ctrl-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+}
+
+.picker-map .maplibregl-ctrl-attrib {
+  font-size: 0.6875rem;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.picker-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.9rem 1.25rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.picker-count {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-right: auto;
+}
+
+.picker-count[data-state="ready"] { color: var(--good-text); }
+.picker-count[data-state="over"] { color: var(--warning-text); }
+
+/* The selected areas, as removable tags. */
+.picker-chosen { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.chosen-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.4rem 0.25rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 9999px;
+  background: var(--surface);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.chosen-tag button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-faint);
+  font-size: 0.875rem;
+  line-height: 1;
+  padding: 0 0.15rem;
+}
+
+.chosen-tag button:hover { color: var(--text); }
+
+/* The hover tooltip on the picker: MapLibre's popup, restyled to the house card. */
+.picker-tip .maplibregl-popup-content {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--lift);
+  padding: 0.35rem 0.65rem;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--text);
+}
+
+.picker-tip .maplibregl-popup-tip { display: none; }
+
+/* A hint overlaid on the map, fading out once the user has tilted it. */
+.picker-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 1rem;
+  transform: translateX(-50%);
+  z-index: 2;
+  padding: 0.4rem 0.9rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: opacity 400ms var(--ease);
+}
+
+.picker-hint[hidden] { display: block; opacity: 0; }
+
+/* The checkbox list stays in the DOM for no-JS and for the POST contract; the map
+   hides it once it takes over. */
+.picker-fallback summary {
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  padding: 0.9rem 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.picker-fallback summary:hover { color: var(--text); }
+.picker-fallback .checkbox-row { padding: 0 1.25rem 1.25rem; }
+.picker-fallback[open] summary { border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+
+/* ---- the waiting orb ----------------------------------------------------- */
+
+/* Three rings of dots turning around a core that beats like a heart: a quick lub, a
+   softer dub, then a rest, rather than an even sine pulse. Two rings of wake expand
+   out of it on each beat.
+
+   Rotation is in-plane only (rotateZ). Tilting the rings on X to fake a sphere
+   foreshortens the dots along with them, and they stop being dots and become dashes;
+   depth comes instead from dot size falling off with radius.
+
+   Everything animates on transform and opacity alone, so it stays on the compositor
+   during the one moment it must not stutter: while the browser is blocked on a slow
+   request. */
+
+.orb {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  flex: none;
+  --beat: 1.15s;          /* one heartbeat; every pulse below shares it */
+}
+
+.orb-glow {
+  position: absolute;
+  inset: -30%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(31, 31, 29, 0.13) 0%, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(156, 122, 58, 0.22) 0%, transparent 60%);
+  animation: orb-glow-beat var(--beat) ease-out infinite;
+}
+
+/* The wake: a thin ring thrown off on each beat, the second half a beat behind. */
+.orb-wave {
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  border: 1px solid rgba(31, 31, 29, 0.5);
+  opacity: 0;
+  animation: orb-wake calc(var(--beat) * 2) ease-out infinite;
+}
+
+.orb-wave--2 { animation-delay: var(--beat); }
+
+.orb-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 15px;
+  height: 15px;
+  margin: -7.5px 0 0 -7.5px;
+  border-radius: 50%;
+  background: var(--ink);
+  animation: orb-heart var(--beat) ease-out infinite;
+}
+
+/* The rings breathe with the beat; each ring inside spins on its own. */
+.orb-rings {
+  position: absolute;
+  inset: 0;
+  animation: orb-swell var(--beat) ease-out infinite;
+}
+
+.orb-ring {
+  position: absolute;
+  inset: 0;
+}
+
+/* Different periods, and the middle ring the other way, so the three never settle
+   into a pattern the eye can lock on to. */
+.orb-ring--1 { animation: orb-spin 7.2s linear infinite; }
+.orb-ring--2 { animation: orb-spin 5.1s linear infinite reverse; }
+.orb-ring--3 { animation: orb-spin 3.6s linear infinite; }
+
+.orb-ring i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: var(--ink);
+  transform: rotate(var(--a)) translateY(calc(var(--r) * -1));
+  /* Brightness runs round each ring once per beat; the per-dot offset is what turns
+     a pulse into a wave travelling through the dots. */
+  animation: orb-twinkle var(--beat) ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.035s);
+}
+
+/* Smaller towards the middle, so the rings sit at different apparent depths. */
+.orb-ring--2 i { width: 6px; height: 6px; margin: -3px 0 0 -3px; }
+.orb-ring--3 i { width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; }
+
+@keyframes orb-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* lub - dub - rest. The second beat is smaller and arrives before the first has
+   fully relaxed, which is what makes it read as a heart and not a throb. */
+@keyframes orb-heart {
+  0%   { transform: scale(1);    box-shadow: 0 0 10px 1px rgba(31, 31, 29, 0.16); }
+  9%   { transform: scale(1.45); box-shadow: 0 0 26px 6px rgba(31, 31, 29, 0.3); }
+  18%  { transform: scale(1.06); box-shadow: 0 0 14px 2px rgba(31, 31, 29, 0.18); }
+  28%  { transform: scale(1.26); box-shadow: 0 0 20px 4px rgba(31, 31, 29, 0.24); }
+  42%  { transform: scale(1);    box-shadow: 0 0 10px 1px rgba(31, 31, 29, 0.16); }
+  100% { transform: scale(1);    box-shadow: 0 0 10px 1px rgba(31, 31, 29, 0.16); }
+}
+
+@keyframes orb-glow-beat {
+  0%   { transform: scale(0.94); opacity: 0.72; }
+  9%   { transform: scale(1.12); opacity: 1; }
+  18%  { transform: scale(0.99); opacity: 0.84; }
+  28%  { transform: scale(1.06); opacity: 0.95; }
+  42%  { transform: scale(0.94); opacity: 0.72; }
+  100% { transform: scale(0.94); opacity: 0.72; }
+}
+
+/* The rings only lean into the beat; a big swell here would collide with the dots. */
+@keyframes orb-swell {
+  0%   { transform: scale(1); }
+  9%   { transform: scale(1.055); }
+  18%  { transform: scale(1.005); }
+  28%  { transform: scale(1.03); }
+  42%  { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes orb-wake {
+  0%   { transform: scale(0.5);  opacity: 0; }
+  6%   { opacity: 0.45; }
+  50%  { transform: scale(1.85); opacity: 0; }
+  100% { transform: scale(1.85); opacity: 0; }
+}
+
+@keyframes orb-twinkle {
+  0%   { opacity: 0.2; }
+  12%  { opacity: 1; }
+  45%  { opacity: 0.34; }
+  100% { opacity: 0.2; }
+}
+
+/* The orb settles when the work is done: the beat stops, the rings stop, every dot
+   comes up, and the core opens out once. */
+.loader-overlay.is-done .orb-ring,
+.loader-overlay.is-done .orb-rings,
+.loader-overlay.is-done .orb-glow { animation-play-state: paused; }
+
+.loader-overlay.is-done .orb-wave { animation: none; opacity: 0; }
+
+.loader-overlay.is-done .orb-ring i {
+  animation: none;
+  opacity: 0.85;
+  transform: rotate(var(--a)) translateY(calc(var(--r) * -1));
+  transition: opacity 340ms var(--ease);
+}
+
+.loader-overlay.is-done .orb-core {
+  animation: none;
+  transform: scale(1.35);
+  box-shadow: 0 0 30px 7px rgba(31, 31, 29, 0.2);
+  transition: transform 340ms var(--ease), box-shadow 340ms var(--ease);
+}
+
+@keyframes orb-calm {
+  0%, 100% { transform: scale(0.96); opacity: 0.8; }
+  50%      { transform: scale(1.06); opacity: 1; }
+}
+
+/* ---- the overlay it sits in --------------------------------------------- */
+
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(251, 251, 250, 0.86);
+  backdrop-filter: blur(6px) saturate(1.2);
+  -webkit-backdrop-filter: blur(6px) saturate(1.2);
+  opacity: 0;
+  animation: loader-in 260ms var(--ease) forwards;
+}
+
+.loader-overlay[hidden] { display: none; }
+
+@keyframes loader-in { to { opacity: 1; } }
+
+.loader-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+  padding: 0 1.5rem;
+  max-width: 26rem;
+  text-align: center;
+}
+
+.loader-state {
+  margin: 0;
+  min-height: 1.6em;            /* holds its line so the orb never shifts on a change */
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.loader-slow {
+  margin: -0.9rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  max-width: 24rem;
+}
+
+.loader-slow[hidden] { display: none; }
+
+/* Motion turned down: the orbits hold still and the core breathes slowly. The stage
+   text still updates, so the information is never carried by the animation alone. */
+@media (prefers-reduced-motion: reduce) {
+  .orb-ring, .orb-rings, .orb-wave { animation: none; }
+  .orb-wave { opacity: 0; }
+  .orb-ring i {
+    animation: none;
+    opacity: 0.55;
+    transform: rotate(var(--a)) translateY(calc(var(--r) * -1));
+  }
+  /* One slow breath, so the page still reads as working without anything spinning
+     and without a heartbeat, which is exactly the kind of motion this setting is for. */
+  .orb-core, .orb-glow { animation: orb-calm 3s ease-in-out infinite !important; }
+  .loader-overlay { animation: none; opacity: 1; }
+}
+
+/* ---- scroll-entry motion ------------------------------------------------- */
+
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+[data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+  transition: opacity 600ms var(--ease), transform 600ms var(--ease);
+  transition-delay: calc(var(--index, 0) * 70ms);
+}
+
+/* No JS, or motion turned down: everything is simply visible. */
+.no-js [data-reveal] { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  [data-reveal] { opacity: 1; transform: none; }
+  body::before { animation: none; }
 }
 
 /* ---- responsive tweaks --------------------------------------------------- */
 
-@media (max-width: 640px) {
-  main.container { padding: 1rem 0.9rem 2.5rem; }
-  h1 { font-size: 1.35rem; }
-  .form-row { flex-direction: column; }
-  table.results { min-width: 480px; }
+@media (max-width: 40rem) {
+  main.container { padding: 2.25rem 1.1rem 4rem; }
+  .site-header nav, footer.site-footer { padding-left: 1.1rem; padding-right: 1.1rem; }
+  .form-row { flex-direction: column; align-items: stretch; }
+  /* Once the row stacks, the main axis is vertical, so flex-basis would set each
+     field's HEIGHT: 10rem of empty space under every select. */
+  .form-row > div { flex: 0 0 auto; }
+  .recommendation { padding: 1.75rem 1.25rem 1.35rem; }
+  .home-card { padding: 1.5rem 1.25rem 1.25rem; min-height: 0; }
+  dialog.modal { padding: 1.25rem; }
+  .section-head { margin-top: 2.5rem; }
+  table.results { min-width: 30rem; }
   /* Each factor cell is its score with the summary beneath. Squeezed into 390 px the
      summaries wrapped a word or two per line; a minimum column width keeps them
      readable, and the table scrolls inside .table-scroll, never the page (15 Oct). */
@@ -399,17 +1641,17 @@ dialog.modal::backdrop { background: rgba(0, 0, 0, 0.45); }
   table.results:not(.breakdown) th:nth-child(n+4) { min-width: 10rem; }
 }
 
-/* Results chart and breakdown (FR 1.5.3, FR 1.4.4) */
-.chart-toolbar { display: flex; gap: .5rem; margin: .5rem 0; }
-.chart-toolbar .pill { cursor: pointer; font: inherit; }
-.chart-container--bars { position: relative; height: 26rem; }
-.modal--wide { max-width: min(60rem, 95vw); }
+/* dialog.modal (element + class) outspecifies a bare .modal--wide, so the wide variant
+   has to match it or the breakdown table is squeezed into the narrow modal and every
+   summary wraps to one or two words a line -- the same failure DECISIONS.md section 21
+   fixed for the comparison table at phone width. */
+dialog.modal.modal--wide { width: min(64rem, 95vw); }
+
 .breakdown td { vertical-align: top; }
-
-/* An excluded factor is greyed; its include toggle stays at full strength. */
-.factor--off > *:not(legend):not(.factor-head),
-.factor--off .factor-head label:last-child { opacity: .45; }
-.factor--off legend { color: var(--text-muted); }
-
-/* Step-by-step directions on the event page (FR 2.5.2) */
-.directions { padding-left: 1.4rem; line-height: 1.6; }
+/* Give the two score columns and the summaries room; the table scrolls inside
+   .table-scroll if the viewport cannot take it, rather than wrapping to shreds. */
+table.results.breakdown { min-width: 48rem; }
+table.results.breakdown td:nth-child(3),
+table.results.breakdown td:nth-child(4) { min-width: 11rem; }
+table.results.breakdown td:nth-child(5) { min-width: 9rem; }
+table.results.breakdown td small { display: block; margin-top: 0.25rem; }

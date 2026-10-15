@@ -3,54 +3,86 @@
 {% block title %}Where to Lepak · GoWhere{% endblock %}
 {% block content %}
 <h1>Where to Lepak</h1>
+<p class="lede">Start with what you feel like doing. Pick up to {{ view.max_categories }}.</p>
 {% if view.error %}{{ note(view.error, 'warning') }}{% endif %}
-<form method="post" action="{{ url_for('web.lepak_submit') }}">
-  <fieldset>
-    <legend>Categories (choose {{ view.min_categories }} to {{ view.max_categories }})</legend>
-    <div class="checkbox-row">
-      {% for c in view.categories %}
-      <label><input type="checkbox" name="categories" value="{{ c.value }}" {% if c.checked %}checked{% endif %}> {{ c.label }}</label>
-      {% endfor %}
-    </div>
-  </fieldset>
 
-  <div class="form-row">
-    <div>
-      <label>When
-        <select name="date_option">
-          {% for d in view.date_options %}<option value="{{ d.value }}" {% if d.selected %}selected{% endif %}>{{ d.label }}</option>{% endfor %}
-        </select>
-      </label>
+<form method="post" action="{{ url_for('web.lepak_submit') }}"
+      data-loading-stages='[[0, "Finding your starting point"],
+                            [900, "Looking for events nearby"],
+                            [2200, "Working out how long each one takes"],
+                            [5200, "Putting the closest ones first"]]'>
+
+  {# The wheel drives these checkboxes; they stay the form's state, exactly as the map
+     picker drives the neighbourhood boxes on Where to Live. With JavaScript off the
+     wheel never appears, the list below is an ordinary set of checkboxes, and the rest
+     of the form is visible from the start. #}
+  <div class="wheel-wrap" id="cat-wheel" data-max="{{ view.max_categories }}">
+    <div class="wheel" hidden>
+      {% for c in view.categories %}
+      <button type="button" class="wheel-seg" data-value="{{ c.value }}"
+              data-cat="{{ c.slug }}" aria-pressed="{{ 'true' if c.checked else 'false' }}"
+              style="--seg: {{ loop.index0 }}">
+        <img src="{{ url_for('static', filename='img/category/icon/' ~ c.slug ~ '.svg') }}"
+             alt="" width="36" height="29" aria-hidden="true">
+        <span class="wheel-seg-label">{{ c.short }}</span>
+        <span class="visually-hidden">{{ c.label }}</span>
+      </button>
+      {% endfor %}
+      <p class="wheel-hub" id="wheel-hub" aria-hidden="true"></p>
     </div>
-    <div>
-      <label>Travel by
-        <select name="mode">
-          {% for m in view.modes %}<option value="{{ m.value }}" {% if m.selected %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
-        </select>
-      </label>
-    </div>
-    <div>
-      <label>At most
-        <select name="max_minutes">
-          {% for m in view.max_minutes %}<option value="{{ m.value }}" {% if m.selected %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
-        </select>
-      </label>
-    </div>
+
+    <fieldset class="wheel-fallback" id="wheel-fallback">
+      <legend>Categories (choose {{ view.min_categories }} to {{ view.max_categories }})</legend>
+      <div class="checkbox-row">
+        {% for c in view.categories %}
+        <label><input type="checkbox" name="categories" value="{{ c.value }}" {% if c.checked %}checked{% endif %}> {{ c.label }}</label>
+        {% endfor %}
+      </div>
+    </fieldset>
   </div>
 
-  <fieldset>
-    <legend>Starting point</legend>
-    <div class="radio-row">
-      <label><input type="radio" name="origin" value="postal" {% if view.origin != 'here' %}checked{% endif %}> Postal code</label>
-      <input name="postal" inputmode="numeric" maxlength="6" autocomplete="off"
-             style="max-width:10rem" value="{{ view.postal }}">
+  {# Revealed once a category is chosen. Visible in the HTML so that with no JavaScript
+     the whole form is simply there; app.js collapses it on load when nothing is picked
+     yet, which is the only state in which hiding it is safe. #}
+  <div class="lepak-rest" id="lepak-rest">
+    <div class="form-row">
+      <div>
+        <label>When
+          <select name="date_option">
+            {% for d in view.date_options %}<option value="{{ d.value }}" {% if d.selected %}selected{% endif %}>{{ d.label }}</option>{% endfor %}
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>Travel by
+          <select name="mode">
+            {% for m in view.modes %}<option value="{{ m.value }}" {% if m.selected %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>At most
+          <select name="max_minutes">
+            {% for m in view.max_minutes %}<option value="{{ m.value }}" {% if m.selected %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
+          </select>
+        </label>
+      </div>
     </div>
-    <div class="radio-row">
-      <label><input type="radio" name="origin" value="here" {% if view.origin == 'here' %}checked{% endif %}> Use my location</label>
-    </div>
-    <input type="hidden" name="lat"><input type="hidden" name="lon">
-  </fieldset>
 
-  <button class="btn" type="submit">Find events</button>
+    <fieldset>
+      <legend>Starting point</legend>
+      <div class="radio-row">
+        <label><input type="radio" name="origin" value="postal" {% if view.origin != 'here' %}checked{% endif %}> Postal code</label>
+        <input name="postal" inputmode="numeric" maxlength="6" autocomplete="off"
+               style="max-width:10rem" value="{{ view.postal }}">
+      </div>
+      <div class="radio-row">
+        <label><input type="radio" name="origin" value="here" {% if view.origin == 'here' %}checked{% endif %}> Use my location</label>
+      </div>
+      <input type="hidden" name="lat"><input type="hidden" name="lon">
+    </fieldset>
+
+    <button class="btn" type="submit">Find events</button>
+  </div>
 </form>
 {% endblock %}

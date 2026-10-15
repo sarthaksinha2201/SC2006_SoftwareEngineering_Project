@@ -1,12 +1,19 @@
+{% from "_macros.html" import loader %}
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}GoWhere{% endblock %}</title>
   <link rel="icon" href="data:,">{# no favicon request, so no console 404 #}
+  {# Runs before first paint, so the scroll-entry styles only apply when JS can
+     undo them. Without JS every [data-reveal] block stays visible. #}
+  <script>document.documentElement.classList.remove("no-js");</script>
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+        href="{{ url_for('static', filename='fonts/instrument-serif-latin.woff2') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet/leaflet.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  {% block head %}{% endblock %}
 </head>
 <body>
   <header class="site-header">
@@ -17,8 +24,9 @@
     </nav>
   </header>
   <main class="container">{% block content %}{% endblock %}</main>
+  {{ loader() }}
   <footer class="site-footer">Map and location data from OneMap (SLA) · Amenity data © OpenStreetMap
-    contributors · Government data from data.gov.sg</footer>
+    contributors · Government data from data.gov.sg{% block credits %}{% endblock %}</footer>
   <script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
   <script src="{{ url_for('static', filename='vendor/chartjs/chart.umd.js') }}"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>

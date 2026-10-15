@@ -49,8 +49,15 @@ HDB resales to score Housing Affordability, and the app tells you so.
 ```bash
 .venv/bin/python -m pytest -q                       # tests: no network or keys needed
 .venv/bin/python -m gowhere.ingest.run              # fetch new events (needs OPENAI_API_KEY)
+.venv/bin/python -m gowhere.lepak.images            # venue photos for new events (no key)
+.venv/bin/python scripts/make_category_art.py       # redraw the category banners
 .venv/bin/python -m gowhere.serve --host 0.0.0.0    # let phones on the same Wi-Fi open it
 ```
+
+Event cards show a freely-licensed photograph of the venue from Wikipedia, falling back
+to category artwork. Both live in the repo, so the cards work offline. After ingesting
+new events, run `gowhere.lepak.images` to fetch pictures for any new venues; correct a
+wrong match by naming the right article in `data/reference/venue_images.csv`.
 
 More detail: [docs/demo.md](docs/demo.md) (running and demo script),
 [DECISIONS.md](DECISIONS.md) (why things are the way they are).

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450" role="img" aria-label="Arts and Culture">
+  <title>Arts and Culture</title>
+  <rect width="800" height="450" fill="#FBFBFA"/>
+  <g fill="#F4F0F9"><rect x="470" y="40" width="300" height="300" rx="8"/></g>
+  <g transform="translate(240 108)" fill="none" stroke="#1F1F1D" stroke-width="5"
+     stroke-linecap="round" stroke-linejoin="round" opacity="0.88"><rect x="30" y="26" width="260" height="192" rx="4"/><path d="M30 170 l72 -74 l56 56 l44 -40 l88 78"/><circle cx="214" cy="80" r="22"/><path d="M96 240 h128"/><path d="M160 218 v22"/></g>
+</svg>

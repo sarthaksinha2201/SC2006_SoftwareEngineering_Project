@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450" role="img" aria-label="Workshops and Classes">
+  <title>Workshops and Classes</title>
+  <rect width="800" height="450" fill="#FBFBFA"/>
+  <g fill="#EDF3EC"><rect x="40" y="210" width="300" height="300" rx="8"/></g>
+  <g transform="translate(240 108)" fill="none" stroke="#1F1F1D" stroke-width="5"
+     stroke-linecap="round" stroke-linejoin="round" opacity="0.88"><path d="M44 212 l24 -70 l132 -132 l46 46 l-132 132 Z"/><path d="M176 56 l46 46"/><path d="M68 142 l46 46"/><path d="M44 212 l30 -30"/><path d="M16 244 h288"/></g>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450" role="img" aria-label="Community">
+  <title>Community</title>
+  <rect width="800" height="450" fill="#FBFBFA"/>
+  <g fill="#E6F2F1"><circle cx="648" cy="118" r="152"/></g>
+  <g transform="translate(240 108)" fill="none" stroke="#1F1F1D" stroke-width="5"
+     stroke-linecap="round" stroke-linejoin="round" opacity="0.88"><circle cx="160" cy="64" r="30"/><circle cx="62" cy="134" r="26"/><circle cx="258" cy="134" r="26"/><path d="M110 170 q50 -46 100 0"/><path d="M20 224 q42 -44 84 -10"/><path d="M300 224 q-42 -44 -84 -10"/><path d="M160 94 v46"/><path d="M88 134 h44"/><path d="M188 134 h44"/></g>
+</svg>

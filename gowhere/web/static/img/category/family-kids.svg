@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450" role="img" aria-label="Family and Kids">
+  <title>Family and Kids</title>
+  <rect width="800" height="450" fill="#FBFBFA"/>
+  <g fill="#FAEBDD"><circle cx="180" cy="86" r="140"/></g>
+  <g transform="translate(240 108)" fill="none" stroke="#1F1F1D" stroke-width="5"
+     stroke-linecap="round" stroke-linejoin="round" opacity="0.88"><path d="M160 36 l66 66 l-66 66 l-66 -66 Z"/><path d="M160 36 v132"/><path d="M94 102 h132"/><path d="M160 168 q-26 36 0 60 q26 24 0 52"/><path d="M160 196 l34 -12"/><path d="M160 232 l-34 -12"/></g>
+</svg>

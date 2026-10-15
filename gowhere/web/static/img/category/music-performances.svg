@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450" role="img" aria-label="Music and Performances">
+  <title>Music and Performances</title>
+  <rect width="800" height="450" fill="#FBFBFA"/>
+  <g fill="#FDEBEC"><circle cx="640" cy="330" r="165"/></g>
+  <g transform="translate(240 108)" fill="none" stroke="#1F1F1D" stroke-width="5"
+     stroke-linecap="round" stroke-linejoin="round" opacity="0.88"><path d="M166 176 V34 l108 -24 v142"/><path d="M166 62 l108 -24"/><ellipse cx="140" cy="182" rx="29" ry="22" transform="rotate(-18 140 182)"/><ellipse cx="248" cy="158" rx="29" ry="22" transform="rotate(-18 248 158)"/><path d="M26 126 q20 -46 40 0 q20 46 40 0"/><path d="M8 126 q9 -23 18 0"/></g>
+</svg>

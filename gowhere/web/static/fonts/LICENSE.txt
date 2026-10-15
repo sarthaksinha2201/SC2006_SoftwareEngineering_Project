@@ -1,0 +1,5 @@
+Instrument Serif — SIL Open Font License 1.1
+Copyright 2022 The Instrument Serif Project Authors
+(https://github.com/Instrument/instrument-serif)
+Full licence: https://openfontlicense.org/
+Subset: latin, woff2, fetched from Google Fonts (fonts.gstatic.com) 15 Oct 2026.

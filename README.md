@@ -59,5 +59,35 @@ to category artwork. Both live in the repo, so the cards work offline. After ing
 new events, run `gowhere.lepak.images` to fetch pictures for any new venues; correct a
 wrong match by naming the right article in `data/reference/venue_images.csv`.
 
+## Deploy it
+
+**Must stay one process.** Session state (the destination postal code, the OneMap route
+cache, your last search) lives in that process's memory (`DECISIONS.md` section 17), so
+the host must run exactly one instance — never turn on autoscaling or multiple replicas,
+or users will randomly land on an instance that doesn't remember their session.
+
+This also rules out Vercel and Netlify: both run your app as stateless, short-lived
+serverless functions with no shared memory and no persistent disk between requests, which
+breaks the same assumption. A normal single-process host is what this app expects.
+
+**[Render](https://render.com), free Web Service** is the easiest fit:
+
+1. Connect this GitHub repo. Every push to `main` redeploys automatically — no manual
+   step after this.
+2. Build command: `pip install -r requirements.txt`
+3. Start command: `python -m gowhere.serve --host 0.0.0.0 --port $PORT`
+4. Add any of the API keys above as environment variables in Render's dashboard (never
+   commit a `.env` file). `GOWHERE_SECRET_KEY` too, if you want sessions to survive a
+   restart rather than resetting to a random key each time.
+
+Free-tier caveat: the instance spins down after ~15 minutes idle, so the first request
+after that takes 30-50 seconds to wake up. Harmless for a casual demo; if it matters,
+either open the URL yourself a minute beforehand or upgrade to a paid instance (no
+spin-down, same setup otherwise).
+
+[Railway](https://railway.app) works the same way (connect repo, same start command,
+auto-deploy on push) if you'd rather avoid spin-down from the start — no free tier, but
+cheaper than Render's paid tier for an always-on instance.
+
 More detail: [docs/demo.md](docs/demo.md) (running and demo script),
 [DECISIONS.md](DECISIONS.md) (why things are the way they are).

@@ -716,3 +716,31 @@ track is simply uniform, which is how an unstyled range input looks anyway.
 **Decision:** The slider is held to **20 rem and may shrink but not grow**.
 **Reason:** Stretched across the full card it read as a progress bar reporting
 something, rather than as a control you set.
+
+## 25. Where to Eat — scope and signals (19 Oct 2026)
+
+**Decision:** Build **Where to Eat** as a third feature, scoped as *permanent establishments*, and distinguished from Where to Lepak's Food & Markets category by one line: **Lepak is time-bound, Eat is permanent.** A pasar malam this weekend is an event and expires; a hawker centre is open every Saturday and does not.
+**Reason:** The two would otherwise overlap confusingly in the UI and in the report. Stating the rule in the Data Dictionary settles it without changing either feature.
+
+**Decision:** Results are **both individual eateries and food destinations** — a hawker centre appears as a single entry carrying its stall count ("Chinatown Complex, 80 stalls, 12 min away").
+**Reason:** It covers both ways people decide: "I want laksa" and "let's go somewhere with options". It also plays to data we hold rather than data we would have to buy, and *variety* becomes a free stand-in for the popularity signal no free source provides.
+
+**Decision:** **No star ratings.** Google Places is rejected.
+**Reason:** It requires billing, its terms forbid caching the content, and it would break the offline operation the Reliability NFR depends on. Yelp and Tripadvisor have poor or restricted Singapore coverage. A feature that quietly costs money per page view is worse than one that is honest about what it can measure.
+
+**Decision:** Quality is represented by a **badge from a curated Michelin Guide reference file** (name, address, award, source URL, retrieval date), not by a score.
+**Reason:** It is a finite, citable list that includes hawker stalls through Bib Gourmand, so it is not merely a list of expensive restaurants. The same provenance-per-row pattern already used for polyclinics, hospitals and venue aliases. A badge claims nothing about relative quality, which is all the evidence supports. Availability and terms to be confirmed before building.
+
+**Decision:** NEA hygiene grades are a **filter, not a sort** — C and D hidden by default, with the user able to show them.
+**Reason:** Nearly all licensed establishments are graded A or B, so grading cannot discriminate between results. **This is the bus saturation problem again** (§18): a measure on which almost everything scores the same ranks nothing. As with bus, the distribution is to be measured before the design is fixed, and a sort added only if real spread is found. Hygiene still matters as a floor: few people choose by grade, many would avoid a C.
+
+**Decision:** Cuisine categories are **eight user-facing groups** mapped from OSM `cuisine` tags: Chinese, Malay & Indonesian, Indian, Japanese & Korean, Western, Thai & Vietnamese, Cafés & Desserts, Seafood. Halal and vegetarian come from OSM `diet:*` tags as filters.
+**Reason:** Eight matches the event categories, so one UI pattern serves both features, and a closed list makes validation possible for the same reason it does for events.
+
+**Decision:** Where tag coverage is incomplete, places with no cuisine or no opening hours are **shown and labelled**, not hidden, and the measured coverage is stated.
+**Reason:** Hiding untagged places would silently delete much of the dataset while appearing to work. The same reasoning as listing unroutable events with an estimated distance rather than dropping them (§13).
+
+**Decision:** Sort options are **Nearest · Open now · Most variety**, mirroring Lepak's three.
+**Reason:** A second scoring formula would add documentation and testing work without helping someone choose lunch. Consistency across the two features also means one set of UI behaviour to test.
+
+**To measure before building** — the same evidence-first sequence used for the bus factor and the detour calibration: the NEA grade distribution, OSM `cuisine` coverage, and OSM `opening_hours` coverage across Singapore food venues. Two of the five signals depend on those numbers.

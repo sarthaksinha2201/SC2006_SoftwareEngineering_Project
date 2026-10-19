@@ -8,6 +8,7 @@ import secrets
 from flask import Flask, render_template
 
 from gowhere import config
+from gowhere.adapters.google_places import shared_places
 from gowhere.lepak import sgt_now
 from gowhere.lepak.parking import ParkingService
 from gowhere.lepak.routing import EventRouter
@@ -34,6 +35,7 @@ def create_app(overrides=None):
         ROUTER_FACTORY=CommuteRouter,
         EVENTS_PATH=config.EVENTS_PATH,
         EAT_PATH=config.EAT_PATH,             # Where to Eat place list, read on first use
+        RATINGS_FACTORY=shared_places,        # Google ratings: one adapter, one daily cap
         LOCATION_FACTORY=None,                # per session; default: LocationService.for_session
         EVENT_ROUTER_FACTORY=EventRouter,     # per session
         PARKING_FACTORY=ParkingService,       # one per app: public data, shared cache

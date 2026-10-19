@@ -6,6 +6,7 @@ from flask import (Blueprint, current_app, jsonify, redirect, render_template, r
 from werkzeug.datastructures import MultiDict
 
 from gowhere.adapters.http import HttpError
+from gowhere.eat import ratings as eat_ratings
 from gowhere.eat import search as eat_search
 from gowhere.eat.hours import status as hours_status
 from gowhere.eat.store import PlaceStore
@@ -264,6 +265,8 @@ def eat_submit():
         found = eat_search.search(_places().places, origin, req["cuisines"], req["tiers"],
                                   req["when"], req["mode"], req["max_minutes"],
                                   state.event_router, now, parking=parking)
+        # Ratings for every timed place, so "Highest rated" sorts them all, not just a page.
+        eat_ratings.attach(found["results"], current_app.config["RATINGS_FACTORY"]())
     except eat_search.InvalidSearch as e:
         return _eat_error(form, str(e))
     except OfflinePostalNotFound:

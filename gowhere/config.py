@@ -92,6 +92,12 @@ OSM_AMENITY_TAGS = {"mall": '["shop"="mall"]', "gym": '["leisure"="fitness_centr
 
 # ---- Where to Eat (DECISIONS.md sections 25 and 25a) ----
 EAT_PATH = DATA_DIR / "eat.db"           # built offline by gowhere.eat.build; committed
+# Google Place Details calls per Singapore day, counted before each call. Ratings are the
+# "Place Details Enterprise" SKU: 1,000 free a month, then US$20 per 1,000. 32 a day is
+# 992 in a 31-day month, inside the free tier. Raise it only with a budget in mind
+# (DECISIONS.md 29).
+GOOGLE_DAILY_CAP = 32
+RATING_WORKERS = 8                       # parallel Place Details calls per search
 OSM_FOOD_TAGS = ['["amenity"="restaurant"]', '["amenity"="cafe"]', '["amenity"="fast_food"]',
                  '["amenity"="food_court"]', '["amenity"="ice_cream"]',
                  '["amenity"="marketplace"]']

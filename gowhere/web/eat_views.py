@@ -74,7 +74,25 @@ def card(r, mode):
         "route_summary": route["summary"] if route else None,
         "parking": parking["text"] if parking else None,
         "detail_url": url_for("web.eat_place", place_id=r["id"]),
+        "rating": rating_view(r.get("rating")),
+        # DECISIONS.md section 29: notability, not quality; the wording says which.
+        "notable": ({"label": "On Wikipedia",
+                     "title": "This place has its own Wikipedia article. That says it is "
+                              "notable, not that the food is good.",
+                     "url": "https://en.wikipedia.org/wiki/" + r["wikipedia_title"].replace(" ", "_")}
+                    if r.get("wikipedia_title") else None),
     }
+
+
+def rating_view(rating):
+    """'4.3' with '1,234 reviews' and the Google Maps link, or None. No rating shows
+    nothing at all, so it can't be read as a bad one."""
+    if not rating:
+        return None
+    count = rating["count"]
+    return {"value": f"{rating['value']:.1f}",
+            "count": f"{count:,} review{'s' if count != 1 else ''}",
+            "maps_url": rating["maps_url"]}
 
 
 def coverage_note(meta):
@@ -123,10 +141,13 @@ def clock_of(t):
 def results_view(saved, sort, hidden, page, now, meta):
     """`saved` is the session's search: {request, search}. Reordering only."""
     req, found = saved["request"], saved["search"]
-    sort = sort if sort in SORTS else "nearest"
+    rated = sum(bool(r.get("rating")) for r in found["results"])
+    sorts = [k for k in SORTS if k != "rated" or rated]   # no ratings: no rating sort
+    sort = sort if sort in sorts else "nearest"
     labels = req["cuisines"] + [NOT_LISTED] if req["cuisines"] else []
     hidden = [c for c in labels if c in set(hidden or ())]
-    rows, total, pages = sort_and_filter(found["results"], sort, hidden, page)
+    rows, total, pages = sort_and_filter(found["results"], sort, hidden, page,
+                                         cuisine_filter=bool(req["cuisines"]))
     page = min(max(1, page), pages)
     link = lambda **kw: url_for("web.eat_results", **{"sort": sort, "hide": hidden,
                                                       "page": 1, **kw})
@@ -156,7 +177,10 @@ def results_view(saved, sort, hidden, page, now, meta):
                             "distance is shown as an estimate and they are listed last."
                             if any(r["minutes"] is None for r in rows) else ""),
         "sorts": [{"value": k, "label": sort_labels[k], "selected": k == sort,
-                   "url": link(sort=k)} for k in SORTS],
+                   "url": link(sort=k)} for k in sorts],
+        "ratings_note": (f"Ratings from Google Maps for {rated} of these places. A place "
+                         f"with no rating shown has none we could fetch, not a low one."
+                         if rated else ""),
         "chips": ([{"label": "All", "count": n, "selected": not hidden, "url": link(hide=[])}]
                   + [{"label": c, "count": by_label[c], "selected": c not in hidden,
                       "url": link(hide=toggled(c))} for c in labels]) if labels else [],

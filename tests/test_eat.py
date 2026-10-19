@@ -147,6 +147,35 @@ def test_write_and_load_round_trip(store):
     assert isinstance(p["cuisines"], list) and isinstance(p["destination"], bool)
 
 
+# ---- the Wikipedia "notable" badge ----
+
+def test_notable_matches_only_an_article_that_names_the_place_itself():
+    from gowhere.eat.notable import match, own_name
+    assert own_name("LiHO - Seletar Mall") == "LiHO" and own_name("Ajisen @ AMK Hub") == "Ajisen"
+    assert own_name("Maxwell Food Centre (Kim Hua Market)") == "Maxwell Food Centre"
+    places = [{"name": "Maxwell Food Centre (Kim Hua Market)", "lat": 1.2803, "lon": 103.8447},
+              {"name": "LiHO - Seletar Mall", "lat": 1.3916, "lon": 103.8760},
+              {"name": "North Bridge Road Market", "lat": 1.3020, "lon": 103.8610},
+              {"name": "Far Food Centre", "lat": 1.3500, "lon": 103.7500}]
+    articles = [{"title": "Maxwell Food Centre", "lat": 1.2804, "lon": 103.8448},
+                {"title": "Seletar Mall", "lat": 1.3917, "lon": 103.8761},        # the mall
+                {"title": "North Bridge Road", "lat": 1.3021, "lon": 103.8611},   # the road
+                {"title": "Far Food Centre", "lat": 1.3600, "lon": 103.7500}]     # 1.1 km off
+    assert match(places, articles) == {0: "Maxwell Food Centre"}
+
+
+def test_the_badge_says_notable_not_good(client):
+    from gowhere.web import eat_views
+    with client.application.test_request_context():
+        c = eat_views.card({"id": 1, "name": "Newton Food Centre", "kind": "hawker_centre",
+                            "stalls": 83, "price_tier": "budget", "cuisines": ["Local & Hawker"],
+                            "address": None, "open": {"open": None, "text": "Opening hours unknown"},
+                            "route": None, "distance_m": 100, "wikipedia_title": "Newton Food Centre"},
+                           "pt")
+    assert c["notable"]["url"] == "https://en.wikipedia.org/wiki/Newton_Food_Centre"
+    assert "notable, not that the food is good" in c["notable"]["title"]
+
+
 # ---- search ----
 
 class Router:
@@ -250,6 +279,17 @@ def test_sorts():
     assert order("nearest") == ["A", "C", "B"]
     assert order("open") == ["B", "A", "C"]          # open, unknown, closed
     assert order("variety") == ["B", "A", "C"]       # most stalls first
+
+
+def test_with_a_cuisine_chosen_unlisted_places_come_after_every_match():
+    rows = [{"name": "Near unlisted", "minutes": 1, "distance_m": 50, "destination": False,
+             "stalls": None, "open": {"open": True}, "cuisines": []},
+            {"name": "Far match", "minutes": 9, "distance_m": 900, "destination": False,
+             "stalls": None, "open": {"open": None}, "cuisines": ["Chinese"]}]
+    names = lambda **kw: [r["name"] for r in sort_and_filter(rows, **kw)[0]]
+    assert names(sort="nearest") == ["Near unlisted", "Far match"]          # "any cuisine"
+    for sort in ("nearest", "open", "variety"):
+        assert names(sort=sort, cuisine_filter=True) == ["Far match", "Near unlisted"]
 
 
 # ---- the screens ----

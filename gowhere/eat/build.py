@@ -25,6 +25,7 @@ import sqlite3
 from datetime import datetime, timezone
 
 from gowhere import config
+from gowhere.eat import google_ids, notable
 from gowhere.eat.cuisines import groups_for, is_kopitiam
 from gowhere.eat.hours import parse
 from gowhere.etl import raw
@@ -52,7 +53,9 @@ CREATE TABLE place (
     lat REAL NOT NULL, lon REAL NOT NULL,
     planning_area TEXT NOT NULL,
     source TEXT NOT NULL,        -- osm or nea
-    source_url TEXT NOT NULL);
+    source_url TEXT NOT NULL,
+    wikipedia_title TEXT,        -- a Wikipedia article at this place (gowhere.eat.notable)
+    google_place_id TEXT);       -- the only Google content stored (gowhere.eat.google_ids)
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 """
 
@@ -176,10 +179,13 @@ def write(path, places, meta):
     db.executescript(SCHEMA)
     db.executemany(
         "INSERT INTO place (name, kind, destination, stalls, price_tier, cuisines, cuisine_tag, "
-        "opening_hours, address, lat, lon, planning_area, source, source_url) "
+        "opening_hours, address, lat, lon, planning_area, source, source_url, wikipedia_title, "
+        "google_place_id) "
         "VALUES (:name, :kind, :destination, :stalls, :price_tier, :cuisines, :cuisine_tag, "
-        ":opening_hours, :address, :lat, :lon, :planning_area, :source, :source_url)",
-        [{**p, "cuisines": json.dumps(p["cuisines"])} for p in places])
+        ":opening_hours, :address, :lat, :lon, :planning_area, :source, :source_url, "
+        ":wikipedia_title, :google_place_id)",
+        [{"wikipedia_title": None, "google_place_id": None, **p,
+          "cuisines": json.dumps(p["cuisines"])} for p in places])
     db.executemany("INSERT INTO meta VALUES (?, ?)", sorted(meta.items()))
     db.commit()
     db.close()
@@ -192,7 +198,16 @@ def main():
     hawkers = json.loads((raw_dir / f"{config.RAW_HAWKER_CENTRES}.json").read_text())
     manifest = json.loads((raw_dir / "_manifest.json").read_text())
     places, counts = build(osm["elements"], hawkers["features"], raw.load_planning_areas())
+    articles, wiki_as_of = notable.load(raw_dir)
+    for i, title in notable.match(places, articles).items():
+        places[i]["wikipedia_title"] = title
+    counts["notable"] = sum(bool(p.get("wikipedia_title")) for p in places)
+    gids = google_ids.load(raw_dir)
+    for p in places:
+        p["google_place_id"] = gids.get(p["source_url"])
+    counts["google_place_ids"] = sum(bool(p["google_place_id"]) for p in places)
     meta = {**{k: str(v) for k, v in counts.items()}, **coverage(places),
+            "wikipedia_as_of": wiki_as_of or "",
             "osm_data_as_of": osm.get("osm3s", {}).get("timestamp_osm_base", "")[:10],
             "hawker_data_as_of": manifest[config.RAW_HAWKER_CENTRES]["fetched_at"][:10],
             "built_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
@@ -200,7 +215,8 @@ def main():
     print(f"eat.db: {counts['places']} places ({counts['hawker_centres']} hawker centres); "
           f"dropped {counts['osm_outside_singapore']} outside Singapore, {counts['osm_unnamed']} "
           f"unnamed, {counts['osm_same_as_hawker_centre']} duplicates of a hawker centre; "
-          f"cuisine listed {meta['cuisine_listed_pct']}%, hours known {meta['hours_known_pct']}%")
+          f"cuisine listed {meta['cuisine_listed_pct']}%, hours known {meta['hours_known_pct']}%; "
+          f"{counts['notable']} with a Wikipedia article")
 
 
 if __name__ == "__main__":

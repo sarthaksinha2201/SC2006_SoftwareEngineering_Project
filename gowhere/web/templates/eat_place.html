@@ -4,12 +4,21 @@
 
 <div class="event-detail-head">
   <p class="event-kicker"><span class="cat-tag" data-cat="{{ view.cuisine_slug }}">{{ view.cuisine }}</span>
-    <span class="price-tier" title="{{ view.tier_label }}">{{ view.tier }}</span></p>
+    <span class="price-tier" title="{{ view.tier_label }}">{{ view.tier }}</span>
+    {% if view.notable %}<a class="badge-notable" href="{{ view.notable.url }}" rel="noopener noreferrer" target="_blank" title="{{ view.notable.title }}">{{ view.notable.label }}</a>{% endif %}</p>
   <h1>{{ view.name }}</h1>
   <p class="lede">{{ view.kind }}</p>
 </div>
 
 <dl class="event-facts">
+  {% if view.rating %}
+  <div class="event-fact">
+    <dt>Rating</dt>
+    <dd><span class="google-rating"><a href="{{ view.rating.maps_url }}" rel="noopener noreferrer" target="_blank">
+      <span class="google-rating-value">&#9733; {{ view.rating.value }}</span> · {{ view.rating.count }}
+      <span class="google-attribution">Google Maps</span></a></span></dd>
+  </div>
+  {% endif %}
   <div class="event-fact">
     <dt>Opening hours</dt>
     <dd><span class="open-status" data-open="{{ view.open_state }}">{{ view.open_text }}</span>
@@ -57,6 +66,7 @@
 <h2 class="section-head">Source</h2>
 <p class="event-sources">
   <a href="{{ view.source.url }}" rel="noopener noreferrer" target="_blank">{{ view.source.label }}</a>
+  {% if view.notable %}<br>{{ view.notable.title }}{% endif %}
   {% if view.data_note %}<br>{{ view.data_note }}{% endif %}
 </p>
 

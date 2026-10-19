@@ -45,7 +45,8 @@ MIN_MINUTES, MAX_MINUTES = 5, 90
 ROUTE_BUDGET = 40
 DESTINATION_SLOTS = 10
 NOT_LISTED_SLOTS = 10
-SORTS = {"nearest": "Nearest", "open": "Open first", "variety": "Most variety"}
+SORTS = {"nearest": "Nearest", "open": "Open first", "variety": "Most variety",
+         "rated": "Highest rated"}
 PAGE_SIZE = 10
 
 
@@ -146,9 +147,12 @@ def label_of(place):
 _OPEN_ORDER = {True: 0, None: 1, False: 2}
 
 
-def sort_and_filter(results, sort="nearest", hidden=(), page=1):
+def sort_and_filter(results, sort="nearest", hidden=(), page=1, cuisine_filter=False):
     """(page of results, total matching, number of pages). A result is hidden only when
-    every one of its cuisine labels is hidden. Pure: no external calls."""
+    every one of its cuisine labels is hidden. With a cuisine filter active, places whose
+    cuisine is not listed come after every match, whatever the sort (DECISIONS.md
+    section 28): still shown and labelled, but no longer above what was asked for.
+    Pure: no external calls."""
     hidden = set(hidden)
     if hidden:
         results = [r for r in results if not set(label_of(r)) <= hidden]
@@ -157,9 +161,15 @@ def sort_and_filter(results, sort="nearest", hidden=(), page=1):
         key = lambda r: (_OPEN_ORDER[r["open"]["open"]], *travel(r), r["name"])
     elif sort == "variety":
         key = lambda r: (not r["destination"], -(r["stalls"] or 0), *travel(r), r["name"])
+    elif sort == "rated":
+        # Rated places first, best first; places with no rating follow in travel order,
+        # because no rating is not a low rating (DECISIONS.md section 29).
+        rating = lambda r: r.get("rating") or {}
+        key = lambda r: (not rating(r), -rating(r).get("value", 0), -rating(r).get("count", 0),
+                         *travel(r), r["name"])
     else:
         key = lambda r: (*travel(r), r["name"])
-    ordered = sorted(results, key=key)
+    ordered = sorted(results, key=(lambda r: (not r["cuisines"], key(r))) if cuisine_filter else key)
     pages = max(1, -(-len(ordered) // PAGE_SIZE))
     page = min(max(1, page), pages)
     return ordered[(page - 1) * PAGE_SIZE: page * PAGE_SIZE], len(ordered), pages

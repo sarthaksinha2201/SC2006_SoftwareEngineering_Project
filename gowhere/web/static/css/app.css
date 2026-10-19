@@ -1672,3 +1672,17 @@ table.results.breakdown td small { display: block; margin-top: 0.25rem; }
 .open-status[data-open="open"]    { color: var(--good-text); font-weight: 600; }
 .open-status[data-open="closed"]  { color: var(--warning-text); font-weight: 600; }
 .open-status[data-open="unknown"] { color: var(--text-faint); }
+.badge-notable { margin-left: 0.4rem; font-size: 0.6875rem; font-weight: 600; color: var(--text-muted);
+                 border: 1px solid var(--border-strong); border-radius: 9999px; padding: 0.1rem 0.5rem;
+                 text-decoration: none; white-space: nowrap; }
+.badge-notable:hover { color: var(--text); border-color: var(--text-muted); }
+/* Google Places attribution (Places API policies): the words "Google Maps", unmodified,
+   in Roboto 12px at a permitted grey, inside a visually separate container, linking to
+   the place on Google Maps. */
+.google-rating { margin: 0.35rem 0; }
+.google-rating a { display: inline-flex; align-items: baseline; gap: 0.35rem; padding: 0.15rem 0.55rem;
+                   border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+                   color: var(--text); text-decoration: none; font-size: 0.8125rem; }
+.google-rating-value { font-weight: 700; }
+.google-attribution { font-family: Roboto, "Helvetica Neue", Arial, sans-serif; font-weight: 400;
+                      font-size: 12px; color: #5E5E5E; }

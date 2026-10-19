@@ -1,7 +1,7 @@
 # GoWhere
 
-SC2006 Team 5. Compare Singapore neighbourhoods (**Where to Live**) and find events near
-you (**Where to Lepak**).
+SC2006 Team 5. Compare Singapore neighbourhoods (**Where to Live**), find events near
+you (**Where to Lepak**), and find places to eat nearby (**Where to Eat**).
 
 ## Run it on your laptop
 
@@ -20,8 +20,8 @@ Then open **http://127.0.0.1:8000**. Stop the server with Ctrl+C.
 On Windows, use `py -3.13 -m venv .venv`, then `.venv\Scripts\pip install -r requirements.txt`
 and `.venv\Scripts\python -m gowhere.serve`.
 
-The neighbourhood data (`data/snapshot.db`) and the events (`data/events.db`) are in the
-repo, so nothing needs downloading or building.
+The neighbourhood data (`data/snapshot.db`), the events (`data/events.db`) and the places
+to eat (`data/eat.db`) are in the repo, so nothing needs downloading or building.
 
 ## API keys (optional)
 
@@ -49,6 +49,7 @@ HDB resales to score Housing Affordability, and the app tells you so.
 ```bash
 .venv/bin/python -m pytest -q                       # tests: no network or keys needed
 .venv/bin/python -m gowhere.ingest.run              # fetch new events (needs OPENAI_API_KEY)
+.venv/bin/python -m gowhere.eat.build               # rebuild the places to eat from data/raw
 .venv/bin/python -m gowhere.lepak.images            # venue photos for new events (no key)
 .venv/bin/python scripts/make_category_art.py       # redraw the category banners
 .venv/bin/python -m gowhere.serve --host 0.0.0.0    # let phones on the same Wi-Fi open it

@@ -139,7 +139,9 @@ def results_view(saved, sort, hidden, page, now, meta):
                    f"Open at {WHEN_OPTIONS[req['when']][0].lower()}"}
     return {
         "heading": (f"{n} {'place' if n == 1 else 'places'} within {req['max_minutes']} min "
-                    f"by {MODES[req['mode']]}, for {when_text(req['when'], found['at'], now)}"),
+                    f"by {MODES[req['mode']]}"
+                    + ("" if req["when"] == "now" else
+                       f", for {when_text(req['when'], found['at'], now)}")),
         "timed_note": (f"Travel times were worked out for the {counts['routed']} nearest of "
                        f"{counts['within_reach']:,} places within reach."
                        if counts["within_reach"] > counts["routed"] else ""),

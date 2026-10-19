@@ -776,3 +776,24 @@ The measurements in `docs/eat-measurements.md` overturned three of §25's premis
 **Reason:** Same rule as unroutable events (§13) and untagged places (§25) — hiding what is unknown deletes most of the dataset while appearing to work.
 
 **Net effect:** of §25's five signals, travel time, price tier and food destinations stand unchanged; cuisine and open-now stand with labelling; hygiene falls. Food destinations are fully supported — 123 operating hawker centres with stall counts (median 45, maximum 226) and 111 photographs — which is why the "destinations as well as eateries" decision now carries more of the feature than it did when it was made.
+
+## 27. Ratings and halal, researched (19 Oct 2026)
+
+Researched after §25a concluded the feature would ship with no quality signal. Two of those conclusions change.
+
+**Finding — Google Places is affordable; the constraint is storage, not cost.** Since March 2025 the $200 monthly credit is replaced by per-SKU free allowances: Essentials 10,000, Pro 5,000 and Enterprise 1,000 events per month. A place's `rating` is a Pro field, so **5,000 free rating lookups a month**, then about US$17 per 1,000. §25's rejection on cost was wrong.
+
+**Decision:** If ratings are built, they are fetched **at request time only, for the venues actually displayed, and never stored**. The ETL may store the **Google place ID**, which Google's Places policies permit to be stored indefinitely; everything else is explicitly barred from caching or storage.
+**Reason:** The policy says plainly: "You must not pre-fetch, cache, or store Places API content beyond the allowed exceptions", with the place ID named as the exception. Storing the ID offline and fetching only the rating live keeps us inside the terms while keeping the request cost to one call per displayed venue. It is the same shape as live carpark availability — an External Service with a documented fallback — so the architecture does not change.
+
+**Three consequences recorded with it:** a billing account with a payment card is required even within the free tier; Google's attribution requirements apply (logo, review attributions, a link to Google Maps); and **sorting by rating can only sort within the fetched page**, because unfetched venues have no rating. A sort control must say so rather than implying a global ranking.
+
+**Decision:** Foursquare and Tripadvisor are **rejected**.
+**Reason:** Foursquare's ratings are a Premium field at US$18.75 per 1,000 with no free tier. Tripadvisor's Content API permits caching of the location ID only — the same restriction as Google, with none of the free allowance — and is reported to have sunset on 31 August 2026, before this project's demonstration.
+
+**Finding — halal data exists after all, from MUIS rather than OSM.** §25a rejected a halal filter on OSM's 3.7% `diet:halal` coverage. That reasoning holds for OSM, but MUIS publishes its certified establishments through a public search, mirrored by community datasets carrying roughly 4,600 records and attributing MUIS.
+**Decision:** If a halal filter is built, it must come from **MUIS certification data, matched strictly on name and postal code, badged with its certification date — never inferred from OSM tags**, and an unmatched venue must read as "not known", never as "not halal".
+**Reason:** For a religious requirement the failure modes are not symmetrical: a missing badge inconveniences someone, a wrong badge misleads them about something they cannot compromise on. The same strict-match rule already used for venues (§12) applies with more force here. The terms of the community mirrors are not stated by MUIS, so the source and its retrieval date must be recorded, as for every other curated file.
+
+**Decision:** Where to Eat can be **entered from the other two features**: from a Lepak event ("where to eat near this event") and from the Where to Live recommendation ("where to eat in this neighbourhood").
+**Reason:** It needs no new data — the planning area and coordinates of every venue are already computed — and it is what makes three features read as one application rather than three separate tools sharing a menu.

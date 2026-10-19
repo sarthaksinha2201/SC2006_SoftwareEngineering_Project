@@ -25,28 +25,38 @@ DEFAULTS = {"categories": [], "date_option": "weekend", "mode": "pt", "max_minut
 SG_BOUNDS = (1.15, 1.48, 103.59, 104.10)     # lat min, lat max, lon min, lon max
 
 
-def parse_lepak_form(form):
-    """{categories, date_option, mode, max_minutes, origin: ("postal", code) or
-    ("here", (lat, lon))}. Raises InvalidSearch; messages never echo the input."""
-    try:
-        max_minutes = int((form.get("max_minutes") or "").strip())
-    except ValueError:
-        raise InvalidSearch("Maximum travel time must be a whole number of minutes.")
+def parse_origin(form, error=InvalidSearch):
+    """("postal", code) or ("here", (lat, lon)) from a search form's starting-point fields,
+    shared by Where to Lepak and Where to Eat. Raises `error`; messages never echo the
+    input."""
     if form.get("origin") == "here":
         try:
             lat, lon = float(form.get("lat", "")), float(form.get("lon", ""))
         except ValueError:
-            raise InvalidSearch("Your location isn't available. Allow location access, "
-                                "or enter a postal code instead.")
+            raise error("Your location isn't available. Allow location access, "
+                        "or enter a postal code instead.")
         if not (SG_BOUNDS[0] <= lat <= SG_BOUNDS[1] and SG_BOUNDS[2] <= lon <= SG_BOUNDS[3]):
-            raise InvalidSearch("Your location appears to be outside Singapore. "
-                                "Enter a postal code instead.")
-        origin = ("here", (lat, lon))
-    else:
-        postal = (form.get("postal") or "").strip()
-        if not (len(postal) == 6 and postal.isdigit()):
-            raise InvalidSearch("Enter a 6-digit Singapore postal code.")
-        origin = ("postal", postal)
+            raise error("Your location appears to be outside Singapore. "
+                        "Enter a postal code instead.")
+        return ("here", (lat, lon))
+    postal = (form.get("postal") or "").strip()
+    if not (len(postal) == 6 and postal.isdigit()):
+        raise error("Enter a 6-digit Singapore postal code.")
+    return ("postal", postal)
+
+
+def parse_max_minutes(form, error=InvalidSearch):
+    try:
+        return int((form.get("max_minutes") or "").strip())
+    except ValueError:
+        raise error("Maximum travel time must be a whole number of minutes.")
+
+
+def parse_lepak_form(form):
+    """{categories, date_option, mode, max_minutes, origin: ("postal", code) or
+    ("here", (lat, lon))}. Raises InvalidSearch; messages never echo the input."""
+    max_minutes = parse_max_minutes(form)
+    origin = parse_origin(form)
     return {"categories": [c for c in form.getlist("categories") if c],
             "date_option": form.get("date_option", ""), "mode": form.get("mode", ""),
             "max_minutes": max_minutes, "origin": origin}

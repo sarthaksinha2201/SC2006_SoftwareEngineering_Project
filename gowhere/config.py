@@ -24,6 +24,7 @@ RAW_HAWKER_CENTRES = "nea_hawker_centres"
 RAW_LIBRARIES = "nlb_libraries"                   # NLB layer served as a OneMap theme
 RAW_SUPERMARKETS = "sfa_supermarkets"             # licence list: addresses, no coordinates
 RAW_OSM_AMENITIES = "osm_amenities"               # malls, gyms, cafes (Overpass)
+RAW_OSM_FOOD = "osm_food"                         # Where to Eat: every food venue (Overpass)
 RAW_BUS_STOPS = "lta_bus_stops"                   # LTA DataMall BusStops (needs LTA_DATAMALL_KEY)
 RAW_BUS_ROUTES = "lta_bus_routes"                 # LTA DataMall BusRoutes: services per stop
 
@@ -88,6 +89,12 @@ AMENITY_CAP = 3
 # OpenStreetMap tags for the amenity types that have no government dataset.
 OSM_AMENITY_TAGS = {"mall": '["shop"="mall"]', "gym": '["leisure"="fitness_centre"]',
                     "cafe": '["amenity"="cafe"]'}
+
+# ---- Where to Eat (DECISIONS.md sections 25 and 25a) ----
+EAT_PATH = DATA_DIR / "eat.db"           # built offline by gowhere.eat.build; committed
+OSM_FOOD_TAGS = ['["amenity"="restaurant"]', '["amenity"="cafe"]', '["amenity"="fast_food"]',
+                 '["amenity"="food_court"]', '["amenity"="ice_cream"]',
+                 '["amenity"="marketplace"]']
 
 # ---- Where to Lepak (DECISIONS.md sections 3 and 11) ----
 EVENTS_PATH = DATA_DIR / "events.db"     # read-write event store; the snapshot stays read-only

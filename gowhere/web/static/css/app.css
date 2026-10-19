@@ -1655,3 +1655,20 @@ table.results.breakdown td:nth-child(3),
 table.results.breakdown td:nth-child(4) { min-width: 11rem; }
 table.results.breakdown td:nth-child(5) { min-width: 9rem; }
 table.results.breakdown td small { display: block; margin-top: 0.25rem; }
+
+/* ---- Where to Eat (DECISIONS.md sections 25 and 25a) -------------------------- */
+/* Cuisine tags reuse .cat-tag with the same washed pastels as the event categories. */
+.cat-tag[data-cat="local-hawker"]        { background: #fbf3db; color: #956400; }
+.cat-tag[data-cat="chinese"]             { background: #fdebec; color: #9f2f2d; }
+.cat-tag[data-cat="malay-indonesian"]    { background: #edf3ec; color: #346538; }
+.cat-tag[data-cat="indian"]              { background: #faebdd; color: #a8553a; }
+.cat-tag[data-cat="japanese-korean"]     { background: #f4f0f9; color: #6940a5; }
+.cat-tag[data-cat="thai-vietnamese"]     { background: #e6f2f1; color: #246b63; }
+.cat-tag[data-cat="western"]             { background: #e1f3fe; color: #1f6c9f; }
+.cat-tag[data-cat="cafes-desserts"]      { background: #faf1f5; color: #ad1a72; }
+/* "Cuisine not listed" keeps .cat-tag's neutral grey: missing data, not a category. */
+
+.price-tier { margin-left: 0.4rem; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.04em; }
+.open-status[data-open="open"]    { color: var(--good-text); font-weight: 600; }
+.open-status[data-open="closed"]  { color: var(--warning-text); font-weight: 600; }
+.open-status[data-open="unknown"] { color: var(--text-faint); }

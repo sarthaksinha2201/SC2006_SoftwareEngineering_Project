@@ -177,11 +177,13 @@ class EventRouter:
             return self.route(origin, destination, "walk", departure)
         return route
 
-    def route_many(self, origin, events, mode, now):
-        """{event id: route or None}."""
+    def route_many(self, origin, events, mode, now, departure=None):
+        """{event id: route or None}. Each event's departure time comes from the event
+        itself (departure_for); `departure` fixes one for every destination instead,
+        as Where to Eat does for "open at lunch"."""
         with ThreadPoolExecutor(max_workers=self.max_workers) as pool:
             routes = pool.map(lambda e: self.route(origin, (e["lat"], e["lon"]), mode,
-                                                   departure_for(e, now)), events)
+                                                   departure or departure_for(e, now)), events)
             out = {e["id"]: r for e, r in zip(events, routes)}
         warn_if_all_failed(out.values(), "event")
         return out

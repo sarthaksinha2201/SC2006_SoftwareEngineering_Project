@@ -70,11 +70,11 @@ class FixedEventRouter:
         routes = json.loads((FIXTURE_DIR / "lepak" / "onemap_routes.json").read_text())
         self._routes = {m: parse_route(routes[m], m) for m in ("pt", "drive", "walk")}
 
-    def route_many(self, origin, events, mode, now):
+    def route_many(self, origin, events, mode, now, departure=None):
         self.calls += 1
         out = {}
         for e in events:
-            m = self._minutes.get(e["title"], self._default)
+            m = self._minutes.get(e.get("title") or e.get("name"), self._default)   # events or places
             used = mode
             if isinstance(m, tuple):
                 used, m = m

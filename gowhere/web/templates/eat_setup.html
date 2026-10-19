@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% from "_macros.html" import note %}
+{% block title %}Where to Eat · GoWhere{% endblock %}
+{% block content %}
+<h1>Where to Eat</h1>
+<p class="lede">Hawker centres, kopitiams, cafés and restaurants near you, and whether
+  they're open when you want to eat.</p>
+{% if view.error %}{{ note(view.error, 'warning') }}{% endif %}
+
+<form method="post" action="{{ url_for('web.eat_submit') }}"
+      data-loading-stages='[[0, "Finding your starting point"],
+                            [900, "Looking for places to eat nearby"],
+                            [2200, "Working out how long each one takes"],
+                            [5200, "Putting the closest ones first"]]'>
+  <fieldset>
+    <legend>Cuisine <small>(any, if you choose none)</small></legend>
+    <div class="checkbox-row">
+      {% for c in view.cuisines %}
+      <label><input type="checkbox" name="cuisines" value="{{ c.value }}" {% if c.checked %}checked{% endif %}> {{ c.label }}</label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Kind of place</legend>
+    <div class="checkbox-row">
+      {% for t in view.tiers %}
+      <label><input type="checkbox" name="tiers" value="{{ t.value }}" {% if t.checked %}checked{% endif %}> {{ t.label }}</label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <div class="form-row">
+    <div>
+      <label>When
+        <select name="when">
+          {% for w in view.whens %}<option value="{{ w.value }}" {% if w.selected %}selected{% endif %}>{{ w.label }}</option>{% endfor %}
+        </select>
+      </label>
+    </div>
+    <div>
+      <label>Travel by
+        <select name="mode">
+          {% for m in view.modes %}<option value="{{ m.value }}" {% if m.selected %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
+        </select>
+      </label>
+    </div>
+    <div>
+      <label>At most
+        <select name="max_minutes">
+          {% for m in view.max_minutes %}<option value="{{ m.value }}" {% if m.selected %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <fieldset>
+    <legend>Starting point</legend>
+    <div class="radio-row">
+      <label><input type="radio" name="origin" value="postal" {% if view.origin != 'here' %}checked{% endif %}> Postal code</label>
+      <input name="postal" inputmode="numeric" maxlength="6" autocomplete="off"
+             style="max-width:10rem" value="{{ view.postal }}">
+    </div>
+    <div class="radio-row">
+      <label><input type="radio" name="origin" value="here" {% if view.origin == 'here' %}checked{% endif %}> Use my location</label>
+    </div>
+    <input type="hidden" name="lat"><input type="hidden" name="lon">
+  </fieldset>
+
+  <button class="btn" type="submit">Find places</button>
+</form>
+{% endblock %}

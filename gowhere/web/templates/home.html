@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-<h1 class="home-title">Where should you<br><em>live</em>, and where<br>should you <em>lepak</em>?</h1>
-<p class="lede">Two questions about Singapore, answered from government data:
-  thirty-two neighbourhoods scored on what you care about, and whatever is on this
-  week within reach of where you are.</p>
+<h1 class="home-title">Where should you<br><em>live</em>, <em>lepak</em><br>and <em>eat</em>?</h1>
+<p class="lede">Three questions about Singapore, answered from open data:
+  thirty-two neighbourhoods scored on what you care about, whatever is on this
+  week within reach of where you are, and where to eat nearby.</p>
 <div class="home-cards">
   <a class="home-card" href="{{ url_for('web.live_setup') }}" data-reveal style="--index: 0">
     <h2>Where to Live</h2>
@@ -13,6 +13,11 @@
   <a class="home-card" href="{{ url_for('web.lepak_setup') }}" data-reveal style="--index: 1">
     <h2>Where to Lepak</h2>
     <p>Find events near you, sorted by how long it takes to get there.</p>
+  </a>
+  <a class="home-card" href="{{ url_for('web.eat_setup') }}" data-reveal style="--index: 2">
+    <h2>Where to Eat</h2>
+    <p>Find hawker centres, kopitiams, cafés and restaurants nearby, and whether they're
+      open when you want to eat.</p>
   </a>
 </div>
 {% endblock %}

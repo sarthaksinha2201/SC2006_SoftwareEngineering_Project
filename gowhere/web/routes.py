@@ -1,17 +1,21 @@
-"""The six screens: Where to Live (setup, results) on the scoring engine, and Where to
-Lepak (search, results, event detail) on the event store."""
+"""The nine screens: Where to Live (setup, results) on the scoring engine, Where to
+Lepak (search, results, event detail) on the event store, and Where to Eat (search,
+results, place detail) on the place list."""
 from flask import (Blueprint, current_app, jsonify, redirect, render_template, request,
                    session, url_for)
 from werkzeug.datastructures import MultiDict
 
 from gowhere.adapters.http import HttpError
+from gowhere.eat import search as eat_search
+from gowhere.eat.hours import status as hours_status
+from gowhere.eat.store import PlaceStore
 from gowhere.lepak.search import InvalidSearch, TooManyEvents, search
 from gowhere.lepak.store import EventStore
 from gowhere.scoring.engine import InvalidRequest, NoFactorsLeft, ScoringEngine
 from gowhere.scoring.registry import default_strategies
 from gowhere.services.location import OfflinePostalNotFound
 from gowhere.web.forms import FormError, parse_live_form
-from gowhere.web import lepak_views
+from gowhere.web import eat_views, lepak_views
 from gowhere.web.view_models import dropped_messages, picker_map, results_view, setup_view
 
 bp = Blueprint("web", __name__)
@@ -131,6 +135,15 @@ def _events():
     return EventStore(current_app.config["EVENTS_PATH"])
 
 
+OFFLINE_POSTAL = ("OneMap can't be reached right now. Without it we can only look up HDB "
+                  "block postal codes, and this one isn't one, so it couldn't be checked. "
+                  "Try the postal code of a nearby HDB block, use your location, or try "
+                  "again shortly.")
+ONEMAP_DOWN = ("OneMap can't be reached right now, so we can't look up your starting point. "
+               "Please try again shortly.")
+POSTAL_NOT_FOUND = "We couldn't find that postal code. Check it and try again."
+
+
 def _lepak_error(form, message):
     return render_template("lepak_setup.html",
                            view=lepak_views.setup_view(form, error=message)), 400
@@ -154,7 +167,7 @@ def lepak_submit():
         if kind == "postal":
             origin = state.locations.postal(value)
             if origin is None:
-                raise InvalidSearch("We couldn't find that postal code. Check it and try again.")
+                raise InvalidSearch(POSTAL_NOT_FOUND)
         else:
             origin = value
         parking = current_app.extensions["gowhere"]["parking"] if req["mode"] == "drive" else None
@@ -165,13 +178,9 @@ def lepak_submit():
     except TooManyEvents as e:
         return _lepak_error(form, lepak_views.too_many_message(e.count))
     except OfflinePostalNotFound:
-        return _lepak_error(form, "OneMap can't be reached right now. Without it we can only "
-                                  "look up HDB block postal codes, and this one isn't one, so "
-                                  "it couldn't be checked. Try the postal code of a nearby HDB "
-                                  "block, use your location, or try again shortly.")
+        return _lepak_error(form, OFFLINE_POSTAL)
     except HttpError:
-        return _lepak_error(form, "OneMap can't be reached right now, so we can't look up "
-                                  "your starting point. Please try again shortly.")
+        return _lepak_error(form, ONEMAP_DOWN)
     # The starting point stays in this session's memory: it marks the route map's start.
     state.lepak = {"form": form, "request": req, "search": found, "origin": origin}
     return redirect(url_for("web.lepak_results"), code=303)
@@ -213,3 +222,93 @@ def lepak_event(event_id):
         return render_template("error.html", title="Event not found",
                                messages=["It may have ended or been removed."]), 404
     return render_template("event_detail.html", view=lepak_views.event_view(event, None, now))
+
+
+# ---- Where to Eat ----
+
+def _places():
+    """The place list, read once per process (gowhere.eat.store)."""
+    ext = current_app.extensions["gowhere"]
+    if ext.get("places") is None:
+        ext["places"] = PlaceStore.load(current_app.config["EAT_PATH"])
+    return ext["places"]
+
+
+def _eat_error(form, message):
+    return render_template("eat_setup.html",
+                           view=eat_views.setup_view(form, error=message)), 400
+
+
+@bp.get("/eat")
+def eat_setup():
+    state = _state()
+    form = state.eat["form"] if state.eat else None
+    return render_template("eat_setup.html", view=eat_views.setup_view(form))
+
+
+@bp.post("/eat")
+def eat_submit():
+    state = _lepak(_state())        # the same per-session location lookups and router
+    form = MultiDict(request.form)
+    now = current_app.config["NOW"]()
+    try:
+        req = eat_views.parse_eat_form(form)
+        kind, value = req["origin"]
+        if kind == "postal":
+            origin = state.locations.postal(value)
+            if origin is None:
+                raise eat_search.InvalidSearch(POSTAL_NOT_FOUND)
+        else:
+            origin = value
+        parking = current_app.extensions["gowhere"]["parking"] if req["mode"] == "drive" else None
+        found = eat_search.search(_places().places, origin, req["cuisines"], req["tiers"],
+                                  req["when"], req["mode"], req["max_minutes"],
+                                  state.event_router, now, parking=parking)
+    except eat_search.InvalidSearch as e:
+        return _eat_error(form, str(e))
+    except OfflinePostalNotFound:
+        return _eat_error(form, OFFLINE_POSTAL)
+    except HttpError:
+        return _eat_error(form, ONEMAP_DOWN)
+    # As for Lepak: the starting point stays in this session's memory only.
+    state.eat = {"form": form, "request": req, "search": found, "origin": origin}
+    return redirect(url_for("web.eat_results"), code=303)
+
+
+@bp.get("/eat/results")
+def eat_results():
+    """Sort, hidden cuisines and page only reorder the saved results: no external call."""
+    state = _state()
+    if state.eat is None:
+        return redirect(url_for("web.eat_setup"))
+    try:
+        page = int(request.args.get("page", 1))
+    except ValueError:
+        page = 1
+    view = eat_views.results_view(state.eat, request.args.get("sort"),
+                                  request.args.getlist("hide"), page,
+                                  current_app.config["NOW"](), _places().meta)
+    state.eat["view_state"] = view["view_state"]
+    return render_template("eat_results.html", view=view)
+
+
+@bp.get("/eat/places/<int:place_id>")
+def eat_place(place_id):
+    state = _state()
+    saved = state.eat
+    meta = _places().meta
+    found = next((r for r in saved["search"]["results"] if r["id"] == place_id), None) if saved else None
+    if found is not None:
+        mode = saved["request"]["mode"]
+        if mode == "drive":        # refreshed here (cached 2 min), never on sort or chips
+            found = {**found, "parking": current_app.extensions["gowhere"]["parking"].near(
+                found["lat"], found["lon"])}
+        return render_template("eat_place.html", view=eat_views.place_view(
+            found, mode, back=saved.get("view_state"), origin=saved.get("origin"), meta=meta))
+    place = _places().get(place_id)
+    if place is None:
+        return render_template("error.html", title="Place not found", messages=[]), 404
+    now = current_app.config["NOW"]()
+    plain = {**place, "route": None, "distance_m": None,
+             "open": hours_status(place["opening_hours"], now)}
+    return render_template("eat_place.html", view=eat_views.place_view(plain, None, meta=meta))

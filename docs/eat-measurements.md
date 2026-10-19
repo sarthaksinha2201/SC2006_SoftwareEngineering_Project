@@ -25,9 +25,8 @@ planning area were dropped, because the bounding box includes part of Johor.
 
 ### Cuisine
 
-There are 218 distinct `cuisine` values. The most common is `coffee_shop` (653). In
-Singapore that tag mostly marks kopitiams, not cafés. A reasonable mapping into §25's
-eight groups gives:
+There are 218 distinct `cuisine` values. The most common is `coffee_shop` (653). A
+reasonable mapping into §25's eight groups gives:
 
 | Venues | Count | Share |
 |---|---|---|
@@ -43,6 +42,26 @@ Indian 275, Thai & Vietnamese 205, Malay & Indonesian 135, Seafood 133.
 the "cuisine not listed" label matters more than the categories. Seafood is the smallest
 group (1.5% of venues). The local-fare tags have no group at all, although local food is
 a main reason to use the feature.
+
+**Correction (19 Oct, while building):** the paragraph above first said `coffee_shop`
+"mostly marks kopitiams". It does not. Counting the names on the 646 venues tagged
+`coffee_shop` in the built place list:
+
+- most are café chains: Starbucks 144, Toast Box 79, The Coffee Bean & Tea Leaf 78,
+  Ya Kun 74, Luckin 24;
+- only about 32 have kopitiam-style names.
+
+The 872 "local only" venues in the table above are therefore mostly cafés. The
+Local & Hawker decision (§25a) still holds, but for a different reason. In the built
+list, Local & Hawker is the largest group at 1,174 places, against 120 tagged seafood.
+It is made up of:
+
+- the 123 NEA hawker centres;
+- 567 OSM food courts and 15 markets;
+- venues tagged `local`, `singaporean`, `noodle` and the like;
+- kopitiams, identified by name ("Kopitiam", "Eating House", "Coffee Shop").
+
+`coffee_shop` now maps to Cafés & Desserts.
 
 ### Opening hours
 

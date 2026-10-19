@@ -33,6 +33,7 @@ def create_app(overrides=None):
         SESSION_COOKIE_SECURE=os.getenv("GOWHERE_HTTPS") == "1",
         ROUTER_FACTORY=CommuteRouter,
         EVENTS_PATH=config.EVENTS_PATH,
+        EAT_PATH=config.EAT_PATH,             # Where to Eat place list, read on first use
         LOCATION_FACTORY=None,                # per session; default: LocationService.for_session
         EVENT_ROUTER_FACTORY=EventRouter,     # per session
         PARKING_FACTORY=ParkingService,       # one per app: public data, shared cache

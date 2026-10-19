@@ -33,6 +33,7 @@ HAWKER_CENTRES_ID = "d_4a086da0a5553be1d89383cd90d07ecd"   # NEA Hawker Centres 
 LIBRARIES_THEME = "libraries"   # NLB via OneMap: updated Aug 2026; data.gov.sg's copy dates from 2019
 SUPERMARKETS_ID = "d_11edd0117280c5776651d7891114c88c"     # SFA List of Supermarket Licences
 OSM_AMENITIES = "overpass"      # malls, gyms, cafes: config.OSM_AMENITY_TAGS
+OSM_FOOD = "overpass"           # Where to Eat: config.OSM_FOOD_TAGS
 
 DATASETS = {
     # name: (dataset id, kind)
@@ -48,6 +49,7 @@ DATASETS = {
     config.RAW_LIBRARIES: (LIBRARIES_THEME, "onemap_theme"),
     config.RAW_SUPERMARKETS: (SUPERMARKETS_ID, "datastore"),
     config.RAW_OSM_AMENITIES: (OSM_AMENITIES, "overpass"),
+    config.RAW_OSM_FOOD: (OSM_FOOD, "overpass_food"),
     config.RAW_BUS_STOPS: (BUS_STOPS, "datamall"),
     config.RAW_BUS_ROUTES: (BUS_ROUTES, "datamall"),
 }
@@ -68,7 +70,7 @@ def record_count(payload, kind):
         return sum(len(p["result"]["records"]) for p in payload)
     if kind == "onemap_theme":
         return len(payload["SrchResults"]) - 1   # first entry is the theme's own metadata
-    if kind == "overpass":
+    if kind in ("overpass", "overpass_food"):
         return len(payload["elements"])
     if kind == "datamall":
         return sum(len(p["value"]) for p in payload)     # stored as the page responses
@@ -78,7 +80,7 @@ def record_count(payload, kind):
 def source_url(dataset_id, kind):
     if kind == "onemap_theme":
         return f"https://www.onemap.gov.sg/api/public/themesvc/retrieveTheme?queryName={dataset_id}"
-    if kind == "overpass":
+    if kind in ("overpass", "overpass_food"):
         return "https://overpass-api.de/api/interpreter"
     if kind == "datamall":
         return f"https://datamall2.mytransport.sg/ltaodataservice/{dataset_id}"
@@ -108,6 +110,8 @@ def fetch(names=None, force=False, adapter=None, onemap=None, raw_dir=None, toda
                        for page in adapter.datastore_pages(dataset_id, filters={"month": month})]
         elif kind == "overpass":
             payload = OverpassAdapter().amenities(list(config.OSM_AMENITY_TAGS.values()))
+        elif kind == "overpass_food":
+            payload = OverpassAdapter().amenities(config.OSM_FOOD_TAGS)
         elif kind == "datamall":
             config.load_dotenv()
             payload = DataMallAdapter().pages(dataset_id, max_pages=MAX_STATIC_PAGES,

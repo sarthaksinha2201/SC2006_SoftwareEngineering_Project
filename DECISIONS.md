@@ -744,3 +744,15 @@ something, rather than as a control you set.
 **Reason:** A second scoring formula would add documentation and testing work without helping someone choose lunch. Consistency across the two features also means one set of UI behaviour to test.
 
 **To measure before building** — the same evidence-first sequence used for the bus factor and the detour calibration: the NEA grade distribution, OSM `cuisine` coverage, and OSM `opening_hours` coverage across Singapore food venues. Two of the five signals depend on those numbers.
+
+## 26. Journey detail — planned (19 Oct 2026)
+
+Two enhancements requested for routing in **both** Where to Lepak and Where to Eat.
+
+**Planned:** When the travel mode is drive, name the **emptiest carpark** near the venue — its name, available lots and distance — rather than only an aggregate count of lots and carparks.
+**Reason:** "598 lots free in 4 carparks" does not tell a driver where to go. The data to do it is already fetched: LTA DataMall returns availability per carpark, and the system already selects those within 500 m. This is presentation of data in hand, not a new source. **Note that parking availability is a live request-time call, not snapshot data** — cached for at most 2 minutes and shared between users because the figures are public and identical for everyone (§3, Data Currency NFR).
+
+**Planned:** When the travel mode is public transport, show **where to board, alight and change** — stop and station names, bus service numbers and the transfer points — rather than only the summary line.
+**Reason:** "Walk 4 min → Thomson-East Coast Line → Walk 13 min" tells the user how long but not what to do. OneMap's itinerary already contains the legs, their boarding and alighting stops and the service numbers; the route summary currently discards most of it. Again presentation, not a new source. It also makes the step-by-step directions on the event map genuinely usable rather than merely present.
+
+Both apply to every routed result in Lepak and Eat, and both are additions to existing displays rather than changes to the routing path.

@@ -50,14 +50,42 @@ The build drops:
 `24/7` and `off`, which covers 98.4% of tagged values. Anything else counts as unknown
 and is never guessed.
 
+**Quality signals (DECISIONS.md §29):**
+
+- **Google ratings** ("★ 4.3 · 1,234 reviews", with "Google Maps" attribution and a link
+  to the place on Google Maps). The flow:
+  - `gowhere.eat.google_ids` resolves a place ID offline with the free "Text Search
+    Essentials (IDs Only)" SKU. The ID is the only Google content stored.
+  - At search time, `gowhere.eat.ratings` fetches rating, review count, name and Maps
+    link for each timed place. This is the "Place Details Enterprise" SKU: 1,000 free a
+    month, then US$20 per 1,000, i.e. US$0.02 a lookup.
+  - A rating is shown only if Google's name for the place matches ours.
+  - Ratings live only in that user's session memory.
+  - A hard daily cap, `config.GOOGLE_DAILY_CAP`, defaults to 32 (992 in a 31-day month)
+    and is counted before every call. Once it is spent, places show without ratings, and
+    "Highest rated" disappears rather than sorting nothing.
+  - A place with no rating shows none, which never reads as a low rating.
+  - **Needs `GOOGLE_MAPS_API_KEY` in `.env`, plus one run of `gowhere.eat.google_ids`.**
+    Until then, no place has an ID and no rating is fetched.
+- **"On Wikipedia" badge** on 24 places with their own Wikipedia article
+  (`gowhere.eat.notable`). The badge claims notability, not good food, and says so.
+  An article counts only if every word of the place's own name appears in its title.
+  Without that rule, shops picked up their mall's article and road-named markets their
+  road's.
+
 **Not built, and why:**
 
 - **Hygiene grades:** the only bulk data is from 2015–16, and SFA has since replaced
   that grading scheme.
 - **Michelin badge:** the guide's terms forbid copying its content.
-- **Star ratings:** Google Places costs money per request and forbids caching.
-- **Halal and vegetarian filters:** OSM tags cover under 4% of places. MUIS's
-  certification register is the authoritative halal source, and we don't hold it.
+- **Halal filter:** MUIS's terms of use (updated 24 Feb 2025) say its content "shall not
+  be reproduced, republished, uploaded, posted, transmitted or otherwise distributed in
+  any way, without the prior permission of MUIS". Even with permission, the content must
+  not be "copied or posted on any network computer". The halal search
+  (halal.muis.gov.sg) has a JSON endpoint, but the terms attach to the content, and the
+  community mirrors republish the same content. It needs written permission from MUIS
+  Corporate Communications. OSM's own `diet:halal` tags (3.7% coverage) are no
+  substitute for a religious requirement.
 
 ## Search
 
@@ -73,12 +101,27 @@ and is never guessed.
 4. Departure is the chosen mealtime, either now or the next breakfast, lunch, dinner or
    supper. Open or closed is judged at that time.
 
-The sorts are Nearest, Open first and Most variety (destinations by stall count). Sort,
-chips and paging reorder the saved results, and call nothing.
+The sorts are Nearest, Open first, Most variety (destinations by stall count) and Highest
+rated (when ratings are available). With a cuisine chosen, places whose cuisine is not
+listed come after every match, whatever the sort (§28). Sort, chips and paging reorder
+the saved results, and call nothing.
 
 **Measured live (19 Oct, from 238801):** a search takes 4.0–6.5 s, inside the 8 s target.
 OneMap answers some of the 40 parallel routing calls with HTTP 429. The retry recovers
-each one, and the times include those retries.
+most of them, and the times include those retries.
+
+**Routing concurrency (19 Oct 2026, §28).** 8 searches per configuration, interleaved,
+from 238801. Public transport, 15 min, any cuisine, routing only (ratings not yet live):
+
+| Configuration | Median | 90th percentile | Max | 429 retries per search (median / total) | Routes lost after retry |
+|---|---|---|---|---|---|
+| 40 places, 16 workers (as built) | 5.29 s | 6.45 s | 6.45 s | 14 / 108 | 3 |
+| 25 places, 16 workers | 4.47 s | 6.30 s | 6.30 s | 8.5 / 74 | 2 |
+| 40 places, 8 workers | 5.68 s | 7.97 s | 7.97 s | 10.5 / 73 | 4 |
+
+Routing fewer places is better on every measure. Fewer workers cuts retries about as
+much, but pushes the 90th percentile to the 8 s limit. A route refused twice becomes a
+straight-line estimate, so rate limiting costs accuracy as well as time.
 
 ## Screens
 

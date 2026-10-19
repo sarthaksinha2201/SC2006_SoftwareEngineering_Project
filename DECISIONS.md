@@ -809,3 +809,26 @@ Researched after §25a concluded the feature would ship with no quality signal. 
 **Supportability, measured honestly:** adding the third feature was mostly new classes — five modules, a view module, three templates and a test file — but **not zero change to shared code**. The shared changes were: an optional fixed departure on the event router; two form-parsing helpers extracted with no behaviour change; three OneMap error messages promoted to shared constants; new endpoints; one attribute each on the session state and the app config; one raw-dataset entry; and a test double accepting a second field name. **No existing test needed changing.** The NFR claims a new factor or data source can be added without modifying the core scoring engine, and that held. The honest statement for the report is "mostly new classes, with small additive changes at the seams", not "no change at all".
 
 **Process note:** a decision-log commit from the planning session used `git add -A` in a shared working tree and swept up another session's in-progress source files. Commits in a shared working tree must name the files they intend to commit.
+
+
+## 29. Quality signals approved (19 Oct 2026)
+
+**Decision:** Build **both** a halal filter and Google ratings, plus a Wikipedia-notable badge.
+
+**Correction to section 27:** that section said a rating sort could only order the venues already on screen. **That was wrong** — the limit is the call budget, not the capability. Fetching a rating for each of the 40 routed candidates rather than only the 20 displayed makes the sort genuine, at roughly 125 free searches a month against the 5,000 free Pro events. The sort is therefore real and may be offered without qualification.
+
+**Decision:** Ratings are **fetched live, displayed with their review count, sortable, and never stored**; only the Google place ID is held in `eat.db`. Google's attribution requirements are met on the pages that display them.
+**Reason:** Google's Places policies permit storing the place ID indefinitely and bar storing anything else (section 27). Resolving the ID offline and fetching only the rating at request time keeps us inside the terms with one call per candidate.
+
+**Decision:** A **hard per-day call cap in code**, in addition to the console-side quota and budget alert.
+**Reason:** A free tier plus an unnoticed loop is how a student project acquires a bill. The cap belongs in the code because that is the part we control and test; the console limits are a second line.
+
+**Decision:** The halal badge comes from **MUIS certification data**, matched strictly on name and postal code, labelled with its certification date; an unmatched venue reads **"not known"**, never "not halal".
+**Reason:** As section 27: for a religious requirement the failure modes are asymmetric, so a missing badge is acceptable and a wrong one is not. The source and its retrieval date are recorded, as for every curated file in the project.
+
+**Decision:** A venue with a **Wikipedia article at its coordinates** carries a "notable" badge.
+**Reason:** Free, cleanly licensed, and the image pipeline already resolves venues against Wikipedia, so the lookup is nearly free. Coverage is small and the badge claims only notability, not quality.
+
+**Rejected, with reasons for the report:** Michelin (terms prohibit automated *and manual* copying, so a scraping service changes nothing — the terms attach to the source, not the tool); Reddit (free tier is non-commercial and needs approval, and extracting per-stall quality from comment threads is a low-precision problem that would become the weakest component in the project); Foursquare (ratings are a paid Premium field with no free tier); Tripadvisor (location ID only may be cached, and the Content API is reported to have sunset in August 2026).
+
+**Note:** the billing account is configured in the Google Cloud console. The repository holds only `GOOGLE_MAPS_API_KEY` in `.env`, which is gitignored; no payment details are in the code or the repository.

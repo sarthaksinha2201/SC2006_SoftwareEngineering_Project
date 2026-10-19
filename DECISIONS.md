@@ -756,3 +756,23 @@ Two enhancements requested for routing in **both** Where to Lepak and Where to E
 **Reason:** "Walk 4 min → Thomson-East Coast Line → Walk 13 min" tells the user how long but not what to do. OneMap's itinerary already contains the legs, their boarding and alighting stops and the service numbers; the route summary currently discards most of it. Again presentation, not a new source. It also makes the step-by-step directions on the event map genuinely usable rather than merely present.
 
 Both apply to every routed result in Lepak and Eat, and both are additions to existing displays rather than changes to the routing path.
+
+## 25a. Where to Eat — three premises corrected on measurement (19 Oct 2026)
+
+The measurements in `docs/eat-measurements.md` overturned three of §25's premises. §25 stands where it is not contradicted here.
+
+**Retraction — hygiene:** §25 treated NEA hygiene grades as a usable floor. **They are not, and the signal is dropped.** The only open dataset covers June 2015 to September 2016 and was merely re-published in 2024; applying 2016 grades to 2026 venues would be wrong for most of them. Licensing moved from NEA to SFA in 2019, and in January 2026 SFA replaced the A–D scheme with SAFE, whose grades exist only behind a per-establishment search with no dataset, no API and no stated bulk terms. The grade spread was also the opposite of what §25 assumed: A 52.5% and B 46.8% was real spread, while a C/D floor would have hidden 0.7% of places — so the stated reason for making it a filter was wrong as well as the data being unusable.
+**Reason this is recorded rather than quietly dropped:** it is the strongest "check the source, not the idea" case in the project. Hygiene grading sounds like the obvious government signal for a food feature, and two independent things — the age of the data and the replacement of the scheme — made it unusable. Both were found by looking, not by reasoning.
+
+**Retraction — Michelin:** §25 proposed a curated Michelin badge. **Not built.** The Guide's terms prohibit automated or manual copying of its pages and the systematic reuse of even small parts of its databases without authorisation, which is exactly what a curated file is. Recorded with its caveat: the site returns an empty HTTP 202 to automated requests, so the terms were read through a search engine's copy rather than the page itself. **The project therefore ships no quality or popularity signal at all**, and says so.
+
+**Decision:** The eighth cuisine group is **Local & Hawker**, replacing Seafood.
+**Reason:** Measured on 9,025 OSM food venues: `coffee_shop` (kopitiam) is the single most common cuisine value at 653, and local fare tags together cover 9.7% of all venues, while Seafood covers 1.5% (133). A category list that omits the most common local category while keeping one of the rarest describes OpenStreetMap's tagging conventions rather than how people in Singapore eat.
+
+**Decision:** **No halal or vegetarian filters.**
+**Reason:** `diet:halal` covers 3.7% of venues and vegetarian/vegan 3.2%. A halal filter would hide about 96% of places and assert "halal" wherever a volunteer happened to tag it. For a religious requirement that is not a coverage problem but a safety one: the authoritative source is MUIS's certification register, which the project does not hold. Named as future work rather than approximated.
+
+**Decision:** Cuisine and Open now are kept, **with their coverage stated in the interface**: 49.4% of venues carry a cuisine tag (35.5% mapping into the eight groups), and about 21% carry parseable opening hours. Venues with neither are shown and labelled, and listed after those known to be open.
+**Reason:** Same rule as unroutable events (§13) and untagged places (§25) — hiding what is unknown deletes most of the dataset while appearing to work.
+
+**Net effect:** of §25's five signals, travel time, price tier and food destinations stand unchanged; cuisine and open-now stand with labelling; hygiene falls. Food destinations are fully supported — 123 operating hawker centres with stall counts (median 45, maximum 226) and 111 photographs — which is why the "destinations as well as eateries" decision now carries more of the feature than it did when it was made.

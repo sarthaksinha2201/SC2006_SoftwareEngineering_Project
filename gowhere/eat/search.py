@@ -42,9 +42,12 @@ TIERS = {"budget": "Hawker centres, food courts & kopitiams",
 TIER_SIGNS = {"budget": "$", "casual": "$$", "restaurant": "$$$"}
 MAX_MINUTES_CHOICES = (10, 15, 20, 30, 45)
 MIN_MINUTES, MAX_MINUTES = 5, 90
-ROUTE_BUDGET = 40
-DESTINATION_SLOTS = 10
-NOT_LISTED_SLOTS = 10
+# 25, not 40 (DECISIONS.md section 30): measured 19 Oct, 25 places gave a better median
+# (4.47 s against 5.29 s), a better 90th percentile and about half the OneMap rate-limit
+# retries. Halving the workers instead pushed the 90th percentile to 7.97 s.
+ROUTE_BUDGET = 25
+DESTINATION_SLOTS = 6
+NOT_LISTED_SLOTS = 6
 SORTS = {"nearest": "Nearest", "open": "Open first", "variety": "Most variety",
          "rated": "Highest rated"}
 PAGE_SIZE = 10

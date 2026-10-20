@@ -95,8 +95,8 @@ and is never guessed.
    plus the places whose cuisine is not listed. Those can be hidden with a chip, but are
    shown by default.
 2. Straight-line pre-filter at the mode's top speed, as for Lepak.
-3. Route the 40 nearest by straight line. Up to 10 slots go to food destinations, and,
-   when cuisines are chosen, at most 10 go to unlisted places. The page says how many
+3. Route the 25 nearest by straight line. Up to 6 slots go to food destinations, and,
+   when cuisines are chosen, at most 6 go to unlisted places. The page says how many
    were within reach and how many were timed.
 4. Departure is the chosen mealtime, either now or the next breakfast, lunch, dinner or
    supper. Open or closed is judged at that time.
@@ -107,21 +107,26 @@ listed come after every match, whatever the sort (§28). Sort, chips and paging 
 the saved results, and call nothing.
 
 **Measured live (19 Oct, from 238801):** a search takes 4.0–6.5 s, inside the 8 s target.
-OneMap answers some of the 40 parallel routing calls with HTTP 429. The retry recovers
-most of them, and the times include those retries.
+With the first budget of 40 places, OneMap answered some of the parallel routing calls
+with HTTP 429. The retry recovered most of them, and the times include those retries.
 
 **Routing concurrency (19 Oct 2026, §28).** 8 searches per configuration, interleaved,
 from 238801. Public transport, 15 min, any cuisine, routing only (ratings not yet live):
 
 | Configuration | Median | 90th percentile | Max | 429 retries per search (median / total) | Routes lost after retry |
 |---|---|---|---|---|---|
-| 40 places, 16 workers (as built) | 5.29 s | 6.45 s | 6.45 s | 14 / 108 | 3 |
-| 25 places, 16 workers | 4.47 s | 6.30 s | 6.30 s | 8.5 / 74 | 2 |
+| 40 places, 16 workers (first build) | 5.29 s | 6.45 s | 6.45 s | 14 / 108 | 3 |
+| **25 places, 16 workers (now built, §30)** | **4.47 s** | **6.30 s** | 6.30 s | **8.5 / 74** | 2 |
 | 40 places, 8 workers | 5.68 s | 7.97 s | 7.97 s | 10.5 / 73 | 4 |
 
 Routing fewer places is better on every measure. Fewer workers cuts retries about as
-much, but pushes the 90th percentile to the 8 s limit. A route refused twice becomes a
-straight-line estimate, so rate limiting costs accuracy as well as time.
+much, but pushes the 90th percentile to the 8 s limit, so the budget is now 25.
+
+**Rate limiting costs accuracy, not only time.** A route that OneMap refuses twice is
+dropped, and that place falls back to a straight-line estimate. The "routes lost" column
+counts these: the user sees "About 600 m away (straight-line estimate)" instead of a
+real travel time. Fewer places per search means fewer refusals, so fewer places lose
+their real time.
 
 ## Screens
 

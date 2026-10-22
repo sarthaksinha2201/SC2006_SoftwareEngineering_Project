@@ -33,12 +33,12 @@ The build drops:
 | Cuisine | OSM `cuisine`, mapped to 8 groups (`gowhere/eat/cuisines.py`) | 53% of OSM places | A tag; otherwise "Cuisine not listed" |
 | Open at the chosen time | OSM `opening_hours` (`gowhere/eat/hours.py`) | 22% of places | "Open until 10 pm" / "Closed, opens 6 pm" / "Opening hours unknown" |
 | Travel time | OneMap, through the same `EventRouter` as Lepak | Every routed place | As for Lepak, with straight-line estimates when unroutable |
-| Price tier | Venue type | Every place | $ hawker centre, food court, market or kopitiam · $$ café or fast food · $$$ restaurant |
+| Price tier | Venue type | Every place | Hawker centre, food court, market or kopitiam · café or fast food · restaurant |
 | Variety | NEA stall count | 125 of 129 hawker centres | "Hawker centre · 83 stalls" |
 
 **Groups:**
 
-- The eight groups are Local & Hawker, Chinese, Malay & Indonesian, Indian, Japanese &
+- The eight groups are Local, Chinese, Malay & Indonesian, Indian, Japanese &
   Korean, Thai & Vietnamese, Western, and Cafés & Desserts.
 - `coffee_shop` maps to Cafés & Desserts. It marks Starbucks and Toast Box far more
   often than kopitiams.

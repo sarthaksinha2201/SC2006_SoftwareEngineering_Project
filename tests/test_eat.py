@@ -108,7 +108,7 @@ def test_a_hawker_centre_is_one_entry_with_its_stall_count(built):
     centre = next(p for p in places if p["kind"] == "hawker_centre")
     assert centre["name"] == "East Food Centre" and centre["stalls"] == 80
     assert centre["destination"] == 1 and centre["source"] == "nea"
-    assert centre["cuisines"] == ["Local & Hawker"] and centre["price_tier"] == "budget"
+    assert centre["cuisines"] == ["Local"] and centre["price_tier"] == "budget"
     assert sum(p["name"] == "East Food Centre" for p in places) == 1       # OSM copy dropped
 
 
@@ -119,7 +119,7 @@ def test_price_tier_and_cuisine_from_venue_type(built):
     assert by["Starbucks"]["price_tier"] == "casual"
     assert by["Starbucks"]["cuisines"] == ["Cafés & Desserts"]
     assert by["Kim San Leng Kopitiam"]["price_tier"] == "budget"
-    assert by["Kim San Leng Kopitiam"]["cuisines"] == ["Local & Hawker"]
+    assert by["Kim San Leng Kopitiam"]["cuisines"] == ["Local"]
     assert by["Mystery Bistro"]["cuisines"] == []                            # shown as not listed
     assert by["Mall Food Court"]["destination"] == 1 and by["Mall Food Court"]["stalls"] is None
     assert by["Ramen One"]["source_url"] == "https://www.openstreetmap.org/node/1"
@@ -168,7 +168,7 @@ def test_the_badge_says_notable_not_good(client):
     from gowhere.web import eat_views
     with client.application.test_request_context():
         c = eat_views.card({"id": 1, "name": "Newton Food Centre", "kind": "hawker_centre",
-                            "stalls": 83, "price_tier": "budget", "cuisines": ["Local & Hawker"],
+                            "stalls": 83, "price_tier": "budget", "cuisines": ["Local"],
                             "address": None, "open": {"open": None, "text": "Opening hours unknown"},
                             "route": None, "distance_m": 100, "wikipedia_title": "Newton Food Centre"},
                            "pt")
@@ -272,7 +272,7 @@ def test_sorts():
     rows = [{"name": "A", "minutes": 5, "distance_m": 100, "destination": False, "stalls": None,
              "open": {"open": None}, "cuisines": ["Chinese"]},
             {"name": "B", "minutes": 9, "distance_m": 300, "destination": True, "stalls": 80,
-             "open": {"open": True}, "cuisines": ["Local & Hawker"]},
+             "open": {"open": True}, "cuisines": ["Local"]},
             {"name": "C", "minutes": 7, "distance_m": 200, "destination": False, "stalls": None,
              "open": {"open": False}, "cuisines": []}]
     order = lambda sort: [r["name"] for r in sort_and_filter(rows, sort)[0]]
@@ -312,7 +312,7 @@ def client(store, tmp_path):
 
 
 def form(**over):
-    return {"cuisines": ["Japanese & Korean", "Local & Hawker"], "tiers": ALL_TIERS,
+    return {"cuisines": ["Japanese & Korean", "Local"], "tiers": ALL_TIERS,
             "when": "lunch", "mode": "walk", "max_minutes": "30", "origin": "postal",
             "postal": POSTAL, **over}
 

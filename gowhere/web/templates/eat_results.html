@@ -36,7 +36,6 @@
 <article>
   <div class="event-body">
     <p class="event-kicker"><span class="cat-tag" data-cat="{{ p.cuisine_slug }}">{{ p.cuisine }}</span>
-      <span class="price-tier" title="{{ p.tier_label }}">{{ p.tier }}</span>
       {% if p.notable %}<a class="badge-notable" href="{{ p.notable.url }}" rel="noopener noreferrer" target="_blank" title="{{ p.notable.title }}">{{ p.notable.label }}</a>{% endif %}</p>
     <h2><a href="{{ p.detail_url }}">{{ p.name }}</a></h2>
     <p class="event-meta">{{ p.kind }}</p>

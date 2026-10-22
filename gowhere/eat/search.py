@@ -39,7 +39,6 @@ WHEN_OPTIONS = {"now": ("Now", None), "breakfast": ("Breakfast", time(8, 30)),
 TIERS = {"budget": "Hawker centres, food courts & kopitiams",
          "casual": "Cafés & fast food",
          "restaurant": "Restaurants"}
-TIER_SIGNS = {"budget": "$", "casual": "$$", "restaurant": "$$$"}
 MAX_MINUTES_CHOICES = (10, 15, 20, 30, 45)
 MIN_MINUTES, MAX_MINUTES = 5, 90
 # 25, not 40 (DECISIONS.md section 30): measured 19 Oct, 25 places gave a better median

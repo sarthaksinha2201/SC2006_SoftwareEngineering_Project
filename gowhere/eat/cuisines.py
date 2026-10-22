@@ -1,6 +1,6 @@
 """Where to Eat cuisine groups (DECISIONS.md sections 25 and 25a).
 
-Eight user-facing groups, mapped from OSM `cuisine` values. "Local & Hawker" replaces
+Eight user-facing groups, mapped from OSM `cuisine` values. "Local" replaces
 Seafood (§25a). It holds the 123 hawker centres, the food courts and markets, venues
 tagged `local`, `singaporean`, `noodle` and the like, and kopitiams found by name (see
 is_kopitiam). Seafood would hold 133 venues.
@@ -18,7 +18,7 @@ because OSM has no cuisine tag at all. These places are shown and labelled, neve
 import re
 
 CUISINES = (
-    "Local & Hawker",
+    "Local",
     "Chinese",
     "Malay & Indonesian",
     "Indian",
@@ -30,7 +30,7 @@ CUISINES = (
 NOT_LISTED = "Cuisine not listed"
 
 _TAGS = {
-    "Local & Hawker": "local singaporean regional hawker zi_char economic_rice "
+    "Local": "local singaporean regional hawker zi_char economic_rice "
                       "chicken_rice noodle noodles asian kopitiam laksa",
     "Chinese": "chinese cantonese hongkong taiwanese hotpot hot_pot dim_sum teochew hainanese "
                "szechuan sichuan shanghai dumpling dumplings peking_duck hakka hokkien",

@@ -93,7 +93,7 @@ def hawker_centres(features):
                                         if p.get("ADDRESSPOSTALCODE") else None) if x)
         out.append({"name": p["NAME"].strip(), "kind": "hawker_centre", "destination": 1,
                     "stalls": stalls, "price_tier": "budget",
-                    "cuisines": ["Local & Hawker"], "cuisine_tag": None, "opening_hours": None,
+                    "cuisines": ["Local"], "cuisine_tag": None, "opening_hours": None,
                     "address": address or None, "lat": float(lat), "lon": float(lon),
                     "source": "nea",
                     "source_url": f"https://data.gov.sg/datasets/{_HAWKER_ID}/view"})
@@ -115,8 +115,8 @@ def osm_venues(elements):
         name = (tags.get("name:en") or tags.get("name") or "").strip()
         cuisine_tag = tags.get("cuisine")
         cuisines = groups_for(cuisine_tag)
-        if (kind in DESTINATION_KINDS or is_kopitiam(name)) and "Local & Hawker" not in cuisines:
-            cuisines = ["Local & Hawker"] + cuisines   # food court, market or kopitiam: local stalls
+        if (kind in DESTINATION_KINDS or is_kopitiam(name)) and "Local" not in cuisines:
+            cuisines = ["Local"] + cuisines   # food court, market or kopitiam: local stalls
         out.append({"name": name,
                     "kind": kind, "destination": int(kind in DESTINATION_KINDS),
                     "stalls": None, "price_tier": price_tier(kind, name),

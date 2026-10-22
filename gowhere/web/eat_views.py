@@ -11,7 +11,7 @@ from flask import url_for
 
 from gowhere.eat.cuisines import CUISINES, NOT_LISTED
 from gowhere.eat.hours import clock
-from gowhere.eat.search import (MAX_MINUTES_CHOICES, SORTS, TIER_SIGNS, TIERS,
+from gowhere.eat.search import (MAX_MINUTES_CHOICES, SORTS, TIERS,
                                 WHEN_OPTIONS, InvalidSearch, label_of, sort_and_filter)
 from gowhere.lepak.images import slugify
 from gowhere.lepak.routing import MODES
@@ -61,7 +61,6 @@ def card(r, mode):
     parking = r.get("parking")
     return {
         "id": r["id"], "name": r["name"], "kind": kind_text(r),
-        "tier": TIER_SIGNS[r["price_tier"]],
         "tier_label": TIERS[r["price_tier"]],
         "cuisine": cuisine_text(r), "cuisine_listed": bool(r["cuisines"]),
         "cuisine_slug": slugify(r["cuisines"][0]) if r["cuisines"] else "not-listed",
@@ -120,7 +119,7 @@ def setup_view(form=None, error=None):
     return {
         "cuisines": [{"value": c, "label": c, "slug": slugify(c), "checked": c in cuisines}
                      for c in CUISINES],
-        "tiers": [{"value": k, "label": f"{TIER_SIGNS[k]} {v}", "checked": k in tiers}
+        "tiers": [{"value": k, "label": v, "checked": k in tiers}
                   for k, v in TIERS.items()],
         "whens": [{"value": k, "label": v[0] if v[1] is None else f"{v[0]} ({clock_of(v[1])})",
                    "selected": k == when} for k, v in WHEN_OPTIONS.items()],

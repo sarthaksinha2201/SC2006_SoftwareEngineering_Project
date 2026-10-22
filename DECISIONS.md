@@ -875,3 +875,21 @@ Researched after §25a concluded the feature would ship with no quality signal. 
 - **FR 2.1.2** becomes 1 to 8. The black-box boundary cases change from 0/1/4/5 to **0/1/8/9**, so the test table in the S4 deliverable needs the same edit.
 - **The 50-event route cap matters more.** With all eight categories and a 30-day window, more searches will reach it and be asked to narrow. Whether 50 is still the right number is a measurement, not a guess — the same question as the Eat route budget (§30), and to be answered the same way.
 - The category wheel should offer a way to select all without eight separate clicks.
+
+
+## 33. Lepak route cap, and an NFR stated honestly (22 Oct 2026)
+
+**Decision:** The Lepak route cap falls from **50 to 25**, matching Eat.
+**Reason:** Measured today, island-wide from 238801 at 16 workers: 20 routes median 4.43 s; 25 routes median 6.42 s, worst 8.48 s; **50 routes median 9.20 s, worst 11.77 s, with 2.9% of routes lost**. A cap of 50 therefore breaches the 8-second target whenever it is reached — the limit was set before any of this was measured. One round was excluded from the figures because OneMap itself degraded: 35 routes took 83 seconds and all 50 failed, which fired the all-routes-failed warning exactly as designed (§21).
+
+**Decision:** Above the cap, the system **routes the nearest 25 and says how many were timed**, instead of refusing the search and asking the user to narrow it. **FR 2.2.3 is amended accordingly.**
+**Reason:** Refusing was reasonable when a category limit of 4 kept searches narrow; §32 removed that limit, so "everything this weekend" is now the expected first search and must not be answered with an error. Eat already behaves this way, so the two features now agree. Refusal also fails in the direction that teaches the user nothing: a list of the 25 nearest, honestly labelled, is more useful than a demand to try again.
+
+**Decision:** The Performance target for routed searches is restated as **a 90th percentile within 8 seconds**, with the measured median and worst case reported alongside it, rather than an absolute ceiling.
+**Reason:** The tail is OneMap's latency, not ours — the same 25 routes took 4.47 s on 19 October and 6.42 s on 22 October, and on a bad minute OneMap stopped answering altogether. An absolute ceiling over a third party's response time is unachievable by construction, so claiming one is a promise we cannot keep. A percentile with the tail published is both honest and checkable, and it is what the Lepak timing measurement (§21) actually established.
+
+**Note for the report — today's cap is unreachable in practice:** with 29 live events, an all-categories 30-day search returns 19 results from Orchard, Queenstown, Tampines or Woodlands alike, and the straight-line pre-filter removes nothing at Singapore's scale. The cap is protection for a larger event store, not a limit anyone currently meets.
+
+**Endorsed without change:** no rating sort in the neighbourhood browse. Areas hold 20 to 1,020 places with a median around 200, so rating them all would spend days of the 32-a-day cap on a single page, and rating only the visible page would be a ten-place sort presented as a ranking — the same objection that made the rating sort honest in search (§30), applied in the opposite direction.
+
+**The seam, as reported:** the browse mode needed slightly more than a filter and a sort, because the search sort assumes every result carries minutes and distance. It has its own sort and view; the card builder was reused unchanged, since it already handled a place with no route. That is a small, truthful answer to the Supportability question and should be written up as it is.

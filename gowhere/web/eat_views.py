@@ -11,8 +11,9 @@ from flask import url_for
 
 from gowhere.eat.cuisines import CUISINES, NOT_LISTED
 from gowhere.eat.hours import clock
-from gowhere.eat.search import (MAX_MINUTES_CHOICES, SORTS, TIERS,
-                                WHEN_OPTIONS, InvalidSearch, label_of, sort_and_filter)
+from gowhere.eat.search import (AREA_SORTS, MAX_MINUTES_CHOICES, SORTS, TIERS,
+                                WHEN_OPTIONS, InvalidSearch, browse_sort, label_of,
+                                sort_and_filter)
 from gowhere.lepak.images import slugify
 from gowhere.lepak.routing import MODES
 from gowhere.scoring.stats import round0
@@ -26,9 +27,11 @@ KIND_LABELS = {"hawker_centre": "Hawker centre", "food_court": "Food court",
 
 
 def parse_eat_form(form):
-    """{cuisines, tiers, when, mode, max_minutes, origin}. Raises InvalidSearch."""
+    """{cuisines, tiers, when, mode, max_minutes, origin}. Raises InvalidSearch.
+    origin ("anchor", None) means "from the event this search was started from", whose
+    coordinates are in the session, never in the form (DECISIONS.md section 27)."""
     max_minutes = parse_max_minutes(form, InvalidSearch)
-    origin = parse_origin(form, InvalidSearch)
+    origin = ("anchor", None) if form.get("origin") == "anchor" else parse_origin(form, InvalidSearch)
     return {"cuisines": [c for c in form.getlist("cuisines") if c],
             "tiers": [t for t in form.getlist("tiers") if t],
             "when": form.get("when", ""), "mode": form.get("mode", ""),
@@ -109,7 +112,7 @@ def data_note(meta):
 
 # ---- screens -------------------------------------------------------------------
 
-def setup_view(form=None, error=None):
+def setup_view(form=None, error=None, anchor=None):
     get = (lambda k, d=None: form.get(k, d)) if form else (lambda k, d=None: d)
     cuisines = set(form.getlist("cuisines")) if form else set(DEFAULTS["cuisines"])
     tiers = set(form.getlist("tiers")) if form else set(DEFAULTS["tiers"])
@@ -130,6 +133,9 @@ def setup_view(form=None, error=None):
         "origin": get("origin", DEFAULTS["origin"]),
         "postal": get("postal", "") if get("origin", "postal") == "postal" else "",
         "error": error,
+        # Entered from a Lepak event: the search starts there (section 27).
+        "anchor": ({"name": anchor["name"],
+                    "clear_url": url_for("web.eat_setup", start="own")} if anchor else None),
     }
 
 
@@ -157,7 +163,9 @@ def results_view(saved, sort, hidden, page, now, meta):
     by_label = {c: sum(c in label_of(r) for r in results) for c in labels}
     sort_labels = {**SORTS, "open": "Open now" if req["when"] == "now" else
                    f"Open at {WHEN_OPTIONS[req['when']][0].lower()}"}
+    anchor = req.get("anchor_name")
     return {
+        "anchor_text": f"Starting from {anchor}." if anchor else "",
         "heading": (f"{n} {'place' if n == 1 else 'places'} within {req['max_minutes']} min "
                     f"by {MODES[req['mode']]}"
                     + ("" if req["when"] == "now" else
@@ -226,3 +234,43 @@ def place_view(p, mode, back=None, origin=None, meta=None):
             "data_note": data_note(meta) if meta else "",
             "back_url": url_for("web.eat_results", **(back or {})) if back is not None else None,
             "search_url": url_for("web.eat_setup")}
+
+
+def area_view(area, area_name, results, cuisines, tiers, sort, hidden, page, meta):
+    """Browsing one neighbourhood, entered from the Where to Live recommendation. No
+    journey, so no travel line, no route and no travel sorts (section 27). The filter
+    form submits by GET to this same page, so it works with JavaScript off. The URL
+    carries only the area name, the filters, the sort and the page."""
+    sort = sort if sort in AREA_SORTS else "variety"
+    labels = cuisines + [NOT_LISTED] if cuisines else []
+    hidden = [c for c in labels if c in set(hidden or ())]
+    rows, total, pages = browse_sort(results, sort, hidden, page, cuisine_filter=bool(cuisines))
+    page = min(max(1, page), pages)
+    link = lambda **kw: url_for("web.eat_area", area=area, **{
+        "cuisines": cuisines, "tiers": tiers, "sort": sort, "hide": hidden, "page": 1, **kw})
+    toggled = lambda c: [x for x in labels if (x in hidden) != (x == c)]
+    n = len(results)
+    by_label = {c: sum(c in label_of(r) for r in results) for c in labels}
+    return {
+        "area": area, "area_name": area_name,
+        "heading": f"{n} {'place' if n == 1 else 'places'} to eat in {area_name}",
+        "lede": ("Everything in the neighbourhood, not a journey: there are no travel "
+                 "times here. Search from a starting point to see how far each place is."),
+        "cuisines": [{"value": c, "label": c, "checked": c in cuisines} for c in CUISINES],
+        "tiers": [{"value": k, "label": v, "checked": k in tiers} for k, v in TIERS.items()],
+        "sort": sort,
+        "sorts": [{"value": k, "label": v, "selected": k == sort, "url": link(sort=k)}
+                  for k, v in AREA_SORTS.items()],
+        "chips": ([{"label": "All", "count": n, "selected": not hidden, "url": link(hide=[])}]
+                  + [{"label": c, "count": by_label[c], "selected": c not in hidden,
+                      "url": link(hide=toggled(c))} for c in labels]) if labels else [],
+        "coverage_note": coverage_note(meta),
+        "data_note": data_note(meta),
+        "empty_text": "" if total else "No places here match. Try more cuisines or kinds of place.",
+        "cards": [card(r, None) for r in rows],
+        "page": page, "pages": pages, "total": total,
+        "prev_url": link(page=page - 1) if page > 1 else None,
+        "next_url": link(page=page + 1) if page < pages else None,
+        "search_url": url_for("web.eat_setup"),
+        "back_url": url_for("web.live_results"),
+    }

@@ -60,6 +60,7 @@
 </p>
 
 <script type="application/json" id="map-data">{{ view.map|tojson }}</script>
+<p><a class="btn btn-secondary" href="{{ url_for('web.eat_from_event', event_id=view.id) }}">Where to eat near this event</a></p>
 <p class="detail-foot"><a class="link-muted" href="{{ view.back_url }}">Back to results</a> ·
    <a class="link-muted" href="{{ view.search_url }}">New search</a></p>
 {% endblock %}

@@ -3,6 +3,7 @@
 {% block title %}Places to eat · GoWhere{% endblock %}
 {% block content %}
 <h1>{{ view.heading }}</h1>
+{% if view.anchor_text %}<p class="lede">{{ view.anchor_text }}</p>{% endif %}
 {% if view.timed_note %}<p class="lede">{{ view.timed_note }}</p>{% endif %}
 
 <div class="filter-bar" data-reveal>

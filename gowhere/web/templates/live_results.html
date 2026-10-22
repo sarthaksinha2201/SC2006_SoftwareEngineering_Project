@@ -17,6 +17,9 @@
   <button type="button" class="btn btn-secondary" data-open-dialog="breakdown">
     See how this was calculated
   </button>
+  {% for e in rec.eat_links %}
+  <a class="btn btn-secondary" href="{{ url_for('web.eat_area', area=e.area) }}">{{ e.label }}</a>
+  {% endfor %}
 </section>
 
 {% set b = view.breakdown %}

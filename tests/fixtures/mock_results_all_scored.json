@@ -355,6 +355,12 @@
     "contribution": "12.8",
     "favours": "Pasir Ris"
    }
+  ],
+  "eat_links": [
+   {
+    "area": "PUNGGOL",
+    "label": "Where to eat in Punggol"
+   }
   ]
  },
  "chart": {

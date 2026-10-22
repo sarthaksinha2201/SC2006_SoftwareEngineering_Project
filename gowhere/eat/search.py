@@ -175,3 +175,42 @@ def sort_and_filter(results, sort="nearest", hidden=(), page=1, cuisine_filter=F
     pages = max(1, -(-len(ordered) // PAGE_SIZE))
     page = min(max(1, page), pages)
     return ordered[(page - 1) * PAGE_SIZE: page * PAGE_SIZE], len(ordered), pages
+
+
+# ---- Browsing a neighbourhood (entered from the Where to Live recommendation) ----
+# Not a journey: no starting point, no travel mode, no routing and so no OneMap calls
+# (DECISIONS.md section 27). What can be ordered without a journey is variety and name.
+# There is no rating sort: an area holds 20 to 1,020 places (median about 200), and
+# rating them all would spend many days of the Google cap on one page.
+AREA_SORTS = {"variety": "Most variety", "name": "A to Z"}
+
+
+def browse(places, area, cuisines, tiers, now):
+    """Every place in planning area `area` of the chosen tiers and cuisines (plus the
+    unlisted ones when cuisines are chosen), with its open status now. Raises
+    InvalidSearch."""
+    if any(c not in CUISINES for c in cuisines):
+        raise InvalidSearch("Choose cuisines from the list.")
+    if not tiers or any(t not in TIERS for t in tiers):
+        raise InvalidSearch("Choose at least one kind of place.")
+    in_area = [p for p in places if p["planning_area"] == area]
+    return [{**p, "route": None, "distance_m": None, "minutes": None,
+             "open": hours_mod.status(p["opening_hours"], now)}
+            for p in candidates(in_area, cuisines, tiers)]
+
+
+def browse_sort(results, sort="variety", hidden=(), page=1, cuisine_filter=False):
+    """(page, total, pages), as sort_and_filter but with no travel time to sort by.
+    "variety": food destinations first, most stalls first, then by name. "name": A to Z.
+    Unlisted places still follow every match when cuisines are chosen (section 28)."""
+    hidden = set(hidden)
+    if hidden:
+        results = [r for r in results if not set(label_of(r)) <= hidden]
+    if sort == "name":
+        key = lambda r: (r["name"].lower(), r["id"])
+    else:
+        key = lambda r: (not r["destination"], -(r["stalls"] or 0), r["name"].lower(), r["id"])
+    ordered = sorted(results, key=(lambda r: (not r["cuisines"], key(r))) if cuisine_filter else key)
+    pages = max(1, -(-len(ordered) // PAGE_SIZE))
+    page = min(max(1, page), pages)
+    return ordered[(page - 1) * PAGE_SIZE: page * PAGE_SIZE], len(ordered), pages

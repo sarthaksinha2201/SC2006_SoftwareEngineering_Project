@@ -17,7 +17,8 @@ from gowhere.scoring.registry import default_strategies
 from gowhere.services.location import OfflinePostalNotFound
 from gowhere.web.forms import FormError, parse_live_form
 from gowhere.web import eat_views, lepak_views
-from gowhere.web.view_models import dropped_messages, picker_map, results_view, setup_view
+from gowhere.web.view_models import (area_name, dropped_messages, picker_map, results_view,
+                                     setup_view)
 
 bp = Blueprint("web", __name__)
 
@@ -236,15 +237,57 @@ def _places():
 
 
 def _eat_error(form, message):
-    return render_template("eat_setup.html",
-                           view=eat_views.setup_view(form, error=message)), 400
+    return render_template("eat_setup.html", view=eat_views.setup_view(
+        form, error=message, anchor=_state().eat_anchor)), 400
 
 
 @bp.get("/eat")
 def eat_setup():
     state = _state()
+    if request.args.get("start") == "own":       # leave the event this search came from
+        state.eat_anchor = None
     form = state.eat["form"] if state.eat else None
-    return render_template("eat_setup.html", view=eat_views.setup_view(form))
+    return render_template("eat_setup.html",
+                           view=eat_views.setup_view(form, anchor=state.eat_anchor))
+
+
+@bp.get("/eat/from-event/<int:event_id>")
+def eat_from_event(event_id):
+    """Where to eat near a Lepak event (DECISIONS.md section 27). The event's place
+    becomes the starting point. It is kept in the session, so the URL carries only the
+    event's id, never coordinates."""
+    event = _events().event(event_id)
+    if event is None:
+        return render_template("error.html", title="Event not found",
+                               messages=["It may have ended or been removed."]), 404
+    state = _state()
+    state.eat_anchor = {"name": event["title"], "lat": event["lat"], "lon": event["lon"]}
+    return redirect(url_for("web.eat_setup"), code=303)
+
+
+@bp.get("/eat/in/<area>")
+def eat_area(area):
+    """Browse one neighbourhood's places, from the Where to Live recommendation. No
+    starting point and no routing, so no OneMap call and no waiting (section 27)."""
+    area = area.upper()
+    places = _places()
+    if not any(p["planning_area"] == area for p in places.places):
+        return render_template("error.html", title="Neighbourhood not found",
+                               messages=["We have no places to eat listed there."]), 404
+    args = request.args
+    cuisines = [c for c in args.getlist("cuisines") if c]
+    tiers = [t for t in args.getlist("tiers") if t] if "tiers" in args else list(eat_search.TIERS)
+    try:
+        results = eat_search.browse(places.places, area, cuisines, tiers,
+                                    current_app.config["NOW"]())
+        page = int(args.get("page", 1))
+    except eat_search.InvalidSearch as e:
+        return render_template("error.html", title="Check the filters", messages=[str(e)]), 400
+    except ValueError:
+        page = 1
+    view = eat_views.area_view(area, area_name(area), results, cuisines, tiers,
+                               args.get("sort"), args.getlist("hide"), page, places.meta)
+    return render_template("eat_area.html", view=view)
 
 
 @bp.post("/eat")
@@ -255,7 +298,12 @@ def eat_submit():
     try:
         req = eat_views.parse_eat_form(form)
         kind, value = req["origin"]
-        if kind == "postal":
+        if kind == "anchor":
+            if state.eat_anchor is None:
+                raise eat_search.InvalidSearch("Choose a starting point.")
+            origin = (state.eat_anchor["lat"], state.eat_anchor["lon"])
+            req["anchor_name"] = state.eat_anchor["name"]
+        elif kind == "postal":
             origin = state.locations.postal(value)
             if origin is None:
                 raise eat_search.InvalidSearch(POSTAL_NOT_FOUND)

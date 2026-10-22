@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% from "_macros.html" import note %}
+{% block title %}{{ view.heading }} · GoWhere{% endblock %}
+{% block content %}
+<h1>{{ view.heading }}</h1>
+<p class="lede">{{ view.lede }}</p>
+
+{# GET to this same page: filtering works with JavaScript off, and the URL holds only the
+   neighbourhood, the filters, the sort and the page. #}
+<form method="get" action="{{ url_for('web.eat_area', area=view.area) }}">
+  <fieldset>
+    <legend>Cuisine <small>(any, if you choose none)</small></legend>
+    <div class="checkbox-row">
+      {% for c in view.cuisines %}
+      <label><input type="checkbox" name="cuisines" value="{{ c.value }}" {% if c.checked %}checked{% endif %}> {{ c.label }}</label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>Kind of place</legend>
+    <div class="checkbox-row">
+      {% for t in view.tiers %}
+      <label><input type="checkbox" name="tiers" value="{{ t.value }}" {% if t.checked %}checked{% endif %}> {{ t.label }}</label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  <input type="hidden" name="sort" value="{{ view.sort }}">
+  <button class="btn" type="submit">Show places</button>
+</form>
+
+<div class="filter-bar" data-reveal>
+  <div class="sort-chip-row" aria-label="Sort">
+    <span class="filter-label">Sort</span>
+    {% for s in view.sorts %}
+    {% if s.selected %}<span class="pill is-selected">{{ s.label }}</span>
+    {% else %}<a class="pill" href="{{ s.url }}">{{ s.label }}</a>{% endif %}
+    {% endfor %}
+  </div>
+  {% if view.chips %}
+  <div class="sort-chip-row" aria-label="Show or hide cuisines">
+    <span class="filter-label">Show</span>
+    {% for c in view.chips %}
+    <a class="pill{% if c.selected %} is-selected{% endif %}" href="{{ c.url }}"
+       aria-pressed="{{ 'true' if c.selected else 'false' }}">{{ c.label }}
+       <span class="pill-count">{{ c.count }}</span></a>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+{{ note(view.coverage_note) }}
+{% if view.empty_text %}{{ note(view.empty_text) }}{% endif %}
+
+<div class="event-cards">
+{% for p in view.cards %}
+<article>
+  <div class="event-body">
+    <p class="event-kicker"><span class="cat-tag" data-cat="{{ p.cuisine_slug }}">{{ p.cuisine }}</span>
+      {% if p.notable %}<a class="badge-notable" href="{{ p.notable.url }}" rel="noopener noreferrer" target="_blank" title="{{ p.notable.title }}">{{ p.notable.label }}</a>{% endif %}</p>
+    <h2><a href="{{ p.detail_url }}">{{ p.name }}</a></h2>
+    <p class="event-meta">{{ p.kind }}</p>
+    <p class="event-meta open-status" data-open="{{ p.open_state }}">{{ p.open_text }}</p>
+    {% if p.address %}<p class="event-meta">{{ p.address }}</p>{% endif %}
+  </div>
+</article>
+{% endfor %}
+</div>
+
+<div class="pagination">
+  {% if view.prev_url %}<a class="pill" href="{{ view.prev_url }}">&larr; Previous</a>{% endif %}
+  <span>Page {{ view.page }} of {{ view.pages }}</span>
+  {% if view.next_url %}<a class="pill" href="{{ view.next_url }}">Next &rarr;</a>{% endif %}
+</div>
+
+<p class="event-sources">{{ view.data_note }}</p>
+<p><a class="link-muted" href="{{ view.back_url }}">Back to the comparison</a> ·
+   <a class="link-muted" href="{{ view.search_url }}">Search from a starting point</a></p>
+{% endblock %}

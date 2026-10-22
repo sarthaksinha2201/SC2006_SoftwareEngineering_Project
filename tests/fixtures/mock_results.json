@@ -322,6 +322,12 @@
     "contribution": "29.0",
     "favours": "Changi"
    }
+  ],
+  "eat_links": [
+   {
+    "area": "TAMPINES",
+    "label": "Where to eat in Tampines"
+   }
   ]
  },
  "chart": {

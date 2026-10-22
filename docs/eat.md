@@ -128,10 +128,51 @@ counts these: the user sees "About 600 m away (straight-line estimate)" instead 
 real travel time. Fewer places per search means fewer refusals, so fewer places lose
 their real time.
 
+## Entering from the other two features (DECISIONS.md §27)
+
+**From a Lepak event: a search from a point.** The event page links to "Where to eat
+near this event" (`/eat/from-event/<event id>`). The event's name and coordinates go
+into the session, never the URL. The search form then shows "Near *event*" in place of
+the starting-point fields, and the user still chooses mealtime, travel mode, maximum
+time and filters. Everything after that is the normal search path with a different
+origin. The results page says "Starting from *event*". "Start somewhere else" clears
+the event and brings back the postal code and location fields.
+
+**From the Where to Live recommendation: a browse, not a search.** The recommendation
+links to "Where to eat in *Queenstown*" (`/eat/in/QUEENSTOWN`; both areas when joint
+first). There is no starting point, no travel mode and no travel time, because someone
+choosing where to live is not planning a journey yet. So browse mode:
+
+- **Filters:** every place whose `planning_area` is that neighbourhood. The cuisine and
+  kind-of-place filters still apply, as does the rule that unlisted places come after
+  every match.
+- **Routes nothing:** no OneMap call, no straight-line estimate, no rate-limit exposure
+  and no waiting overlay. The page states how many places it lists ("458 places to eat
+  in Queenstown").
+- **Sorts:** **Most variety** (the default: food destinations first, most stalls
+  first, then by name) and **A to Z**. Nearest and Open first are left out, because
+  both assume a journey. "Most variety" is the default because it puts the hawker
+  centres, the places that best answer "what is there to eat around here", at the top.
+  A to Z gives a predictable order for scanning.
+- **No rating sort, and no ratings:** a neighbourhood holds between 20 places (Marina
+  South) and 1,020 (Downtown Core), with a median of about 200. Rating them all would
+  spend many days of the 32-a-day Google cap on a single page view. Rating only the page
+  shown would make "Highest rated" a sort of ten places pretending to be a ranking. A
+  search rates its 25 timed places, so ratings stay there.
+- **Works with JavaScript off:** the filters are a GET form on the same page. The URL
+  holds only the neighbourhood name, the filters, the sort and the page.
+
+**The seam:** the search sort assumes a travel time and a distance on every result, so
+browse needed its own sort (`search.browse_sort`) and view (`eat_views.area_view`). The
+card builder needed no change, because it already handles a place with no route. The
+browse is a filter and a sort over the same place list, not a variant of the search.
+
 ## Screens
 
 | Route | What it does |
 |---|---|
 | `GET /eat`, `POST /eat` | The search form. Its starting point is handled exactly as for Lepak: session memory only. |
 | `GET /eat/results?sort=&hide=&page=` | The results. |
+| `GET /eat/from-event/<event id>` | Sets a Lepak event as the starting point (in the session), then opens the search form. |
+| `GET /eat/in/<area>?cuisines=&tiers=&sort=&hide=&page=` | Browse one neighbourhood, with no journey. Linked from the Where to Live recommendation. |
 | `GET /eat/places/<id>` | A place: hours as tagged, cuisine as tagged, travel time, map with start and route, directions, parking in drive mode, source link. |

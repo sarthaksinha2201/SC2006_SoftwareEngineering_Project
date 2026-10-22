@@ -105,6 +105,10 @@ def recommendation(result):
                             f"other, so changing a single weight could swap them."
                             if result["close_call"] else ""),
         "reasons": reasons,
+        # Where to eat in the recommended neighbourhood (both, when joint first): a
+        # browse with no journey (DECISIONS.md section 27).
+        "eat_links": [{"area": key, "label": f"Where to eat in {area_name(key)}"}
+                      for key in ([ex["winner"], ex["runner_up"]] if joint else [ex["winner"]])],
     }
 
 

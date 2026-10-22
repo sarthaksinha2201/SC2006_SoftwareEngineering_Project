@@ -186,7 +186,7 @@ class Router:
 
     def route_many(self, origin, items, mode, now, departure=None):
         from gowhere.etl.geo import haversine_m
-        self.calls.append({"n": len(items), "departure": departure})
+        self.calls.append({"n": len(items), "departure": departure, "origin": origin})
         return {p["id"]: None if p["name"] in self.fail else
                 {"minutes": 1 + haversine_m(*origin, p["lat"], p["lon"]) / 100, "mode": mode,
                  "summary": "Walk", "steps": [], "geometry": {"type": "LineString", "coordinates": []}}
@@ -365,3 +365,94 @@ def test_postal_code_never_in_url_cookie_or_logs(client, caplog):
 def test_home_and_nav_link_to_where_to_eat(client):
     page = client.get("/").get_data(as_text=True)
     assert page.count('href="/eat"') >= 2                # the nav link and the home card
+
+
+# ---- entering from the other two features (DECISIONS.md section 27) ----
+
+@pytest.fixture
+def linked(store, tmp_path):
+    """An app with the fixture places and the Lepak fixture events."""
+    import sqlite3
+    from gowhere.web import create_app
+    from gowhere.web.mock import lepak_events
+    events = tmp_path / "events.db"
+    target = sqlite3.connect(events)
+    lepak_events().db.backup(target)
+    target.close()
+    routers = []
+
+    def router():
+        routers.append(Router())
+        return routers[-1]
+    app = create_app({"SECRET_KEY": "t", "TESTING": True, "EAT_PATH": store[1],
+                      "EVENTS_PATH": events, "LOCATION_FACTORY": Locations,
+                      "EVENT_ROUTER_FACTORY": router, "NOW": lambda: MONDAY_NOON})
+    app.routers = routers
+    return app
+
+
+def test_from_an_event_the_search_starts_at_the_event(linked):
+    from gowhere.lepak.store import EventStore
+    from gowhere.web.mock import LEPAK_NOW
+    linked.config["NOW"] = lambda: LEPAK_NOW            # the fixture events' own date
+    event = EventStore(linked.config["EVENTS_PATH"]).events(LEPAK_NOW)[0]
+    c = linked.test_client()
+    detail = c.get(f"/lepak/events/{event['id']}").get_data(as_text=True)
+    assert f'href="/eat/from-event/{event["id"]}"' in detail and "Where to eat near this event" in detail
+    r = c.get(f"/eat/from-event/{event['id']}")
+    assert r.status_code == 303 and r.headers["Location"].endswith("/eat")
+    setup = html.unescape(c.get("/eat").get_data(as_text=True))
+    assert f"Near <strong>{event['title']}</strong>" in setup and 'name="origin" value="anchor"' in setup
+    assert 'name="postal"' not in setup                      # no starting point to choose
+    r = c.post("/eat", data={"tiers": ALL_TIERS, "when": "now", "mode": "pt",
+                             "max_minutes": "90", "origin": "anchor"})
+    assert r.status_code == 303
+    assert linked.routers[-1].calls[-1]["origin"] == (event["lat"], event["lon"])
+    page = html.unescape(c.get("/eat/results").get_data(as_text=True))
+    assert f"Starting from {event['title']}." in page
+    assert str(event["lat"]) not in r.headers["Location"]
+    cleared = c.get("/eat?start=own").get_data(as_text=True)
+    assert 'name="postal"' in cleared and 'value="anchor"' not in cleared
+    assert c.get("/eat/from-event/999999").status_code == 404
+
+
+def test_an_anchor_search_without_an_anchor_asks_for_a_starting_point(linked):
+    r = linked.test_client().post("/eat", data={"tiers": ALL_TIERS, "when": "now", "mode": "walk",
+                                                "max_minutes": "30", "origin": "anchor"})
+    assert r.status_code == 400 and "Choose a starting point." in r.get_data(as_text=True)
+
+
+def test_browsing_a_neighbourhood_routes_nothing(linked):
+    c = linked.test_client()
+    page = html.unescape(c.get("/eat/in/WEST").get_data(as_text=True))
+    assert "4 places to eat in West" in page                 # all tiers by default
+    assert "min by" not in page and "straight-line" not in page
+    assert linked.routers == []                              # no router was even created
+    assert "Nearest" not in page and "Most variety" in page and "A to Z" in page
+    east = html.unescape(c.get("/eat/in/east").get_data(as_text=True))
+    assert "2 places to eat in East" in east
+    assert east.index("East Food Centre") < east.index("Mall Food Court")   # stalls first
+    az = html.unescape(c.get("/eat/in/EAST?sort=name").get_data(as_text=True))
+    assert az.index("East Food Centre") < az.index("Mall Food Court")
+    assert c.get("/eat/in/NOWHERE").status_code == 404
+
+
+def test_browsing_filters_by_cuisine_and_tier_with_unlisted_last(linked):
+    c = linked.test_client()
+    page = html.unescape(c.get("/eat/in/WEST?cuisines=Japanese+%26+Korean&tiers=restaurant").get_data(as_text=True))
+    assert "2 places to eat in West" in page                 # Ramen One + Mystery Bistro
+    assert page.index("Ramen One") < page.index("Mystery Bistro")
+    assert "Cuisine not listed" in page
+    none = c.get("/eat/in/WEST?tiers=").get_data(as_text=True)
+    assert "Choose at least one kind of place." in none
+
+
+def test_the_recommendation_links_to_its_neighbourhood():
+    from gowhere.web.view_models import recommendation
+    result = {"explanation": {"winner": "QUEENSTOWN", "runner_up": "PUNGGOL", "factors": []},
+              "areas": [{"rank": 1, "overall_display": 6.0}, {"rank": 2, "overall_display": 4.4}],
+              "close_call": False}
+    assert recommendation(result)["eat_links"] == [
+        {"area": "QUEENSTOWN", "label": "Where to eat in Queenstown"}]
+    result["areas"][1]["rank"] = 1                            # joint first: both
+    assert [e["area"] for e in recommendation(result)["eat_links"]] == ["QUEENSTOWN", "PUNGGOL"]

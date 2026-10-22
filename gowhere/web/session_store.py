@@ -28,6 +28,7 @@ class SessionState:
         self.event_router = None
         self.lepak = None
         self.eat = None                 # Where to Eat: last search, as for Lepak
+        self.eat_anchor = None          # the Lepak event a Where to Eat search starts from
         self.touched = time.monotonic()
 
 

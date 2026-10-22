@@ -864,3 +864,14 @@ Researched after §25a concluded the feature would ship with no quality signal. 
 **Reason:** A price sign implies a measured price level, and we hold no price data at all: the tier is inferred from the kind of venue. The words say exactly that and claim nothing more, which is the same rule applied to the straight-line distance labels and the coverage notes — the interface should not imply precision the data does not have.
 
 **For the deliverable pass:** the eight cuisine groups are **Local, Chinese, Malay & Indonesian, Indian, Japanese & Korean, Thai & Vietnamese, Western, Cafés & Desserts**.
+
+
+## 32. Lepak category limit raised (22 Oct 2026)
+
+**Decision:** Where to Lepak accepts **1 to 8 event categories** — at least one, up to all of them — replacing the 1-to-4 limit.
+**Reason:** The cap of 4 was chosen when the categories were new and nothing was known about yield, on the assumption that a wide search would return an unusable wall of results. The first live ingestion settled that: 38 events across the whole store, so a user selecting everything sees a manageable list rather than a flood. Restricting the choice was solving a problem the data does not have, and "show me everything on this weekend" is the most natural first search a person makes.
+
+**Consequences to carry through:**
+- **FR 2.1.2** becomes 1 to 8. The black-box boundary cases change from 0/1/4/5 to **0/1/8/9**, so the test table in the S4 deliverable needs the same edit.
+- **The 50-event route cap matters more.** With all eight categories and a 30-day window, more searches will reach it and be asked to narrow. Whether 50 is still the right number is a measurement, not a guess — the same question as the Eat route budget (§30), and to be answered the same way.
+- The category wheel should offer a way to select all without eight separate clicks.

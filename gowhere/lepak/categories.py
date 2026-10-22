@@ -14,4 +14,6 @@ CATEGORIES = (
     "Community",          # CC and RC activities: the most neighbourhood-bound events
     "Sales & Pop-ups",    # retail promotions, a large share of @sgwhereto's posts
 )
-MIN_SELECTED, MAX_SELECTED = 1, 4
+# 1 to all 8 (DECISIONS.md section 32). The old cap of 4 assumed a wide search would
+# flood the page; the first live ingestion held 38 events in total.
+MIN_SELECTED, MAX_SELECTED = 1, len(CATEGORIES)

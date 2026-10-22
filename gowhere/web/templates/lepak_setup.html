@@ -3,7 +3,7 @@
 {% block title %}Where to Lepak · GoWhere{% endblock %}
 {% block content %}
 <h1>Where to Lepak</h1>
-<p class="lede">Start with what you feel like doing. Pick up to {{ view.max_categories }}.</p>
+<p class="lede">Start with what you feel like doing: one category, a few, or all of them.</p>
 {% if view.error %}{{ note(view.error, 'warning') }}{% endif %}
 
 <form method="post" action="{{ url_for('web.lepak_submit') }}"
@@ -30,10 +30,12 @@
       {% endfor %}
       <p class="wheel-hub" id="wheel-hub" aria-hidden="true"></p>
     </div>
+    <p class="wheel-all-row" hidden><button type="button" class="pill" id="wheel-all">All categories</button></p>
 
     <fieldset class="wheel-fallback" id="wheel-fallback">
-      <legend>Categories (choose {{ view.min_categories }} to {{ view.max_categories }})</legend>
+      <legend>Categories (choose at least {{ view.min_categories }})</legend>
       <div class="checkbox-row">
+        <label><input type="checkbox" name="all_categories" value="1"> <strong>All categories</strong></label>
         {% for c in view.categories %}
         <label><input type="checkbox" name="categories" value="{{ c.value }}" {% if c.checked %}checked{% endif %}> {{ c.label }}</label>
         {% endfor %}

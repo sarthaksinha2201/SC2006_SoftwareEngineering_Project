@@ -7,6 +7,8 @@ import sqlite3
 
 import pytest
 
+from gowhere.lepak.categories import CATEGORIES
+
 from gowhere.adapters.http import HttpError
 from gowhere.config import ROOT
 from gowhere.lepak.parking import UNAVAILABLE, ParkingService
@@ -157,9 +159,8 @@ def test_paging(client, monkeypatch):
 
 
 @pytest.mark.parametrize("over, message", [
-    ({"categories": []}, "Choose 1 to 4 categories"),
-    ({"categories": ["Arts & Culture", "Music & Performances", "Family & Kids",
-                     "Sales & Pop-ups", "Community"]}, "Choose 1 to 4 categories"),
+    ({"categories": []}, "Choose 1 to 8 categories"),
+    ({"categories": list(CATEGORIES) + ["Nightlife"]}, "Choose 1 to 8 categories"),
     ({"postal": "12345"}, "6-digit"),
     ({"postal": "1234567"}, "6-digit"),
     ({"postal": "999999"}, "couldn&#39;t find that postal code"),
@@ -171,6 +172,23 @@ def test_paging(client, monkeypatch):
 def test_invalid_searches_rerender_with_message(client, over, message):
     r = client.post("/lepak", data=form(**over))
     assert r.status_code == 400 and message in r.get_data(as_text=True)
+
+
+def test_all_eight_categories_can_be_searched_at_once(client):
+    """DECISIONS.md section 32: 1 to 8, replacing 1 to 4."""
+    assert client.post("/lepak", data=form(categories=list(CATEGORIES))).status_code == 303
+    page = client.get("/lepak/results").get_data(as_text=True)
+    assert page.count("aria-pressed=") == len(CATEGORIES) + 1      # a chip each, plus All
+
+
+def test_all_categories_shortcut_works_without_javascript(client):
+    setup = client.get("/lepak").get_data(as_text=True)
+    assert 'name="all_categories"' in setup and 'id="wheel-all"' in setup
+    r = client.post("/lepak", data=form(categories=[], all_categories="1"))
+    assert r.status_code == 303
+    refill = client.get("/lepak").get_data(as_text=True)
+    assert refill.count('name="categories"') == refill.count('name="categories" value') == len(CATEGORIES)
+    assert refill.count("checked") >= len(CATEGORIES)
 
 
 def test_too_many_asks_to_narrow_without_routing(app, client, monkeypatch):

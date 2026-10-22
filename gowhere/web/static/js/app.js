@@ -487,7 +487,8 @@
     var hub = document.getElementById("wheel-hub");
     var rest = document.getElementById("lepak-rest");
     var segs = Array.prototype.slice.call(root.querySelectorAll(".wheel-seg"));
-    var max = parseInt(root.getAttribute("data-max"), 10) || 4;
+    var max = parseInt(root.getAttribute("data-max"), 10) || segs.length;
+    var allButton = document.getElementById("wheel-all");
     if (!wheel || !segs.length) return;
     var boxes = {};
     root.querySelectorAll('input[name="categories"]').forEach(function (b) {
@@ -496,6 +497,7 @@
 
     wheel.hidden = false;
     fallback.hidden = true;
+    if (allButton) allButton.parentNode.hidden = false;
 
     function chosen() {
       return Object.keys(boxes).filter(function (k) { return boxes[k].checked; });
@@ -523,6 +525,9 @@
         hub.appendChild(document.createTextNode(
           picked.length === 1 ? "category chosen" : "categories chosen"));
       }
+      if (allButton) {
+        allButton.textContent = picked.length === segs.length ? "Clear" : "All categories";
+      }
       // The rest of the search only means anything once there is something to search
       // for, so it stays out of the way until then.
       var show = picked.length > 0;
@@ -539,6 +544,18 @@
       message = text;
       redraw();
       setTimeout(function () { message = null; redraw(); }, 1800);
+    }
+
+    // Every category in one click (DECISIONS.md section 32), or none again.
+    if (allButton) {
+      allButton.addEventListener("click", function () {
+        var all = chosen().length !== segs.length;
+        segs.forEach(function (seg) {
+          var box = boxes[seg.getAttribute("data-value")];
+          if (box) box.checked = all;
+        });
+        redraw();
+      });
     }
 
     segs.forEach(function (seg) {

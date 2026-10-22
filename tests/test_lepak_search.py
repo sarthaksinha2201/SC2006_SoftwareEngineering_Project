@@ -6,6 +6,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from gowhere.lepak.categories import CATEGORIES
+
 from gowhere.adapters.datamall import DataMallAdapter
 from gowhere.adapters.http import HttpError
 from gowhere.config import ROOT
@@ -34,9 +36,9 @@ def ev(i, lat=1.30, lon=103.85, category="Arts & Culture", start="2026-10-03 10:
 # ---- validation and dates -------------------------------------------------------
 
 @pytest.mark.parametrize("cats, date, mode, minutes, message", [
-    ([], "week", "pt", 30, "Choose 1 to 4"),
-    (["Arts & Culture", "Community", "Family & Kids", "Food & Markets", "Sales & Pop-ups"],
-     "week", "pt", 30, "Choose 1 to 4"),
+    ([], "week", "pt", 30, "Choose 1 to 8"),
+    # Above the maximum: only 8 categories exist, so a 9th value is made up (section 32).
+    (list(CATEGORIES) + ["Nightlife"], "week", "pt", 30, "Choose 1 to 8"),
     (["Nightlife"], "week", "pt", 30, "from the list"),
     (ARTS, "someday", "pt", 30, "when"),
     (ARTS, "week", "cycle", 30, "travel mode"),
@@ -51,6 +53,7 @@ def test_invalid_searches(cats, date, mode, minutes, message):
 def test_boundaries_that_are_valid():
     validate(ARTS, "week", "pt", 5)
     validate(["Arts & Culture", "Community", "Family & Kids", "Food & Markets"], "week", "walk", 180)
+    validate(list(CATEGORIES), "month", "pt", 30)             # all 8: the new maximum
 
 
 @pytest.mark.parametrize("now, option, expected", [

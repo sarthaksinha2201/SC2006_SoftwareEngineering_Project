@@ -95,3 +95,38 @@ Tests check that neither the postal code nor the coordinates appear in:
 - the log.
 
 A live smoke run against OneMap logged the postal code 0 times.
+
+## Categories and the route cap (DECISIONS.md §32, measured 22 Oct 2026)
+
+A search takes 1 to all 8 categories. The old cap of 4 was dropped. On the wheel, "All
+categories" selects every category in one click and then becomes "Clear". Without
+JavaScript, the plain list has an "All categories" box that the server reads as every
+category.
+
+**Is a route cap of 50 still right?** Two measurements.
+
+**What a wide search finds today.** The store holds 29 events that haven't ended, from
+the 14 Oct ingestion. An all-categories, next-30-days search finds 19 of them from every
+starting point tried: Orchard, Queenstown, Tampines and Woodlands, by public transport
+or car. The straight-line filter removes nothing at Singapore's scale, so the number of
+routes is simply the number of events in the window, and the cap is unreachable today.
+It will start to matter as six-hourly ingestion fills the store.
+
+**What N routes cost.** These are routes from 238801 to island-wide destinations,
+public transport, 16 workers, runs interleaved and 10 s apart. One round, where OneMap
+itself slowed down, is excluded: 35 routes took 83 s and all 50 routes failed, which
+fired the all-routes-failed warning.
+
+| Routes per search | Runs | Median | Worst | Routes lost after retry |
+|---|---|---|---|---|
+| 20 | 5 | 4.43 s | 10.82 s | 2 of 100 |
+| 25 | 4 | 6.42 s | 8.48 s | 3 of 100 |
+| 50 | 9 | 9.20 s | 11.77 s | 13 of 450 |
+
+At 50 routes the median is already past the 8 s target. OneMap was also slower today
+than on 19 Oct, when 25 routes took a median of 4.47 s, so the margin varies by day.
+
+**Proposed, not applied:** lower the cap from 50 to 25, the same budget as Where to Eat.
+An alternative for the planner: instead of refusing a search with more than 25 events
+in reach, route the 25 nearest and say how many were timed, as Where to Eat does. That
+keeps "show me everything this weekend" working once the store is larger.

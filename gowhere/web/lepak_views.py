@@ -57,7 +57,10 @@ def parse_lepak_form(form):
     ("here", (lat, lon))}. Raises InvalidSearch; messages never echo the input."""
     max_minutes = parse_max_minutes(form)
     origin = parse_origin(form)
-    return {"categories": [c for c in form.getlist("categories") if c],
+    # "All categories" (the no-JavaScript shortcut) stands for every category.
+    categories = (list(CATEGORIES) if form.get("all_categories")
+                  else [c for c in form.getlist("categories") if c])
+    return {"categories": categories,
             "date_option": form.get("date_option", ""), "mode": form.get("mode", ""),
             "max_minutes": max_minutes, "origin": origin}
 
@@ -151,7 +154,8 @@ def card(r, mode, now):
 
 def setup_view(form=None, error=None):
     get = (lambda k, d=None: form.get(k, d)) if form else (lambda k, d=None: d)
-    chosen = set(form.getlist("categories")) if form else set(DEFAULTS["categories"])
+    chosen = (set(CATEGORIES) if form and form.get("all_categories")
+              else set(form.getlist("categories")) if form else set(DEFAULTS["categories"]))
     date_option = get("date_option", DEFAULTS["date_option"])
     mode = get("mode", DEFAULTS["mode"])
     max_minutes = str(get("max_minutes", DEFAULTS["max_minutes"]))

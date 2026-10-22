@@ -10,7 +10,7 @@ from gowhere.eat import ratings as eat_ratings
 from gowhere.eat import search as eat_search
 from gowhere.eat.hours import status as hours_status
 from gowhere.eat.store import PlaceStore
-from gowhere.lepak.search import InvalidSearch, TooManyEvents, search
+from gowhere.lepak.search import InvalidSearch, search
 from gowhere.lepak.store import EventStore
 from gowhere.scoring.engine import InvalidRequest, NoFactorsLeft, ScoringEngine
 from gowhere.scoring.registry import default_strategies
@@ -177,8 +177,6 @@ def lepak_submit():
                        req["mode"], req["max_minutes"], state.event_router, now, parking=parking)
     except InvalidSearch as e:
         return _lepak_error(form, str(e))
-    except TooManyEvents as e:
-        return _lepak_error(form, lepak_views.too_many_message(e.count))
     except OfflinePostalNotFound:
         return _lepak_error(form, OFFLINE_POSTAL)
     except HttpError:

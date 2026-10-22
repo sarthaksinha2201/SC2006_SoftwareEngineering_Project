@@ -2,6 +2,7 @@
 point kept out of URLs, cookies and logs, and sorting/chips/paging making no external
 calls. Events are the ingestion fixtures as of 30 Sep 2026 12:00."""
 import json
+import re
 import logging
 import sqlite3
 
@@ -191,11 +192,14 @@ def test_all_categories_shortcut_works_without_javascript(client):
     assert refill.count("checked") >= len(CATEGORIES)
 
 
-def test_too_many_asks_to_narrow_without_routing(app, client, monkeypatch):
+def test_above_the_cap_the_nearest_are_shown_and_labelled(app, client, monkeypatch):
+    """DECISIONS.md section 33: a wide search is answered, not refused."""
     monkeypatch.setattr("gowhere.lepak.search.ROUTE_CAP", 3)
     r = client.post("/lepak", data=form())
-    assert r.status_code == 400 and "Choose fewer categories" in r.get_data(as_text=True)
-    assert all(router.calls == 0 for router in app.routers)
+    assert r.status_code == 303
+    page = client.get("/lepak/results").get_data(as_text=True)
+    assert re.search(r"Travel times were worked out for the 3 nearest of \d+ events within reach", page)
+    assert page.count("<article>") <= 3
 
 
 @pytest.mark.parametrize("postal, status, text", [

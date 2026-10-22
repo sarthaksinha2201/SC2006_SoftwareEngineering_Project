@@ -22,8 +22,11 @@ Results are sorted, not scored (DECISIONS §3). The code is in `gowhere/lepak/se
    These are loose on purpose, so the filter never drops an event a real route would
    keep. On the recorded Junction 8 to City Square Mall routes, the real straight-line
    speeds were 66, 180 and 335 m/min.
-3. **The cap.** If more than 50 events survive, nothing is routed and the search page
-   asks the user to narrow the search.
+3. **The cap.** At most 25 events are routed. If more survive the straight-line filter,
+   the 25 nearest are routed and the results page says "Travel times were worked out for
+   the 25 nearest of N events within reach" (DECISIONS §33). Until 22 Oct 2026, a search
+   above the cap (then 50) was refused with a request to narrow it. That made sense while
+   only 4 categories could be chosen, but not once all 8 can.
 4. **Routing.** Each survivor is routed with OneMap, 16 in parallel. Events beyond the
    maximum are dropped. The departure time is:
    - now, for an event already under way;
@@ -126,7 +129,10 @@ fired the all-routes-failed warning.
 At 50 routes the median is already past the 8 s target. OneMap was also slower today
 than on 19 Oct, when 25 routes took a median of 4.47 s, so the margin varies by day.
 
-**Proposed, not applied:** lower the cap from 50 to 25, the same budget as Where to Eat.
-An alternative for the planner: instead of refusing a search with more than 25 events
-in reach, route the 25 nearest and say how many were timed, as Where to Eat does. That
-keeps "show me everything this weekend" working once the store is larger.
+**Applied (DECISIONS §33):** the cap is now 25, the same as Where to Eat. Above it, the
+25 nearest are routed and labelled rather than the search being refused. The
+Performance NFR for routed searches is now stated as a 90th percentile within 8 s, with
+the measured median and worst case published beside it. The reason is in the table:
+the same 25 routes took 4.47 s on 19 Oct and 6.42 s on 22 Oct, and in the excluded
+round OneMap stopped answering altogether. An absolute ceiling over a third party's
+latency is a promise the app can't keep.

@@ -14,7 +14,7 @@ from gowhere.config import ROOT
 from gowhere.etl.geo import haversine_m
 from gowhere.lepak.parking import UNAVAILABLE, ParkingService
 from gowhere.lepak.routing import EventRouter, decode_polyline, departure_for, parse_route
-from gowhere.lepak.search import (ROUTE_CAP, TOP_SPEED_M_PER_MIN, InvalidSearch, TooManyEvents,
+from gowhere.lepak.search import (ROUTE_CAP, TOP_SPEED_M_PER_MIN, InvalidSearch,
                                   date_window, search, sort_and_filter, validate)
 from gowhere.web.mock import LEPAK_NOW, FixedEventRouter, lepak_events
 
@@ -104,14 +104,16 @@ def test_straight_line_filter_uses_the_mode():
     assert [r["id"] for r in pt["results"]] == [1]
 
 
-def test_more_than_the_cap_routes_nothing():
+def test_above_the_cap_the_nearest_are_routed_and_the_rest_counted():
+    """DECISIONS.md section 33: no refusal; the ROUTE_CAP nearest by straight line."""
+    assert ROUTE_CAP == 25
     router = FixedEventRouter({})
-    events = [ev(i) for i in range(ROUTE_CAP + 1)]
-    with pytest.raises(TooManyEvents) as e:
-        search(events, (1.30, 103.85), ARTS, "weekend", "pt", 30, router, NOW)
-    assert e.value.count == ROUTE_CAP + 1 and router.calls == 0
-    found = search(events[:ROUTE_CAP], (1.30, 103.85), ARTS, "weekend", "pt", 30, router, NOW)
-    assert len(found["results"]) == ROUTE_CAP and router.calls == 1
+    events = [ev(i, lat=1.30 + i * 0.001) for i in range(ROUTE_CAP + 5)]    # further each time
+    found = search(events, (1.30, 103.85), ARTS, "weekend", "pt", 30, router, NOW)
+    assert router.calls == 1
+    assert sorted(r["id"] for r in found["results"]) == list(range(ROUTE_CAP))   # the nearest
+    assert found["counts"]["within_straight_line"] == ROUTE_CAP + 5
+    assert found["counts"]["timed"] == ROUTE_CAP
 
 
 def test_the_cap_counts_after_the_straight_line_filter():

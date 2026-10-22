@@ -4,6 +4,7 @@
 {% block content %}
 <h1>{{ view.heading }}</h1>
 <p class="lede">{{ view.freshness }}</p>
+{% if view.timed_note %}<p class="lede">{{ view.timed_note }}</p>{% endif %}
 {% if view.freshness_warning %}{{ note(view.freshness_warning, 'warning') }}{% endif %}
 
 <div class="filter-bar" data-reveal>

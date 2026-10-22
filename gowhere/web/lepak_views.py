@@ -16,7 +16,7 @@ from flask import url_for
 from gowhere.lepak.categories import CATEGORIES, MAX_SELECTED, MIN_SELECTED
 from gowhere.lepak.images import default_images, slugify
 from gowhere.lepak.routing import MODES
-from gowhere.lepak.search import (DATE_OPTIONS, MAX_MINUTES_CHOICES, ROUTE_CAP, SORTS,
+from gowhere.lepak.search import (DATE_OPTIONS, MAX_MINUTES_CHOICES, SORTS,
                                   InvalidSearch, sort_and_filter)
 from gowhere.scoring.stats import round0
 
@@ -178,11 +178,6 @@ def setup_view(form=None, error=None):
     }
 
 
-def too_many_message(count):
-    return (f"{count} events match, more than the {ROUTE_CAP} we can work out travel times for "
-            f"at once. Choose fewer categories, a shorter date range or a shorter travel time.")
-
-
 def freshness(last_updated, now):
     """FR 2.3.4: how long ago events were last updated, and a warning past 24 hours."""
     if last_updated is None:
@@ -223,6 +218,11 @@ def results_view(saved, sort, hidden, page, now, last_updated=None):
                     f"{req['max_minutes']} min by {MODES[req['mode']]}, "
                     f"{DATE_OPTIONS[req['date_option']].lower()}"),
         "freshness": fresh["text"], "freshness_warning": fresh["warning"],
+        # Above the route cap, the nearest were timed (section 33): say so.
+        "timed_note": (f"Travel times were worked out for the {found['counts']['timed']} nearest "
+                       f"of {found['counts']['within_straight_line']} events within reach."
+                       if found["counts"].get("timed", 0) < found["counts"]["within_straight_line"]
+                       else ""),
         "empty_text": ("" if total else
                        "No events match. Try more categories, a longer date range or a longer "
                        "travel time." if not hidden else

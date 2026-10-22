@@ -1,13 +1,16 @@
 """Where to Lepak search (DECISIONS.md section 3): results are sorted, not scored.
 
-1. Stored events in the chosen categories (1-4) that overlap the chosen dates.
+1. Stored events in the chosen categories (1 to 8) that overlap the chosen dates.
 2. Straight-line pre-filter: an event whose straight-line distance could not be covered
    within the maximum travel time even at a generous top speed for the mode is dropped
    without routing. The speeds are deliberately loose upper bounds, so the filter never
    drops an event a real route would have kept.
-3. More than ROUTE_CAP survivors: nothing is routed and the user is asked to narrow the
-   search (TooManyEvents).
-4. Otherwise every survivor is routed with OneMap. Events within the maximum are kept.
+3. More than ROUTE_CAP survivors: only the ROUTE_CAP nearest by straight line are
+   routed, and the results say how many were within reach (DECISIONS.md section 33).
+   Refusing the search was reasonable while 4 categories kept searches narrow. With all 8
+   allowed, "everything this weekend" is the expected first search, and it gets the
+   nearest events, honestly labelled, not an error.
+4. Each routed event within the maximum is kept.
    Events OneMap could not route are kept too, marked "travel time unavailable" and
    sorted last: they passed the straight-line check, and hiding them would hide the
    failure.
@@ -28,19 +31,15 @@ MIN_MINUTES, MAX_MINUTES = 5, 180
 # Straight-line metres per minute no real trip beats: brisk walk 6 km/h; MRT at 60 km/h
 # with no walking or waiting; driving at 90 km/h door to door.
 TOP_SPEED_M_PER_MIN = {"walk": 100.0, "pt": 1000.0, "drive": 1500.0}
-ROUTE_CAP = 50
+# 25, not 50 (DECISIONS.md section 33, measured 22 Oct 2026): 50 routes took a median of
+# 9.2 s, past the 8 s target, while 25 took 6.4 s. The same as Where to Eat.
+ROUTE_CAP = 25
 SORTS = {"travel": "Shortest travel time", "soonest": "Soonest", "recent": "Recently added"}
 PAGE_SIZE = 10
 
 
 class InvalidSearch(ValueError):
     pass
-
-
-class TooManyEvents(Exception):
-    def __init__(self, count):
-        super().__init__(f"{count} events match; narrow the search to at most {ROUTE_CAP}")
-        self.count = count
 
 
 def validate(categories, date_option, mode, max_minutes):
@@ -95,16 +94,15 @@ def within_straight_line(events, origin, mode, max_minutes):
 
 def search(events, origin, categories, date_option, mode, max_minutes, router, now,
            parking=None):
-    """{results, counts}. `events` are the store's current events. Raises InvalidSearch
-    or TooManyEvents. `parking` (drive mode only) adds each result's parking."""
+    """{results, counts}. `events` are the store's current events. Raises InvalidSearch.
+    `parking` (drive mode only) adds each result's parking."""
     validate(categories, date_option, mode, max_minutes)
     pool = candidates(events, set(categories), date_option, now)
     near = within_straight_line(pool, origin, mode, max_minutes)
-    if len(near) > ROUTE_CAP:
-        raise TooManyEvents(len(near))
-    routes = router.route_many(origin, near, mode, now) if near else {}
+    timed = sorted(near, key=lambda e: (e["distance_m"], e["id"]))[:ROUTE_CAP]
+    routes = router.route_many(origin, timed, mode, now) if timed else {}
     results = []
-    for e in near:
+    for e in timed:
         route = routes.get(e["id"])
         if route is not None and route["minutes"] > max_minutes:
             continue
@@ -115,6 +113,7 @@ def search(events, origin, categories, date_option, mode, max_minutes, router, n
             r["parking"] = parking.near(r["lat"], r["lon"])
     return {"results": results,
             "counts": {"in_categories_and_dates": len(pool), "within_straight_line": len(near),
+                       "timed": len(timed),
                        "routed": sum(r is not None for r in routes.values()),
                        "shown": len(results)}}
 

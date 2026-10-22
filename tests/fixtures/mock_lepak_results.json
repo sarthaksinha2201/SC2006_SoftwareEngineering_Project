@@ -2,6 +2,7 @@
  "heading": "9 events within 45 min by public transport, next 30 days",
  "freshness": "Events have not been updated yet.",
  "freshness_warning": "No event update has completed yet, so there may be no events to show.",
+ "timed_note": "",
  "empty_text": "",
  "unroutable_note": "No route could be found for some events, so their straight-line distance is shown as an estimate and they are listed last.",
  "sorts": [

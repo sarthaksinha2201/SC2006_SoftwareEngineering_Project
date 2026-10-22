@@ -21,7 +21,7 @@ GOWHERE_SECRET_KEY=<random string> flask --app "gowhere.web:create_app()" run
 | `POST /live/check` | Selection-time warning: JSON `{"warnings": [...], "incomplete": msg or null}`. Never checks Commute. |
 | `GET /live/areas.geojson` | The setup screen's map picker reads its polygons here: every in-scope area, simplified to ~66 m, with `key`, `name`, `flats` and `flats_text`. Identical for every visitor and cached for a day. |
 | `GET /lepak` | Where to Lepak search, refilled from this session's last search |
-| `POST /lepak` | Validates, looks up the starting point, filters by straight line, routes (at most 50), then redirects 303 to results. An invalid search, an unknown postal code, OneMap being down, or more than 50 candidates re-renders the search page with a 400 and a message. |
+| `POST /lepak` | Validates, looks up the starting point, filters by straight line, routes the 25 nearest (more than 25 in reach: the results say how many were timed), then redirects 303 to results. An invalid search, an unknown postal code or OneMap being down re-renders the search page with a 400 and a message. |
 | `GET /lepak/results?sort=&hide=&page=` | This session's last search, reordered. `hide` repeats once per hidden category (FR 2.4.2). Sort, hidden categories and page only reorder the saved results and make no external call. The view is remembered, so an event's **Back to results** restores it (FR 2.5.3). |
 | `GET /lepak/events/<id>` | Event detail. From this session's search it has the travel time, route and (drive mode) freshly cached parking. Opened directly, it shows the event without travel. Unknown or ended: 404. |
 

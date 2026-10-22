@@ -766,8 +766,8 @@ The measurements in `docs/eat-measurements.md` overturned three of §25's premis
 
 **Retraction — Michelin:** §25 proposed a curated Michelin badge. **Not built.** The Guide's terms prohibit automated or manual copying of its pages and the systematic reuse of even small parts of its databases without authorisation, which is exactly what a curated file is. Recorded with its caveat: the site returns an empty HTTP 202 to automated requests, so the terms were read through a search engine's copy rather than the page itself. **The project therefore ships no quality or popularity signal at all**, and says so.
 
-**Decision:** The eighth cuisine group is **Local & Hawker**, replacing Seafood.
-**Reason:** *(Reason corrected 19 Oct — the original was based on a misreading.)* The first version of this decision claimed `coffee_shop` marked kopitiams and was the most common tag at 653. **It does not:** counting the names behind that tag gives Starbucks 144, Toast Box 79, Coffee Bean 78, Ya Kun 74 and Luckin 24, with only about 32 kopitiam-style names, so `coffee_shop` now maps to Cafes & Desserts. The decision survives on the built figures rather than the tag count: Local & Hawker is the largest group at **1,174 places** (123 NEA hawker centres, 567 OSM food courts, 15 markets, local and noodle tags, and kopitiams identified by name), against **120** for Seafood. A category list that omits the largest local category while keeping one of the smallest would describe OpenStreetMap's tagging conventions rather than how people in Singapore eat.
+**Decision:** The eighth cuisine group is **Local**, replacing Seafood.
+**Reason:** *(Reason corrected 19 Oct — the original was based on a misreading.)* The first version of this decision claimed `coffee_shop` marked kopitiams and was the most common tag at 653. **It does not:** counting the names behind that tag gives Starbucks 144, Toast Box 79, Coffee Bean 78, Ya Kun 74 and Luckin 24, with only about 32 kopitiam-style names, so `coffee_shop` now maps to Cafes & Desserts. The decision survives on the built figures rather than the tag count: Local is the largest group at **1,174 places** (123 NEA hawker centres, 567 OSM food courts, 15 markets, local and noodle tags, and kopitiams identified by name), against **120** for Seafood. A category list that omits the largest local category while keeping one of the smallest would describe OpenStreetMap's tagging conventions rather than how people in Singapore eat.
 
 **Decision:** **No halal or vegetarian filters.**
 **Reason:** `diet:halal` covers 3.7% of venues and vegetarian/vegan 3.2%. A halal filter would hide about 96% of places and assert "halal" wherever a volunteer happened to tag it. For a religious requirement that is not a coverage problem but a safety one: the authoritative source is MUIS's certification register, which the project does not hold. Named as future work rather than approximated.
@@ -853,3 +853,14 @@ Researched after §25a concluded the feature would ship with no quality signal. 
 
 **Decision:** Ratings are held **only in the session's in-memory results** for re-sorting, never written to disk.
 **Reason:** Google's policy bars storing Places content; only the place ID is excepted, and that is the only thing in `eat.db`. Re-fetching on every page view would multiply the call count against a 1,000-a-month allowance for no gain to the user.
+
+
+## 31. Two naming changes (22 Oct 2026)
+
+**Decision:** The cuisine group is named **Local**, not "Local & Hawker". Earlier sections are updated in place; the group's membership is unchanged at 1,174 places.
+**Reason:** "Hawker" named one kind of venue inside a group that also holds food courts, markets and kopitiams, so the label described part of its own contents. "Local" says what the group is for.
+
+**Decision:** The **$/$$/$$$ price signs are removed**; the tier is shown only in words — "Hawker centres, food courts & kopitiams", "Cafés & fast food", "Restaurants". The underlying tiers and the filter are unchanged.
+**Reason:** A price sign implies a measured price level, and we hold no price data at all: the tier is inferred from the kind of venue. The words say exactly that and claim nothing more, which is the same rule applied to the straight-line distance labels and the coverage notes — the interface should not imply precision the data does not have.
+
+**For the deliverable pass:** the eight cuisine groups are **Local, Chinese, Malay & Indonesian, Indian, Japanese & Korean, Thai & Vietnamese, Western, Cafés & Desserts**.

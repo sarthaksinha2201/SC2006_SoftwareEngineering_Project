@@ -1,96 +1,92 @@
 # Dialog map
 
-A state machine of UI screens (Fox, Dialog Maps), built from `docs/deliverable/lab4_deliverable_FR_NFR.docx`
-(use case descriptions UC-1 through UC-13, revised 26 Oct 2026) and cross-checked against the
-routes in `gowhere/web/routes.py`. Supersedes the two-feature dialog map in the Lab 2 deliverable.
+A state machine of UI screens (Fox, Dialog Maps), extending the Lab 2 dialog map to all three
+features. Built from the use case descriptions in `docs/deliverable/lab4_deliverable_FR_NFR.docx`
+(UC-1 through UC-13) and cross-checked against `gowhere/web/routes.py`. Screens only — the detail
+behind each box and arrow (exact FRs, exceptions, wording) lives in the use case descriptions, not
+duplicated here.
 
-**Scope:** User-facing screens only. UC-9 Refresh Static Data, UC-10 Ingest Events and UC-13 Build
-Place List are Maintainer-initiated or system-scheduled background procedures with no screen of
-their own — they produce the data the screens below read, but neither a User nor this map ever
-sees them run. UC-3 Check Parking, UC-6 Estimate Commute, UC-7 Plan Route and UC-8 Resolve Location
-are internal `«include»`s with no screen either; their effect (a parking line, a commute score, a
-route) shows up inline on the screens that invoke them, noted where relevant below.
+Not shown: UC-9, UC-10 and UC-13 (Maintainer-only or scheduled background work, no screen of their
+own), and UC-3, UC-6, UC-7, UC-8 (internal `«include»`s — a parking line, a commute score, a route —
+that show up inline on the screens below rather than as screens themselves).
 
 ```mermaid
 stateDiagram-v2
     [*] --> Home
-
-    Home --> LiveSetup : Where to Live
-    Home --> LepakSetup : Where to Lepak
-    Home --> EatSetup : Where to Eat
+    Home --> SelectAreas : Choose "Where to Live"
+    Home --> SearchCriteria : Choose "Where to Lepak"
+    Home --> EatCriteria : Choose "Where to Eat"
 
     state "Where to Live (UC-4)" as Live {
-        [*] --> LiveSetup
-        LiveSetup : Pick 2-4 neighbourhoods (map picker or list) then weight what matters
-        LiveSetup --> LiveSetup : choose or change areas, factors, weights, options
-        LiveSetup --> LiveSetup : invalid submit - wrong area count, no factor included, budget min over max, or an unresolvable postal code (UC-4 E1-E3)
-        LiveSetup --> LiveResults : submit [2-4 areas, at least 1 factor, valid inputs]
-        LiveResults : Ranked list, bar chart, map, recommendation and explanation
-        LiveResults --> LiveSetup : change the comparison (UC-4 A7)
-        LiveResults --> LiveBreakdown : request score breakdown (UC-5)
-        LiveBreakdown : Per-factor weight, scores, raw values, marginal contribution, excluded factors
-        LiveBreakdown --> LiveResults : close
+        SelectAreas : Select Neighbourhoods
+        SelectAreas --> SelectAreas : Next [invalid count]
+        SelectAreas --> ConfigureFactors : Next [2-4 selected]
+        ConfigureFactors : Configure Factors
+        ConfigureFactors --> SelectAreas : Change areas
+        AllExcluded : All Factors Excluded
+        ConfigureFactors --> AllExcluded : Compare [all excluded]
+        AllExcluded --> ConfigureFactors : Change factors
+        ConfigureFactors --> Ranking : Compare [valid]
+        Ranking : Ranking + Recommendation
+        Ranking --> ConfigureFactors : Change factors
+        Ranking --> Breakdown : View breakdown (UC-5)
+        Breakdown : Score Breakdown (UC-5)
+        Breakdown --> Ranking : Close
     }
 
     state "Where to Lepak (UC-1)" as Lepak {
-        [*] --> LepakSetup
-        LepakSetup : Category wheel (1-8 of 8), remaining criteria reveal once a category is chosen (FR 2.1.1.1)
-        LepakSetup --> LepakSetup : choose categories, date, starting point, mode, max time
-        LepakSetup --> LepakSetup : invalid submit - unresolvable postal code (UC-1 E1)
-        LepakSetup --> LepakSearching : submit [valid]
-        LepakSearching : Waiting indicator, shown only past 320 ms (FR 2.2.7)
-        LepakSearching --> LepakResults : results ready (or "no events match", UC-1 A3)
-        LepakResults : Paginated list, freshness line, photo or category artwork per card
-        LepakResults --> LepakResults : sort, show/hide a category, page (no new request, FR 2.4.3)
-        LepakResults --> LepakEventRoute : select an event (UC-2)
-        LepakEventRoute : Map with start, venue, route, step-by-step directions, parking line inline if travel mode is drive (UC-3)
-        LepakEventRoute --> LepakResults : back [restores sort, hidden categories, page]
+        SearchCriteria : Event Search Criteria
+        SearchCriteria --> SearchCriteria : postal not recognised
+        SearchCriteria --> LepakSearching : Search [valid]
+        LepakSearching : Searching...
+        LepakSearching --> EventResults : results found
+        LepakSearching --> NoEvents : no matches
+        NoEvents : No Events Found
+        NoEvents --> SearchCriteria : narrow search
+        EventResults : Event Results
+        EventResults --> EventResults : sort / filter / page
+        EventResults --> EventRoute : select an event
+        EventRoute : Event Route Map (UC-2)
+        EventRoute --> EventResults : Back (restores view)
     }
 
     state "Where to Eat (UC-11)" as Eat {
-        [*] --> EatSetup
-        EatSetup : Cuisine/kind filters, mealtime, starting point (manual, or pre-filled from an event, UC-11 A1)
-        EatSetup --> EatSetup : edit filters or starting point
-        EatSetup --> EatSetup : clear a pre-filled starting point [start=own]
-        EatSetup --> EatSetup : invalid submit - unresolvable postal code (UC-11 E1)
-        EatSetup --> EatSearching : submit [valid]
-        EatSearching : Waiting indicator (shared with Lepak's search path)
-        EatSearching --> EatResults : results ready (or "no place matches", UC-11 E3)
-        EatResults : Paginated list, rating + review count where available, "not listed" cuisines shown last
-        EatResults --> EatResults : sort, show/hide a cuisine group, page (no new request, FR 3.4.3)
-        EatResults --> EatPlaceDetails : select a place (UC-12)
-        EatPlaceDetails --> EatResults : back [restores sort, hidden cuisines, page]
-
-        EatBrowse : Every place in one neighbourhood, no starting point or routing at all (UC-11 A2) - sort by variety or A-Z only
-        EatBrowse --> EatBrowse : filter by cuisine or kind, sort, page (no external call, no routing)
-        EatBrowse --> EatPlaceDetails : select a place [no route shown, UC-12 A1]
-        EatPlaceDetails --> EatBrowse : back [restores filters, sort, page]
-
-        EatPlaceDetails : Name, hours, rating, notability badge, map with route if one was calculated, parking line inline if travel mode is drive (UC-3)
+        EatCriteria : Eat Search Criteria
+        EatCriteria --> EatCriteria : postal not recognised
+        EatCriteria --> EatSearching : Search [valid]
+        EatSearching : Searching...
+        EatSearching --> PlaceResults : results found
+        EatSearching --> NoPlaces : no matches
+        NoPlaces : No Places Found
+        NoPlaces --> EatCriteria : narrow search
+        PlaceResults : Place Results
+        PlaceResults --> PlaceResults : sort / filter / page
+        PlaceResults --> PlaceDetails : select a place
+        Browse : Browse Neighbourhood
+        Browse --> Browse : filter / sort / page
+        Browse --> PlaceDetails : select a place
+        PlaceDetails : Place Details (UC-12)
+        PlaceDetails --> PlaceResults : Back (restores view)
+        PlaceDetails --> Browse : Back (restores view)
     }
 
-    LiveResults --> EatBrowse : find places to eat in this neighbourhood (FR 1.6, every joint-ranked neighbourhood)
-    LepakEventRoute --> EatSetup : find places to eat near this event (FR 2.7.1, sets the event's location as the starting point)
+    Ranking --> Browse : Find eats here (FR 1.6)
+    EventRoute --> EatCriteria : Find eats nearby (FR 2.7.1)
+
+    classDef highlight fill:#ddd,stroke:#333,stroke-width:2px
+    class Ranking highlight
 ```
 
 ## Notes
 
-- **The map picker and the category wheel are not separate states.** Both are presentation over
-  the same form state as the equivalent checkbox list — `LiveSetup` and `LepakSetup` work
-  identically with JavaScript disabled, just rendered as a list instead of a map or a wheel. A
-  dialog map models screens, not widgets, so this is one state either way.
-- **The persistent header** (`GoWhere` · `Where to Live` · `Where to Lepak` · `Where to Eat`) is on
-  every page and jumps straight to `Home`, `LiveSetup`, `LepakSetup` or `EatSetup` from anywhere in
-  the diagram. Drawing that from all eleven states would make the diagram unreadable, so it's noted
-  once here instead of as fourty-some edges.
-- **`EatPlaceDetails` is one state reached two ways**, matching UC-12 exactly: from `EatResults`
-  with a calculated route, or from `EatBrowse` with no route at all (UC-12 A1) — same screen,
-  conditionally missing the map's route layer and the travel-time line.
-- **Two cross-feature edges are new since the two-feature dialog map**: `LiveResults -> EatBrowse`
-  (FR 1.6) and `LepakEventRoute -> EatSetup` (FR 2.7.1). Both exist because Where to Eat was added
-  after Where to Live and Where to Lepak already worked — UC-11's two alternative entries (A1, A2)
-  are what make them possible without Where to Eat needing to know anything about the other two
-  features beyond a location and a name.
-- **`LepakSearching` and `EatSearching`** are genuinely transient — UC-1 and UC-11 share the same
-  routing path (`«include» UC-7 Plan Route`) and the same 8-second 90th-percentile target, so the
-  waiting indicator is one shared piece of UI, not two.
+- **Map picker / category wheel are not states.** Both drive the same form as the equivalent
+  checkbox list — one state either way, same as the Lab 2 map didn't draw a separate state for a
+  dropdown versus a text field.
+- **`No Events Found` / `No Places Found`** replace Lab 2's `Too Many Events`: the current system no
+  longer refuses above a cap, it routes the 25 nearest and says how many were in reach, so there's
+  no longer a dead-end screen for that case.
+- **`Place Details` is one screen, reached two ways** (UC-12): with a route, from `Place Results`;
+  without one, from `Browse`. Same box, same as the diagram shows it.
+- **Two edges are new since Lab 2**: `Ranking -> Browse` and `Event Route -> Eat Criteria`, both
+  added for the third feature. Everything else is unchanged in shape from the two-feature version,
+  just relabelled where the FR numbers moved.

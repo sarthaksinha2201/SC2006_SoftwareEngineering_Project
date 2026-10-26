@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1860 1860" width="1860" height="1860" font-family="Helvetica, Arial, sans-serif">
+<defs>
+<marker id="open" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto-start-reverse" markerUnits="userSpaceOnUse">
+<path d="M1,1 L11,6 L1,11" fill="none" stroke="#000" stroke-width="1.4"/></marker>
+<style>
+.uc{fill:#fff;stroke:#000;stroke-width:1.4}
+.ucname{font-size:15px;text-anchor:middle}
+.ucid{font-size:12px;text-anchor:middle}
+.lbl{font-size:12.5px;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round}
+.cond{font-size:12px;text-anchor:middle;font-style:italic;paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round}
+.act{font-size:14px;font-weight:bold;text-anchor:middle}
+.stereo{font-size:12px;text-anchor:middle}
+.pkg{fill:none;stroke:#000;stroke-width:1.2}
+.pkgname{font-size:14px;font-weight:bold}
+</style></defs>
+<rect x="0" y="0" width="1860" height="1860" fill="#fff"/>
+<rect x="230" y="20" width="1060" height="1560" fill="none" stroke="#000" stroke-width="2"/>
+<text x="760" y="56" font-size="22" font-weight="bold" text-anchor="middle">GoWhere</text>
+<path class="pkg" d="M255,80 h140 v24 h570 v276 h-710 Z M255,104 h140"/>
+<text class="pkgname" x="265" y="97">Where to Lepak</text>
+<path class="pkg" d="M255,410 h130 v24 h580 v316 h-710 Z M255,434 h130"/>
+<text class="pkgname" x="265" y="427">Where to Live</text>
+<path class="pkg" d="M255,780 h125 v24 h585 v236 h-710 Z M255,804 h125"/>
+<text class="pkgname" x="265" y="797">Where to Eat</text>
+<path class="pkg" d="M255,1070 h130 v24 h580 v436 h-710 Z M255,1094 h130"/>
+<text class="pkgname" x="265" y="1087">Maintain Data</text>
+<path class="pkg" d="M990,80 h150 v24 h125 v1426 h-275 Z M990,104 h150"/>
+<text class="pkgname" x="1000" y="97">Shared Services</text>
+<line x1="142.0" y1="505.0" x2="361.3" y2="279.8" stroke="#000" stroke-width="1.3"/>
+<line x1="142.0" y1="505.0" x2="315.0" y2="565.4" stroke="#000" stroke-width="1.3"/>
+<line x1="142.0" y1="505.0" x2="375.1" y2="888.9" stroke="#000" stroke-width="1.3"/>
+<line x1="142.0" y1="1285.0" x2="297.5" y2="1251.8" stroke="#000" stroke-width="1.3"/>
+<line x1="142.0" y1="1285.0" x2="501.9" y2="1401.5" stroke="#000" stroke-width="1.3"/>
+<line x1="1648.0" y1="205.0" x2="923.0" y2="295.8" stroke="#000" stroke-width="1.3"/>
+<line x1="1648.0" y1="785.0" x2="1209.3" y2="646.1" stroke="#000" stroke-width="1.3"/>
+<line x1="1648.0" y1="785.0" x2="1200.1" y2="969.8" stroke="#000" stroke-width="1.3"/>
+<line x1="1648.0" y1="1165.0" x2="505.7" y2="949.9" stroke="#000" stroke-width="1.3"/>
+<line x1="420.0" y1="1645.0" x2="402.0" y2="1272.0" stroke="#000" stroke-width="1.3"/>
+<line x1="420.0" y1="1645.0" x2="558.0" y2="1470.5" stroke="#000" stroke-width="1.3"/>
+<line x1="790.0" y1="1645.0" x2="781.0" y2="1272.0" stroke="#000" stroke-width="1.3"/>
+<line x1="1040.0" y1="1645.0" x2="805.7" y2="1271.0" stroke="#000" stroke-width="1.3"/>
+<line x1="702.7" y1="186.8" x2="507.3" y2="221.2" stroke="#000" stroke-width="1.3" stroke-dasharray="8 6" marker-end="url(#open)"/>
+<text class="lbl" x="605" y="195">«extend»</text>
+<text class="cond" x="605" y="222">[user selects an event]</text>
+<line x1="702.1" y1="291.6" x2="507.9" y2="258.4" stroke="#000" stroke-width="1.3" stroke-dasharray="8 6" marker-end="url(#open)"/>
+<text class="lbl" x="605" y="266">«extend»</text>
+<text class="cond" x="605" y="293">[travel mode = Drive]</text>
+<line x1="782.9" y1="350.9" x2="427.1" y2="889.1" stroke="#000" stroke-width="1.3" stroke-dasharray="8 6" marker-end="url(#open)"/>
+<text class="lbl" x="555" y="686">«extend»</text>
+<text class="cond" x="555" y="713">[travel mode = Drive]</text>
+<line x1="703.6" y1="539.5" x2="506.4" y2="575.5" stroke="#000" stroke-width="1.3" stroke-dasharray="8 6" marker-end="url(#open)"/>
+<text class="lbl" x="605" y="548">«extend»</text>
+<text class="cond" x="605" y="576">[user requests breakdown]</text>
+<line x1="703.6" y1="650.5" x2="506.4" y2="614.5" stroke="#000" stroke-width="1.3" stroke-dasharray="8 6" marker-end="url(#open)"/>
+<text class="lbl" x="605" y="624">«extend»</text>
+<text class="cond" x="605" y="650">[Commute factor included]</text>
+<line x1="692.5" y1="908.6" x2="517.5" y2="921.4" stroke="#000" stroke-width="1.3" stroke-dasharray="8 6" marker-end="url(#open)"/>
+<text class="lbl" x="605" y="906">«extend»</text>
+<text class="cond" x="605" y="933">[user selects a place]</text>
+<line x1="466.8" y1="274.9" x2="1063.2" y2="586.6" stroke="#000" stroke-width="1.3" stroke-dasharray="8 6" marker-end="url(#open)"/>
+<text class="lbl" x="795" y="437">«include»</text>
+<line x1="919.4" y1="652.7" x2="1029.3" y2="635.4" stroke="#000" stroke-width="1.3" stroke-dasharray="8 6" marker-end="url(#open)"/>
+<text class="lbl" x="974" y="635">«include»</text>
+<line x1="476.1" y1="897.5" x2="1055.2" y2="650.6" stroke="#000" stroke-width="1.3" stroke-dasharray="8 6" marker-end="url(#open)"/>
+<text class="lbl" x="812" y="745">«include»</text>
+<line x1="1127.0" y1="662.0" x2="1127.0" y2="958.0" stroke="#000" stroke-width="1.3" stroke-dasharray="8 6" marker-end="url(#open)"/>
+<text class="lbl" x="1127" y="801">«include»</text>
+<line x1="489.0" y1="1201.8" x2="1044.6" y2="1026.1" stroke="#000" stroke-width="1.3" stroke-dasharray="8 6" marker-end="url(#open)"/>
+<text class="lbl" x="722" y="1119">«include»</text>
+<line x1="836.0" y1="1192.9" x2="1072.7" y2="1036.0" stroke="#000" stroke-width="1.3" stroke-dasharray="8 6" marker-end="url(#open)"/>
+<text class="lbl" x="943" y="1113">«include»</text>
+<line x1="638.1" y1="1391.5" x2="1080.1" y2="1037.6" stroke="#000" stroke-width="1.3" stroke-dasharray="8 6" marker-end="url(#open)"/>
+<text class="lbl" x="868" y="1198">«include»</text>
+<ellipse class="uc" cx="400" cy="240" rx="120" ry="42"/>
+<text class="ucid" x="400" y="191">UC-1</text>
+<text class="ucname" x="400" y="245">Find Events</text>
+<ellipse class="uc" cx="810" cy="168" rx="120" ry="42"/>
+<text class="ucid" x="810" y="119">UC-2</text>
+<text class="ucname" x="810" y="173">View Event Route</text>
+<ellipse class="uc" cx="810" cy="310" rx="120" ry="42"/>
+<text class="ucid" x="810" y="261">UC-3</text>
+<text class="ucname" x="810" y="306">Check Parking</text>
+<text class="ucname" x="810" y="325">Availability</text>
+<ellipse class="uc" cx="400" cy="595" rx="120" ry="42"/>
+<text class="ucid" x="400" y="546">UC-4</text>
+<text class="ucname" x="400" y="591">Compare</text>
+<text class="ucname" x="400" y="610">Neighbourhoods</text>
+<ellipse class="uc" cx="810" cy="520" rx="120" ry="42"/>
+<text class="ucid" x="810" y="471">UC-5</text>
+<text class="ucname" x="810" y="516">View Score</text>
+<text class="ucname" x="810" y="535">Breakdown</text>
+<ellipse class="uc" cx="810" cy="670" rx="120" ry="42"/>
+<text class="ucid" x="810" y="621">UC-6</text>
+<text class="ucname" x="810" y="666">Estimate</text>
+<text class="ucname" x="810" y="685">Commute Time</text>
+<ellipse class="uc" cx="400" cy="930" rx="120" ry="42"/>
+<text class="ucid" x="400" y="881">UC-11</text>
+<text class="ucname" x="400" y="935">Find Places to Eat</text>
+<ellipse class="uc" cx="810" cy="900" rx="120" ry="42"/>
+<text class="ucid" x="810" y="959">UC-12</text>
+<text class="ucname" x="810" y="905">View Place Details</text>
+<ellipse class="uc" cx="1127" cy="620" rx="105" ry="42"/>
+<text class="ucid" x="1127" y="571">UC-7</text>
+<text class="ucname" x="1127" y="625">Plan Route</text>
+<ellipse class="uc" cx="1127" cy="1000" rx="105" ry="42"/>
+<text class="ucid" x="1127" y="1059">UC-8</text>
+<text class="ucname" x="1127" y="1005">Resolve Location</text>
+<ellipse class="uc" cx="400" cy="1230" rx="120" ry="42"/>
+<text class="ucid" x="400" y="1181">UC-9</text>
+<text class="ucname" x="400" y="1226">Refresh Static</text>
+<text class="ucname" x="400" y="1245">Data</text>
+<ellipse class="uc" cx="780" cy="1230" rx="120" ry="42"/>
+<text class="ucid" x="780" y="1181">UC-10</text>
+<text class="ucname" x="780" y="1235">Ingest Events</text>
+<ellipse class="uc" cx="590" cy="1430" rx="120" ry="42"/>
+<text class="ucid" x="590" y="1381">UC-13</text>
+<text class="ucname" x="590" y="1435">Build Place List</text>
+<circle cx="110" cy="464" r="17" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<line x1="110" y1="481" x2="110" y2="532" stroke="#000" stroke-width="1.6"/>
+<line x1="82" y1="500" x2="138" y2="500" stroke="#000" stroke-width="1.6"/>
+<line x1="110" y1="532" x2="86" y2="572" stroke="#000" stroke-width="1.6"/>
+<line x1="110" y1="532" x2="134" y2="572" stroke="#000" stroke-width="1.6"/>
+<text class="act" x="110" y="594">User</text>
+<circle cx="110" cy="1244" r="17" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<line x1="110" y1="1261" x2="110" y2="1312" stroke="#000" stroke-width="1.6"/>
+<line x1="82" y1="1280" x2="138" y2="1280" stroke="#000" stroke-width="1.6"/>
+<line x1="110" y1="1312" x2="86" y2="1352" stroke="#000" stroke-width="1.6"/>
+<line x1="110" y1="1312" x2="134" y2="1352" stroke="#000" stroke-width="1.6"/>
+<text class="act" x="110" y="1374">Maintainer</text>
+<circle cx="1680" cy="164" r="17" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<line x1="1680" y1="181" x2="1680" y2="232" stroke="#000" stroke-width="1.6"/>
+<line x1="1652" y1="200" x2="1708" y2="200" stroke="#000" stroke-width="1.6"/>
+<line x1="1680" y1="232" x2="1656" y2="272" stroke="#000" stroke-width="1.6"/>
+<line x1="1680" y1="232" x2="1704" y2="272" stroke="#000" stroke-width="1.6"/>
+<text class="act" x="1680" y="294">LTA DataMall</text>
+<text class="stereo" x="1680" y="311">«external system»</text>
+<circle cx="1680" cy="744" r="17" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<line x1="1680" y1="761" x2="1680" y2="812" stroke="#000" stroke-width="1.6"/>
+<line x1="1652" y1="780" x2="1708" y2="780" stroke="#000" stroke-width="1.6"/>
+<line x1="1680" y1="812" x2="1656" y2="852" stroke="#000" stroke-width="1.6"/>
+<line x1="1680" y1="812" x2="1704" y2="852" stroke="#000" stroke-width="1.6"/>
+<text class="act" x="1680" y="874">OneMap API</text>
+<text class="stereo" x="1680" y="891">«external system»</text>
+<circle cx="1680" cy="1124" r="17" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<line x1="1680" y1="1141" x2="1680" y2="1192" stroke="#000" stroke-width="1.6"/>
+<line x1="1652" y1="1160" x2="1708" y2="1160" stroke="#000" stroke-width="1.6"/>
+<line x1="1680" y1="1192" x2="1656" y2="1232" stroke="#000" stroke-width="1.6"/>
+<line x1="1680" y1="1192" x2="1704" y2="1232" stroke="#000" stroke-width="1.6"/>
+<text class="act" x="1680" y="1254">Google Places</text>
+<text class="stereo" x="1680" y="1271">«external system»</text>
+<circle cx="420" cy="1669" r="17" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<line x1="420" y1="1686" x2="420" y2="1737" stroke="#000" stroke-width="1.6"/>
+<line x1="392" y1="1705" x2="448" y2="1705" stroke="#000" stroke-width="1.6"/>
+<line x1="420" y1="1737" x2="396" y2="1777" stroke="#000" stroke-width="1.6"/>
+<line x1="420" y1="1737" x2="444" y2="1777" stroke="#000" stroke-width="1.6"/>
+<text class="act" x="420" y="1799">Data Sources</text>
+<text class="stereo" x="420" y="1816">«external system»</text>
+<text class="stereo" x="420" y="1832">(data.gov.sg · LTA DataMall · OpenStreetMap · Wikipedia)</text>
+<circle cx="790" cy="1669" r="17" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<line x1="790" y1="1686" x2="790" y2="1737" stroke="#000" stroke-width="1.6"/>
+<line x1="762" y1="1705" x2="818" y2="1705" stroke="#000" stroke-width="1.6"/>
+<line x1="790" y1="1737" x2="766" y2="1777" stroke="#000" stroke-width="1.6"/>
+<line x1="790" y1="1737" x2="814" y2="1777" stroke="#000" stroke-width="1.6"/>
+<text class="act" x="790" y="1799">Telegram</text>
+<text class="stereo" x="790" y="1816">«external system»</text>
+<circle cx="1040" cy="1669" r="17" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<line x1="1040" y1="1686" x2="1040" y2="1737" stroke="#000" stroke-width="1.6"/>
+<line x1="1012" y1="1705" x2="1068" y2="1705" stroke="#000" stroke-width="1.6"/>
+<line x1="1040" y1="1737" x2="1016" y2="1777" stroke="#000" stroke-width="1.6"/>
+<line x1="1040" y1="1737" x2="1064" y2="1777" stroke="#000" stroke-width="1.6"/>
+<text class="act" x="1040" y="1799">LLM Service</text>
+<text class="stereo" x="1040" y="1816">«external system»</text>
+</svg>

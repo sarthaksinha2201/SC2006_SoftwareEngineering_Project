@@ -1,4 +1,4 @@
-// Builds the deliverable: GoWhere_Requirements_and_Use_Cases.docx
+// Builds the deliverable: lab4_deliverable_FR_NFR.docx
 //   npm install docx && python3 gen_usecase.py && qlmanage -t -s 1860 -o . use_case_diagram.svg
 //   mv use_case_diagram.svg.png use_case_diagram.png && node build_doc.js
 const fs = require("fs");
@@ -411,6 +411,6 @@ const doc = new Document({
 });
 
 Packer.toBuffer(doc).then((buf) => {
-  fs.writeFileSync("GoWhere_Requirements_and_Use_Cases.docx", buf);
+  fs.writeFileSync("lab4_deliverable_FR_NFR.docx", buf);
   console.log("written", buf.length);
 });

@@ -31,6 +31,11 @@ def _state():
     return store.get(session["sid"])
 
 
+def _back(endpoint, label, **values):
+    """The error page's way out: back to the feature the user was in, not always Live."""
+    return url_for(endpoint, **values), label
+
+
 def _engine(state):
     snapshot = current_app.extensions["gowhere"]["snapshot"]
     return ScoringEngine(default_strategies(state.router), snapshot), snapshot
@@ -99,7 +104,8 @@ def live_results():
     except NoFactorsLeft as e:
         return render_template("error.html", title="Nothing left to compare",
                                messages=dropped_messages(e.dropped)
-                               + ["Every included factor was left out, so there is no ranking."]), 200
+                               + ["Every included factor was left out, so there is no ranking."],
+                               back=_back("web.live_setup", "Back to Where to Live")), 200
     return render_template("live_results.html",
                            view=results_view(result, snapshot, all_factors=engine.factors()))
 
@@ -220,7 +226,8 @@ def lepak_event(event_id):
     event = _events().event(event_id)
     if event is None or event["ends_at"] < now.strftime("%Y-%m-%d %H:%M"):
         return render_template("error.html", title="Event not found",
-                               messages=["It may have ended or been removed."]), 404
+                               messages=["It may have ended or been removed."],
+                               back=_back("web.lepak_setup", "Back to Where to Lepak")), 404
     return render_template("event_detail.html", view=lepak_views.event_view(event, None, now))
 
 
@@ -257,7 +264,8 @@ def eat_from_event(event_id):
     event = _events().event(event_id)
     if event is None:
         return render_template("error.html", title="Event not found",
-                               messages=["It may have ended or been removed."]), 404
+                               messages=["It may have ended or been removed."],
+                               back=_back("web.lepak_setup", "Back to Where to Lepak")), 404
     state = _state()
     state.eat_anchor = {"name": event["title"], "lat": event["lat"], "lon": event["lon"]}
     return redirect(url_for("web.eat_setup"), code=303)
@@ -271,7 +279,8 @@ def eat_area(area):
     places = _places()
     if not any(p["planning_area"] == area for p in places.places):
         return render_template("error.html", title="Neighbourhood not found",
-                               messages=["We have no places to eat listed there."]), 404
+                               messages=["We have no places to eat listed there."],
+                               back=_back("web.eat_setup", "Back to Where to Eat")), 404
     args = request.args
     cuisines = [c for c in args.getlist("cuisines") if c]
     tiers = [t for t in args.getlist("tiers") if t] if "tiers" in args else list(eat_search.TIERS)
@@ -280,7 +289,8 @@ def eat_area(area):
                                     current_app.config["NOW"]())
         page = int(args.get("page", 1))
     except eat_search.InvalidSearch as e:
-        return render_template("error.html", title="Check the filters", messages=[str(e)]), 400
+        return render_template("error.html", title="Check the filters", messages=[str(e)],
+                               back=_back("web.eat_area", "Clear the filters", area=area)), 400
     except ValueError:
         page = 1
     view = eat_views.area_view(area, area_name(area), results, cuisines, tiers,
@@ -346,7 +356,12 @@ def eat_place(place_id):
     state = _state()
     saved = state.eat
     meta = _places().meta
-    found = next((r for r in saved["search"]["results"] if r["id"] == place_id), None) if saved else None
+    # Opened from Browse: the place alone, even if the last search also found it, so
+    # Back returns to the neighbourhood rather than to that search's results.
+    browse = ({**request.args.to_dict(flat=False), "area": request.args["area"]}
+              if "area" in request.args else None)
+    found = (next((r for r in saved["search"]["results"] if r["id"] == place_id), None)
+             if saved and browse is None else None)
     if found is not None:
         mode = saved["request"]["mode"]
         if mode == "drive":        # refreshed here (cached 2 min), never on sort or chips
@@ -356,8 +371,10 @@ def eat_place(place_id):
             found, mode, back=saved.get("view_state"), origin=saved.get("origin"), meta=meta))
     place = _places().get(place_id)
     if place is None:
-        return render_template("error.html", title="Place not found", messages=[]), 404
+        return render_template("error.html", title="Place not found", messages=[],
+                               back=_back("web.eat_setup", "Back to Where to Eat")), 404
     now = current_app.config["NOW"]()
     plain = {**place, "route": None, "distance_m": None,
              "open": hours_status(place["opening_hours"], now)}
-    return render_template("eat_place.html", view=eat_views.place_view(plain, None, meta=meta))
+    return render_template("eat_place.html", view=eat_views.place_view(plain, None, meta=meta,
+                                                                      browse=browse))

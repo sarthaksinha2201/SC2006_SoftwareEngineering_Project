@@ -70,6 +70,6 @@
 </p>
 
 <script type="application/json" id="map-data">{{ view.map|tojson }}</script>
-<p class="detail-foot">{% if view.back_url %}<a class="link-muted" href="{{ view.back_url }}">Back to results</a> · {% endif %}
+<p class="detail-foot">{% if view.back_url %}<a class="link-muted" href="{{ view.back_url }}">{{ view.back_label }}</a> · {% endif %}
    <a class="link-muted" href="{{ view.search_url }}">New search</a></p>
 {% endblock %}

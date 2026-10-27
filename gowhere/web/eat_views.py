@@ -206,9 +206,11 @@ def _source(p):
     return {"url": p["source_url"], "label": "OpenStreetMap"}
 
 
-def place_view(p, mode, back=None, origin=None, meta=None):
+def place_view(p, mode, back=None, origin=None, meta=None, browse=None):
     """The place detail screen. With a session search (`mode`), the travel time, route,
-    directions and starting point; without one, the place alone."""
+    directions and starting point; without one, the place alone. `back` is the results
+    screen's sort, chips and page; `browse` is the Browse screen's query, when opened
+    from there."""
     c = card(p, mode or "pt")
     if not mode:
         c["travel"], c["travel_estimated"] = None, False
@@ -232,7 +234,9 @@ def place_view(p, mode, back=None, origin=None, meta=None):
                          for cp in (parking or {}).get("carparks", [])],
             "source": _source(p),
             "data_note": data_note(meta) if meta else "",
-            "back_url": url_for("web.eat_results", **(back or {})) if back is not None else None,
+            "back_url": (url_for("web.eat_area", **browse) if browse is not None
+                         else url_for("web.eat_results", **back) if back is not None else None),
+            "back_label": "Back to the neighbourhood" if browse is not None else "Back to results",
             "search_url": url_for("web.eat_setup")}
 
 
@@ -267,7 +271,10 @@ def area_view(area, area_name, results, cuisines, tiers, sort, hidden, page, met
         "coverage_note": coverage_note(meta),
         "data_note": data_note(meta),
         "empty_text": "" if total else "No places here match. Try more cuisines or kinds of place.",
-        "cards": [card(r, None) for r in rows],
+        # The detail link carries this view, so its Back returns to this very page.
+        "cards": [{**card(r, None), "detail_url": url_for(
+            "web.eat_place", place_id=r["id"], area=area, cuisines=cuisines, tiers=tiers,
+            sort=sort, hide=hidden, page=page)} for r in rows],
         "page": page, "pages": pages, "total": total,
         "prev_url": link(page=page - 1) if page > 1 else None,
         "next_url": link(page=page + 1) if page < pages else None,

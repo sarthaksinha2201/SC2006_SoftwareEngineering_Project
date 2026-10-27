@@ -8,7 +8,7 @@ flowchart TB
             Routes["routes.py<br/>(controllers: live_*, lepak_*, eat_*)"]
             Views["view-model builders<br/>view_models.py / lepak_views.py / eat_views.py"]
             Templates["Jinja templates + static assets<br/>Leaflet, MapLibre, Chart.js -- vendored, never a CDN"]
-            Session["SessionStore / SessionState<br/>in-memory, one per browser tab"]
+            Session["SessionStore / SessionState<br/>in-memory, one per browser tab;<br/>owns that session's routers"]
         end
 
         subgraph LiveFeature["Where to Live"]
@@ -21,7 +21,8 @@ flowchart TB
         end
 
         subgraph EatFeature["Where to Eat"]
-            EatSearch["eat/search.py: search()"]
+            EatSearch["eat/search.py: search(), browse()"]
+            Ratings["eat/ratings.py: attach()"]
         end
 
         subgraph Shared["Shared services -- Facade"]
@@ -36,34 +37,37 @@ flowchart TB
             DataMall["DataMallAdapter"]
             LLM["LlmAdapter"]
             Places["GooglePlacesAdapter"]
+            Telegram["TelegramPostSource"]
         end
 
         Ingestor["Ingestor<br/>(background thread, optional, off by default)"]
 
-        subgraph Stores["Data -- read every request"]
-            Snap[("snapshot.db<br/>read-only")]
-            Events[("events.db<br/>read-write")]
-            PlaceDb[("eat.db<br/>read-only")]
+        subgraph Stores["Data -- local files"]
+            Snap[("snapshot.db<br/>read-only, queried per request")]
+            Events[("events.db<br/>read-write, queried per request")]
+            PlaceDb[("eat.db<br/>read-only, loaded into memory once")]
         end
     end
 
     subgraph Offline["Offline builds -- Maintainer only, never reachable by users"]
+        Fetch["etl fetch + geocode<br/>(DataGovAdapter, DataMallAdapter,<br/>OverpassAdapter, OneMapAdapter)"]
         Refresh["build_snapshot.py"]
-        EatBuild["eat/build.py"]
+        EatBuild["eat/build.py<br/>+ notable.py, google_ids.py"]
+        Images["lepak/images.py<br/>(venue photos)"]
     end
 
     subgraph Sources["Data Sources -- bulk, read offline only"]
         GovData["data.gov.sg, URA, HDB,<br/>LTA static, NParks, MOH, NEA, SFA, NLB"]
-        OSM["OpenStreetMap"]
+        OSM["OpenStreetMap (Overpass)"]
         Wiki["Wikipedia"]
     end
 
-    subgraph External["External Services -- called at request time"]
+    subgraph External["External Services -- called while the app runs"]
         OneMapAPI["OneMap API"]
         DataMallAPI["LTA DataMall"]
-        LLMAPI["LLM Service"]
         PlacesAPI["Google Places"]
-        TelegramAPI["Telegram"]
+        LLMAPI["LLM Service<br/>(Ingestor only)"]
+        TelegramAPI["Telegram<br/>(Ingestor only)"]
     end
 
     Browser --> Routes
@@ -73,6 +77,7 @@ flowchart TB
     Routes --> Engine
     Routes --> LepakSearch
     Routes --> EatSearch
+    Routes --> Ratings
 
     Engine --> Strategies
     Strategies --> CommRouter
@@ -80,32 +85,43 @@ flowchart TB
 
     LepakSearch --> EvRouter
     LepakSearch --> Parking
-    LepakSearch --> Events
+    Routes --> Events
 
     EatSearch --> EvRouter
     EatSearch --> Parking
-    EatSearch --> PlaceDb
-    EatSearch --> Places
+    Routes --> PlaceDb
+    Ratings --> Places
+
+    Session --> CommRouter
+    Session --> Location
+    Session --> EvRouter
 
     CommRouter --> Location
     CommRouter --> OneMap
     EvRouter --> OneMap
     Location --> OneMap
+    Location -. "HDB postal codes<br/>when OneMap is down" .-> Snap
     Parking --> DataMall
 
+    Ingestor --> Telegram
     Ingestor --> LLM
     Ingestor --> Location
     Ingestor --> Events
-    Ingestor --> TelegramAPI
 
     OneMap --> OneMapAPI
     DataMall --> DataMallAPI
     LLM --> LLMAPI
     Places --> PlacesAPI
+    Telegram --> TelegramAPI
 
-    Refresh --> GovData
+    Fetch --> GovData
+    Fetch --> OSM
+    Fetch --> DataMallAPI
+    Fetch -- "geocoding" --> OneMapAPI
+    Fetch -- "data/raw" --> Refresh
+    Fetch -- "data/raw" --> EatBuild
     Refresh --> Snap
-    EatBuild --> OSM
-    EatBuild --> Wiki
-    EatBuild --> GovData
+    EatBuild -- "notability" --> Wiki
+    EatBuild -- "place IDs only" --> PlacesAPI
     EatBuild --> PlaceDb
+    Images --> Wiki

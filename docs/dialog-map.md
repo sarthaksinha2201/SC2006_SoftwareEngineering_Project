@@ -6,6 +6,10 @@ features. Built from the use case descriptions in `docs/deliverable/lab4_deliver
 only — the detail behind each box and arrow (exact FRs, exceptions, wording) lives in the use case
 descriptions, not duplicated here.
 
+The raw Mermaid source below also lives on its own at [`dialog-map.mmd`](dialog-map.mmd) — paste it
+into the [Mermaid Live Editor](https://mermaid.live) to re-render or export it (PNG, SVG, PDF)
+without needing this repo checked out.
+
 Not shown: UC-9, UC-10 and UC-13 (Maintainer-only or scheduled background work, no screen of their
 own), and UC-3 Check Parking, UC-6 Estimate Commute, UC-7 Plan Route, UC-8 Resolve Location
 (internal `«include»`s with no screen of their own either — UC-3 is extra content on a results

@@ -1,7 +1,7 @@
 # Dialog map
 
 A state machine of UI screens (Fox, Dialog Maps), extending the Lab 2 dialog map to all three
-features. Built from the use case descriptions in `docs/deliverable/lab4_deliverable_FR_NFR.docx`
+features. Built from the use case descriptions in `lab3/lab3_FR_NFR.docx`
 (UC-1 through UC-13) and cross-checked against `gowhere/web/routes.py` and the templates. Screens
 only — the detail behind each box and arrow (exact FRs, exceptions, wording) lives in the use case
 descriptions, not duplicated here.

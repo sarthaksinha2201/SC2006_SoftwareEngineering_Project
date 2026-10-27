@@ -5,7 +5,7 @@ points to it rather than duplicating it, so there's one copy of each artefact to
 
 | Deliverable | Where |
 |---|---|
-| Complete Use Case model (diagram and descriptions) | [`docs/deliverable/lab4_deliverable_FR_NFR.docx`](../docs/deliverable/lab4_deliverable_FR_NFR.docx) — Use Case Diagram + UC-1 through UC-13 |
+| Complete Use Case model (diagram and descriptions) | [`lab3_FR_NFR.docx`](lab3_FR_NFR.docx) — Use Case Diagram + UC-1 through UC-13 |
 | Design Model — class diagram | [`docs/class-diagram.md`](../docs/class-diagram.md) |
 | Design Model — dialog map | [`docs/dialog-map.md`](../docs/dialog-map.md) |
 | System architecture | [`docs/architecture.md`](../docs/architecture.md) |

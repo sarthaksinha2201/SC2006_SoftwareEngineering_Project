@@ -28,9 +28,11 @@ three features), organized into packages matching the design model's stereotypes
 - `gowhere/web/` — Flask routes, view models, templates, static assets
 
 See [`docs/class-diagram.md`](../docs/class-diagram.md) for exactly which class lives where, and
-its notes for the two places this package structure deliberately diverges from the Lab 2 class
-names (no boundary/control wrapper classes around Flask's route functions; no entity classes for
-what are plain SQLite-row dicts throughout).
+its notes for where this diverges from the Lab 2 class names: the function modules (Flask's route
+functions, each feature's `search()`) are drawn as `«utility»` classes — UML's own notation for a
+module of free functions — rather than invented boundary/control wrapper classes; and there are no
+entity classes for `Neighbourhood`, `Event`, `Place` etc., which are plain SQLite-row dicts
+throughout.
 
 **Representative skeleton-shaped files**, if you want two or three concrete examples to show rather
 than the whole tree — these still read as signatures-and-docstrings, the shape a skeleton has

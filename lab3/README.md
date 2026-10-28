@@ -31,3 +31,30 @@ See [`docs/class-diagram.md`](../docs/class-diagram.md) for exactly which class 
 its notes for the two places this package structure deliberately diverges from the Lab 2 class
 names (no boundary/control wrapper classes around Flask's route functions; no entity classes for
 what are plain SQLite-row dicts throughout).
+
+**Representative skeleton-shaped files**, if you want two or three concrete examples to show rather
+than the whole tree — these still read as signatures-and-docstrings, the shape a skeleton has
+everywhere before it's filled in:
+
+- `gowhere/scoring/base.py` — the `ScoringStrategy` abstract interface (`@abstractmethod`s, no
+  bodies) plus small option-type classes that are nothing but a signature and a docstring.
+- `gowhere/adapters/overpass.py` — a short adapter: one class, two public methods, a docstring
+  naming exactly which External Service it wraps and why.
+- `gowhere/scoring/registry.py` — the whole file is sixteen lines: import every concrete class,
+  list them. The comment at the top says what adding a new factor would change (just this file).
+
+## How to read each diagram type (for the write-up / your supervisor)
+
+These answer different questions, which is why they look different:
+
+| Diagram | Question it answers | Notation |
+|---|---|---|
+| Class diagram | What objects exist, what do they know, what can they do? | Boxes = classes with attributes/methods inside; arrows = inheritance (`<\|--`) or uses |
+| Dialog map | What screens exist, how does the user move between them? | Boxes = screens; arrows = user actions, labelled with the guard that triggers them |
+| System architecture | What are the big pieces of the whole system, how does data flow between them? | Boxes = subsystems/layers (not individual classes); arrows = "calls" / "reads" / "writes"; cylinders = databases |
+
+For the architecture diagram specifically: the coloured regions are layers (Web layer, Where to
+Live, Shared services, Adapters, Data...), not classes — just groupings. Follow an arrow and read
+it as a sentence: `Routes → Engine` is "the controller calls the scoring engine"; `OneMap → OneMap
+API` is "the adapter calls the external service." It's deliberately zoomed out; method signatures
+are the class diagram's job, not this one's.

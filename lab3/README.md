@@ -21,7 +21,8 @@ three features), organized into packages matching the design model's stereotypes
 - `gowhere/scoring/` — the Strategy hierarchy and `ScoringEngine` (Where to Live)
 - `gowhere/lepak/` — Where to Lepak's search, routing, parking, event store
 - `gowhere/eat/` — Where to Eat's search, place store, ratings, notability
-- `gowhere/adapters/` — one Adapter class per External Service
+- `gowhere/adapters/` — one Adapter class per External Service the running app calls (Telegram's,
+  `TelegramPostSource`, sits with the ingestion pipeline in `gowhere/ingest/run.py`)
 - `gowhere/services/` — `LocationService`, the shared Facade
 - `gowhere/ingest/` — the Telegram scraper and LLM extraction pipeline
 - `gowhere/etl/` — the offline data-snapshot build

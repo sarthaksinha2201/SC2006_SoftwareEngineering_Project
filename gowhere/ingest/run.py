@@ -29,6 +29,7 @@ from gowhere.adapters.http import HttpError
 from gowhere.adapters.llm import LlmAdapter, LlmError, ReplayLlm
 from gowhere.etl.geocode import SearchCache
 from gowhere.etl.reference import load_venue_aliases
+from gowhere.ingest import telegram
 from gowhere.ingest.extract import Discard, extract_batch, validate
 from gowhere.ingest.prefilter import has_date_like_text
 from gowhere.lepak import sgt_now
@@ -56,14 +57,10 @@ class FilePostSource:
 
 
 class TelegramPostSource:
-    """Sarthak's S2 scraper (gowhere.ingest.telegram), once it exists."""
+    """The Telegram adapter: Sarthak's S2 scraper (gowhere.ingest.telegram) behind the
+    same posts() the Ingestor calls on any source, FilePostSource included."""
 
     def posts(self, channel, since_post_id=None):
-        try:
-            from gowhere.ingest import telegram
-        except ImportError:
-            raise SystemExit("The Telegram scraper (S2, gowhere/ingest/telegram.py) is not "
-                             "in the repo yet; run with --posts-file instead.")
         since = f"{channel}/{since_post_id}" if since_post_id is not None else None
         return telegram.fetch_posts(channel, since_post_id=since)
 

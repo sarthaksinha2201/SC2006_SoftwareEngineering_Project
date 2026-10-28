@@ -445,6 +445,32 @@ def test_browsing_filters_by_cuisine_and_tier_with_unlisted_last(linked):
     assert "Cuisine not listed" in page
     none = c.get("/eat/in/WEST?tiers=").get_data(as_text=True)
     assert "Choose at least one kind of place." in none
+    assert 'href="/eat/in/WEST"' in none and "Clear the filters" in none
+
+
+def test_a_place_opened_from_browsing_is_the_place_alone_even_after_a_search(linked):
+    c = linked.test_client()
+    c.post("/eat", data=form())                    # a search that also found this place
+    results = html.unescape(c.get("/eat/results").get_data(as_text=True))
+    pid = re.search(r"/eat/places/(\d+)", results).group(1)
+    page = html.unescape(c.get("/eat/in/WEST?sort=name").get_data(as_text=True))
+    url = re.search(rf'href="(/eat/places/{pid}\?[^"]*)"', page).group(1)
+    detail = html.unescape(c.get(url).get_data(as_text=True))
+    assert '"kind": "start"' not in detail and "Back to results" not in detail
+    back = re.search(r'href="([^"]*)">Back to the neighbourhood<', detail).group(1)
+    assert back.startswith("/eat/in/WEST?") and "sort=name" in back
+    assert "Back to results" in c.get(f"/eat/places/{pid}").get_data(as_text=True)
+
+
+def test_error_pages_lead_back_to_their_own_feature(linked):
+    c = linked.test_client()
+    for url, label in [("/eat/places/999999", "Back to Where to Eat"),
+                       ("/eat/in/NOWHERE", "Back to Where to Eat"),
+                       ("/eat/from-event/999999", "Back to Where to Lepak"),
+                       ("/lepak/events/999999", "Back to Where to Lepak"),
+                       ("/no-such-page", "Back to home")]:
+        page = c.get(url).get_data(as_text=True)
+        assert label in page and "Back to Where to Live" not in page, url
 
 
 def test_the_recommendation_links_to_its_neighbourhood():

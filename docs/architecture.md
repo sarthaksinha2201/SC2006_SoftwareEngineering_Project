@@ -15,7 +15,7 @@ flowchart TB
             Routes["routes.py<br/>(controllers: live_*, lepak_*, eat_*)"]
             Views["view-model builders<br/>view_models.py / lepak_views.py / eat_views.py"]
             Templates["Jinja templates + static assets<br/>Leaflet, MapLibre, Chart.js -- vendored, never a CDN"]
-            Session["SessionStore / SessionState<br/>in-memory, one per browser tab"]
+            Session["SessionStore / SessionState<br/>in-memory, one per browser tab;<br/>owns that session's routers"]
         end
 
         subgraph LiveFeature["Where to Live"]
@@ -28,7 +28,8 @@ flowchart TB
         end
 
         subgraph EatFeature["Where to Eat"]
-            EatSearch["eat/search.py: search()"]
+            EatSearch["eat/search.py: search(), browse()"]
+            Ratings["eat/ratings.py: attach()"]
         end
 
         subgraph Shared["Shared services -- Facade"]
@@ -43,34 +44,37 @@ flowchart TB
             DataMall["DataMallAdapter"]
             LLM["LlmAdapter"]
             Places["GooglePlacesAdapter"]
+            Telegram["TelegramPostSource"]
         end
 
         Ingestor["Ingestor<br/>(background thread, optional, off by default)"]
 
-        subgraph Stores["Data -- read every request"]
-            Snap[("snapshot.db<br/>read-only")]
-            Events[("events.db<br/>read-write")]
-            PlaceDb[("eat.db<br/>read-only")]
+        subgraph Stores["Data -- local files"]
+            Snap[("snapshot.db<br/>read-only, queried per request")]
+            Events[("events.db<br/>read-write, queried per request")]
+            PlaceDb[("eat.db<br/>read-only, loaded into memory once")]
         end
     end
 
     subgraph Offline["Offline builds -- Maintainer only, never reachable by users"]
+        Fetch["etl fetch + geocode<br/>(DataGovAdapter, DataMallAdapter,<br/>OverpassAdapter, OneMapAdapter)"]
         Refresh["build_snapshot.py"]
-        EatBuild["eat/build.py"]
+        EatBuild["eat/build.py<br/>+ notable.py, google_ids.py"]
+        Images["lepak/images.py<br/>(venue photos)"]
     end
 
     subgraph Sources["Data Sources -- bulk, read offline only"]
         GovData["data.gov.sg, URA, HDB,<br/>LTA static, NParks, MOH, NEA, SFA, NLB"]
-        OSM["OpenStreetMap"]
+        OSM["OpenStreetMap (Overpass)"]
         Wiki["Wikipedia"]
     end
 
-    subgraph External["External Services -- called at request time"]
+    subgraph External["External Services -- called while the app runs"]
         OneMapAPI["OneMap API"]
         DataMallAPI["LTA DataMall"]
-        LLMAPI["LLM Service"]
         PlacesAPI["Google Places"]
-        TelegramAPI["Telegram"]
+        LLMAPI["LLM Service<br/>(Ingestor only)"]
+        TelegramAPI["Telegram<br/>(Ingestor only)"]
     end
 
     Browser --> Routes
@@ -80,6 +84,7 @@ flowchart TB
     Routes --> Engine
     Routes --> LepakSearch
     Routes --> EatSearch
+    Routes --> Ratings
 
     Engine --> Strategies
     Strategies --> CommRouter
@@ -87,35 +92,46 @@ flowchart TB
 
     LepakSearch --> EvRouter
     LepakSearch --> Parking
-    LepakSearch --> Events
+    Routes --> Events
 
     EatSearch --> EvRouter
     EatSearch --> Parking
-    EatSearch --> PlaceDb
-    EatSearch --> Places
+    Routes --> PlaceDb
+    Ratings --> Places
+
+    Session --> CommRouter
+    Session --> Location
+    Session --> EvRouter
 
     CommRouter --> Location
     CommRouter --> OneMap
     EvRouter --> OneMap
     Location --> OneMap
+    Location -. "HDB postal codes<br/>when OneMap is down" .-> Snap
     Parking --> DataMall
 
+    Ingestor --> Telegram
     Ingestor --> LLM
     Ingestor --> Location
     Ingestor --> Events
-    Ingestor --> TelegramAPI
 
     OneMap --> OneMapAPI
     DataMall --> DataMallAPI
     LLM --> LLMAPI
     Places --> PlacesAPI
+    Telegram --> TelegramAPI
 
-    Refresh --> GovData
+    Fetch --> GovData
+    Fetch --> OSM
+    Fetch --> DataMallAPI
+    Fetch -- "geocoding" --> OneMapAPI
+    Fetch -- "data/raw" --> Refresh
+    Fetch -- "data/raw" --> EatBuild
     Refresh --> Snap
-    EatBuild --> OSM
-    EatBuild --> Wiki
-    EatBuild --> GovData
+    EatBuild -- "notability" --> Wiki
+    EatBuild -- "place IDs only" --> PlacesAPI
     EatBuild --> PlaceDb
+    Images --> Wiki
 ```
 
 ## Notes
@@ -124,13 +140,22 @@ flowchart TB
   twice the operations work for a 5-week project." Session state in `SessionStore` lives in that
   one process's memory, which is why the deploy guidance in the README insists on a single instance
   with no autoscaling.
-- **Two-tier data**: `snapshot.db` and `eat.db` are built offline and read-only at request time;
-  `events.db` is the one store written at request time, by `Ingestor` on its own background thread.
+- **Two-tier data**: `snapshot.db` and `eat.db` are built offline and read-only while the app runs
+  (`eat.db`'s 8,600 places are loaded into memory once at startup; `snapshot.db` is queried per
+  request). `events.db` is the one store written while the app runs, by `Ingestor` on its own
+  background thread, never by a user's request.
   Splitting read-only from read-write data this way is what makes the Performance NFR achievable —
   a request never waits on a bulk Data Source, only (at most) on an External Service.
 - **`EventRouter` crosses the Lepak/Eat boundary** deliberately — it's the one piece of this diagram
   that was written for one feature and reused unchanged by a feature that didn't exist yet when it
   was built, which is the Supportability NFR's reuse claim made visible as a diagram edge.
 - **Every External Service sits behind its own Adapter.** `DECISIONS.md` §4: "Makes them mockable,
-  which the test plan depends on." Swapping the LLM Service provider (Anthropic → OpenAI, partway
-  through the project) only ever touched `LlmAdapter`.
+  which the test plan depends on." Telegram's adapter is `TelegramPostSource`, which wraps the
+  scraper in `ingest/telegram.py`. The offline builds use adapters too (`DataGovAdapter`,
+  `OverpassAdapter`, and `OneMapAdapter` for geocoding), shown inside the fetch box rather than
+  drawn twice. Swapping the LLM Service provider (Anthropic → OpenAI, partway through the project)
+  only ever touched `LlmAdapter`.
+- **Only three External Services are called on a user's request**: OneMap (postal codes and
+  routes), LTA DataMall (live carpark lots, drive mode only) and Google Places (ratings, after an
+  Eat search, under a daily cap). The LLM Service and Telegram are called only by the background
+  `Ingestor`.

@@ -4,5 +4,7 @@
 {% block content %}
 <h1>{{ title }}</h1>
 {% for m in messages %}{{ note(m, 'warning') }}{% endfor %}
-<p><a class="btn btn-secondary" href="{{ url_for('web.live_setup') }}">Back to Where to Live</a></p>
+{# back: (url, label) for the feature the error happened in; Home when there is none. #}
+{% set url, label = back or (url_for('web.home'), 'Back to home') %}
+<p><a class="btn btn-secondary" href="{{ url }}">{{ label }}</a></p>
 {% endblock %}

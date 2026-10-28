@@ -1,6 +1,6 @@
 # Deliverable generator
 
-Rebuilds `lab4_deliverable_FR_NFR.docx` (FR, NFR, Data Dictionary,
+Rebuilds `lab3/lab3_FR_NFR.docx` (FR, NFR, Data Dictionary,
 use case diagram, UC-1 to UC-13) from `DECISIONS.md` and the code.
 
 ```bash

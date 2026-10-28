@@ -15,7 +15,7 @@ points to it rather than duplicating it, so there's one copy of each artefact to
 ## On "application skeleton"
 
 §4 allows "an in-progress prototype... so long as the skeleton structure of the overall project is
-clear." `gowhere/` is past that bar — it's a complete, tested, working application (439 tests,
+clear." `gowhere/` is past that bar — it's a complete, tested, working application (400+ tests,
 three features), organized into packages matching the design model's stereotypes:
 
 - `gowhere/scoring/` — the Strategy hierarchy and `ScoringEngine` (Where to Live)
@@ -27,12 +27,11 @@ three features), organized into packages matching the design model's stereotypes
 - `gowhere/etl/` — the offline data-snapshot build
 - `gowhere/web/` — Flask routes, view models, templates, static assets
 
-See [`docs/class-diagram.md`](../docs/class-diagram.md) for exactly which class lives where, and
-its notes for where this diverges from the Lab 2 class names: the function modules (Flask's route
-functions, each feature's `search()`) are drawn as `«utility»` classes — UML's own notation for a
-module of free functions — rather than invented boundary/control wrapper classes; and there are no
-entity classes for `Neighbourhood`, `Event`, `Place` etc., which are plain SQLite-row dicts
-throughout.
+See [`docs/class-diagram.md`](../docs/class-diagram.md) for exactly which class lives where. Every
+class there carries its boundary, control or entity stereotype. Its notes cover the two places the
+code differs from the Lab 2 class names: Flask's route and search functions are drawn as
+`«utility»` classes rather than wrapped in boundary/control classes, and `Neighbourhood`, `Event`
+and `Place` are drawn as `«entity, table»` because the code carries their rows as plain dicts.
 
 **Representative skeleton-shaped files**, if you want two or three concrete examples to show rather
 than the whole tree — these still read as signatures-and-docstrings, the shape a skeleton has
@@ -51,7 +50,7 @@ These answer different questions, which is why they look different:
 
 | Diagram | Question it answers | Notation |
 |---|---|---|
-| Class diagram | What objects exist, what do they know, what can they do? | Boxes = classes with attributes/methods inside; arrows = inheritance (`<\|--`) or uses |
+| Class diagram | What objects exist, what do they know, what can they do? | Boxes = classes with attributes/methods inside, each marked «boundary», «control» or «entity» and grouped by it; arrows = inheritance (`<\|--`) or uses |
 | Dialog map | What screens exist, how does the user move between them? | Boxes = screens; arrows = user actions, labelled with the guard that triggers them |
 | System architecture | What are the big pieces of the whole system, how does data flow between them? | Boxes = subsystems/layers (not individual classes); arrows = "calls" / "reads" / "writes"; cylinders = databases |
 

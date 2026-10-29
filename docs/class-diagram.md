@@ -23,6 +23,8 @@ classDiagram
     %% notation for free functions grouped in one place. An <<entity, table>> class is a
     %% database table whose rows the code carries as dicts. A <<boundary, page>> class is
     %% one screen: a Jinja template in gowhere/web/templates, matching a dialog map state.
+    %% A <<control, offline>> class is a module of the offline data build (UC-9, UC-13),
+    %% run from the command line by the Maintainer, never by the running app.
     %% The view-model builders are left out: they only reshape results for the templates.
 
     namespace Boundary {
@@ -41,6 +43,7 @@ classDiagram
             +tokens TokenSource
             +token bool
             +search(query, page, redact) dict
+            +theme(query_name) dict
             +route(start, end, route_type) dict
             +transit_route(start, end, departure) dict
             +drive_route(start, end) dict
@@ -262,6 +265,39 @@ classDiagram
             +eat
             +eat_anchor
         }
+        class RawFetch {
+            <<control, offline>>
+            +fetch(names, force)
+        }
+        class BlockGeocoder {
+            <<control, offline>>
+            +geocode_all(blocks, adapter, cache) list
+            +load_geocodes() dict
+        }
+        class SnapshotBuilder {
+            <<control, offline>>
+            +build(snapshot_path, min_geocode_coverage, strategies)
+            +compute(blocks, geocodes, areas, sources, strategies) dict
+            +validate(result, n_residential, min_geocode_coverage)
+            +write_snapshot(path, result, areas, strategies, meta)
+        }
+        class GoogleIdResolver {
+            <<control, offline>>
+            +resolve(places, adapter, known) dict
+            +load() dict
+        }
+        class NotableMatcher {
+            <<control, offline>>
+            +fetch_geotagged() list
+            +match(places, articles) dict
+            +load() tuple
+        }
+        class PlaceListBuilder {
+            <<control, offline>>
+            +build(osm_elements, hawker_features, areas) tuple
+            +coverage(places) dict
+            +write(path, places, meta)
+        }
     }
 
     namespace Entity {
@@ -406,6 +442,21 @@ classDiagram
     EventRouter "1" *-- "1" OneMapAdapter
     ParkingService "1" *-- "1" DataMallAdapter
 
+    %% ==== Offline data build (UC-9 Refresh Static Data, UC-13 Build Place List) ====
+    RawFetch ..> DataGovAdapter : datasets
+    RawFetch ..> DataMallAdapter : bus stops and routes
+    RawFetch ..> OverpassAdapter : OSM amenities and food venues
+    RawFetch ..> OneMapAdapter : theme layers
+    BlockGeocoder ..> OneMapAdapter : search, cached
+    SnapshotBuilder ..> BlockGeocoder : load_geocodes
+    SnapshotBuilder ..> ScoringStrategy : precompute(blocks, sources)
+    SnapshotBuilder ..> HDBBlock : writes, each placed in its area
+    SnapshotBuilder ..> Neighbourhood : writes
+    GoogleIdResolver ..> GooglePlacesAdapter : find_place_id, IDs only
+    PlaceListBuilder ..> NotableMatcher : match
+    PlaceListBuilder ..> GoogleIdResolver : load
+    PlaceListBuilder ..> Place : writes
+
     %% ==== Event ingestion (background, off by default) ====
     Ingestor ..> TelegramPostSource : reads posts from
     Ingestor "1" --> "1" LlmAdapter
@@ -483,9 +534,22 @@ classDiagram
 - **Each session owns its routers.** `SessionState` holds that browser's `CommuteRouter` (with its
   route cache), `LocationService` (its postal-code lookups) and `EventRouter`, in memory only
   (`DECISIONS.md` §17). That is why the app must run as one process.
-- **Offline-only adapters.** `DataGovAdapter` and `OverpassAdapter` are used only by the offline data
-  builds, never by the running app; `GooglePlacesAdapter.find_place_id` likewise runs only offline
-  (`eat/google_ids.py`), while `details` runs at request time through `EatRatings`.
+- **The offline data build is drawn too (UC-9, UC-13).** These six `«control, offline»` classes
+  are modules the Maintainer runs from the command line; the running app never calls them, which is
+  why they have no web page (see access control in `lab3/design-issues.md`).
+  - UC-9 Refresh Static Data: `RawFetch` (`etl/_temp_fetch_raw.py`) downloads the datasets through
+    `DataGovAdapter`, `DataMallAdapter`, `OverpassAdapter` and `OneMapAdapter.theme` into
+    `data/raw/`; `BlockGeocoder` (`etl/geocode.py`) places every HDB block with OneMap search;
+    `SnapshotBuilder` (`etl/build_snapshot.py`) places each block in its Planning Area, asks every
+    `ScoringStrategy` for its per-block tables, validates the result, and only then replaces
+    `snapshot.db`. It makes no network calls itself.
+  - UC-13 Build Place List: `GoogleIdResolver` (`eat/google_ids.py`) stores a Google place ID per
+    place (the free IDs-only search); `NotableMatcher` (`eat/notable.py`) collects geotagged
+    Wikipedia articles and matches them to places; `PlaceListBuilder` (`eat/build.py`) merges OSM
+    venues with NEA hawker centres and writes `eat.db`.
+  - Wikipedia is the one source called without an Adapter class: `NotableMatcher` here, and the
+    venue-photo step `lepak/images.py`, use the shared HTTP helper directly. Both run offline; the
+    app only reads what they wrote, so Wikipedia is never called while a user waits.
 - **`TelegramPostSource`** (`ingest/run.py`) is the Telegram adapter: it wraps the scraper functions
   in `ingest/telegram.py`. `Ingestor.run` takes any object with `posts()`, so tests pass a
   `FilePostSource` instead.

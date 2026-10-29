@@ -1,7 +1,8 @@
 # Lab 3 deliverables
 
-Per the Lab 3 manual §4. The three diagrams in `diagrams/` are copies of `docs/` taken on 29 Oct 2026 for submission; `docs/` stays the working copy. Everything below lives in its normal place in the repo — this folder
-points to it rather than duplicating it, so there's one copy of each artefact to keep current.
+Per the Lab 3 manual §4. Every deliverable is in this folder except the application itself
+(`gowhere/`). The three diagrams in `diagrams/` are copies of `docs/`, taken on 29 Oct 2026 for
+submission; `docs/` stays the working copy.
 
 | Deliverable | Where |
 |---|---|

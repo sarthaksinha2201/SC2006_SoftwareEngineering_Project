@@ -10,6 +10,7 @@ points to it rather than duplicating it, so there's one copy of each artefact to
 | Design Model — dialog map | [`docs/dialog-map.md`](../docs/dialog-map.md) |
 | System architecture | [`docs/architecture.md`](../docs/architecture.md) |
 | Application skeleton | [`gowhere/`](../gowhere/) — see note below |
+| Design issues, patterns, architectural style (§3.1.3, §3.2.1, §3.2.2) | [`design-issues.md`](design-issues.md) |
 | PDF report (§3.3.5: AI tech-stack re-prompt + AI-generated minimal skeleton + critique) | **Not yet done** — tracked separately |
 
 ## On "application skeleton"

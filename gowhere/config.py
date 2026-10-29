@@ -104,12 +104,14 @@ OSM_FOOD_TAGS = ['["amenity"="restaurant"]', '["amenity"="cafe"]', '["amenity"="
 
 # ---- Where to Lepak (DECISIONS.md sections 3 and 11) ----
 EVENTS_PATH = DATA_DIR / "events.db"     # read-write event store; the snapshot stays read-only
-# Public broadcast channels with a t.me/s/ view (DECISIONS.md section 7). sgbestnightlife
-# is on probation: its yield decides whether it stays.
+# Public broadcast channels with a t.me/s/ view (DECISIONS.md section 7). budgetbabes
+# is on probation (section 34): its yield decides whether it stays.
 LEPAK_CHANNELS = ["sgweekend", "sgwhereto", "SGArtsChannel", "sgconcerts", "dateideas",
-                  "sgfitnesshealth"]
+                  "sgfitnesshealth", "budgetbabes"]
 # Dropped (DECISIONS.md section 7): TimeOutSG, dormant since June; sgbestnightlife, on
 # probation, stored 0 events from 20 posts in the first real run (14 Oct 2026).
+# Tried and not added (section 34): goodlobang, sgfooddeals and freebiessg, whose
+# surviving "events" were restaurant discounts and store promotions.
 LLM_MODEL = "gpt-6-luna"                 # OpenAI: cheapest model for bulk structured extraction
 LLM_REASONING_EFFORT = "low"             # reasoning tokens bill as output; extraction needs little
 LLM_BATCH_SIZE = 10                      # posts per extraction call

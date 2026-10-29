@@ -893,3 +893,20 @@ Researched after §25a concluded the feature would ship with no quality signal. 
 **Endorsed without change:** no rating sort in the neighbourhood browse. Areas hold 20 to 1,020 places with a median around 200, so rating them all would spend days of the 32-a-day cap on a single page, and rating only the visible page would be a ten-place sort presented as a ranking — the same objection that made the rating sort honest in search (§30), applied in the opposite direction.
 
 **The seam, as reported:** the browse mode needed slightly more than a filter and a sort, because the search sort assumes every result carries minutes and distance. It has its own sort and view; the card builder was reused unchanged, since it already handled a place with no route. That is a small, truthful answer to the Supportability question and should be written up as it is.
+
+
+## 34. Four more Telegram channels tried; one added on probation (29 Oct 2026)
+
+**Decision:** Add **`budgetbabes`** to the ingested channels, **on probation**. Do not add `goodlobang`, `sgfooddeals` or `freebiessg`. (`sgfitnesshealth`, the fifth suggestion, was already ingested.)
+**Reason:** All four are public, have a `t.me/s/` preview and post most days, so the choice came down to content. That was measured, not guessed: each channel's latest page (20 posts) went through the real pipeline into a scratch database, so the live event list was untouched until the decision was made.
+
+| Channel | Posts | Extracted | Stored | What survived |
+|---|---|---|---|---|
+| goodlobang | 20 | 18 | 3 | Restaurant discounts ($1.50 sushi plates, a $1 pancake at two outlets) |
+| sgfooddeals | 20 | 16 | 1 | A 1-for-1 lunch deal |
+| budgetbabes | 20 | 7 | 1 | A four-day beauty bazaar, a real Sales & Pop-ups event |
+| freebiessg | 20 | 9 | 1 | A three-month store promotion |
+
+The two food-deal channels have plenty of posts with a date, but most deals run at "all outlets" or online, so they are discarded as "missing location". What survives is a discount at one restaurant. Stored as "Food & Markets", that would bury the markets and food festivals the category exists for, and a discount on a meal is Where to Eat's territory, not an event. `freebiessg` is mostly online giveaways, which the extraction rules discard by design, and it reposts much of `budgetbabes`. `budgetbabes`'s browsed page also showed free-entry markets (FOMO Weekend Market, HallyuCon K-Pop Market, Rooang Creative Market), which had already ended by this run. Low yield, but the right kind of event, so it gets the same probation `sgbestnightlife` had (§7). It stays only if its stored events keep being real events.
+
+**First full run with seven channels (29 Oct, 13:58):** 75 posts seen, 58 sent to the LLM, 54 events extracted, **17 stored**, 1 merged with an existing event, 12 ended events purged. The store holds 43 events. `budgetbabes` contributed 1 (the bazaar). The other six channels had not been fetched since 14 October.

@@ -1,0 +1,66 @@
+stateDiagram-v2
+    [*] --> Home
+    Home --> ConfigureComparison : Choose "Where to Live"
+    Home --> SearchCriteria : Choose "Where to Lepak"
+    Home --> EatCriteria : Choose "Where to Eat"
+
+    state "Where to Live (UC-4, UC-5, UC-6)" as Live {
+        ConfigureComparison : Configure Comparison
+        ConfigureComparison --> ConfigureComparison : edit [warns if a factor would drop]
+        ConfigureComparison --> Scoring : Compare
+        Scoring : Scoring...
+        Scoring --> ConfigureComparison : [invalid input]
+        Scoring --> AllExcluded : [all excluded]
+        AllExcluded : All Factors Excluded
+        AllExcluded --> ConfigureComparison : Change factors
+        Scoring --> Ranking : [valid] results ready
+        Ranking : Ranking + Recommendation
+        Ranking --> ConfigureComparison : Change comparison
+        Ranking --> Breakdown : View breakdown (UC-5)
+        Breakdown : Score Breakdown (UC-5)
+        Breakdown --> Ranking : Close
+    }
+
+    state "Where to Lepak (UC-1, UC-2, UC-3)" as Lepak {
+        SearchCriteria : Event Search Criteria
+        SearchCriteria --> LepakSearching : Search
+        LepakSearching : Searching...
+        LepakSearching --> SearchCriteria : [invalid input]
+        LepakSearching --> EventResults : [valid] results found
+        LepakSearching --> NoEvents : [valid] no matches
+        NoEvents : No Events Found
+        NoEvents --> SearchCriteria : widen search
+        EventResults : Event Results
+        EventResults --> EventResults : sort / filter / page
+        EventResults --> EventRoute : select an event
+        EventRoute : Event Route Map (UC-2)
+        EventRoute --> EventResults : Back (restores view)
+    }
+
+    state "Where to Eat (UC-11, UC-12, UC-3)" as Eat {
+        EatCriteria : Eat Search Criteria
+        EatCriteria --> EatSearching : Search
+        EatSearching : Searching...
+        EatSearching --> EatCriteria : [invalid input]
+        EatSearching --> PlaceResults : [valid] results found
+        EatSearching --> NoPlaces : [valid] no matches
+        NoPlaces : No Places Found
+        NoPlaces --> EatCriteria : widen search
+        PlaceResults : Place Results
+        PlaceResults --> PlaceResults : sort / filter / page
+        PlaceResults --> PlaceDetails : select a place
+        Browse : Browse Neighbourhood
+        Browse --> Browse : filter / sort / page
+        Browse --> PlaceDetails : select a place
+        Browse --> EatCriteria : Search from a starting point
+        PlaceDetails : Place Details (UC-12)
+        PlaceDetails --> PlaceResults : Back to results (restores view)
+        PlaceDetails --> Browse : Back to the neighbourhood (restores view)
+    }
+
+    Ranking --> Browse : Find eats here (FR 1.6)
+    Browse --> Ranking : Back to the comparison
+    EventRoute --> EatCriteria : Find eats nearby (FR 2.7.1)
+
+    classDef highlight fill:#ddd,stroke:#333,stroke-width:2px
+    class Ranking highlight

@@ -1,0 +1,325 @@
+classDiagram
+    %% GoWhere design class model, built from the real code (gowhere/), not the Lab 2
+    %% placeholder names. Every class carries its Fox/Bruegge stereotype and sits in a
+    %% Boundary, Control or Entity group. A module of plain functions (web routes,
+    %% lepak.search, eat.search, eat.ratings, eat.hours) also carries <<utility>>, UML's
+    %% notation for free functions grouped in one place. An <<entity, table>> class is a
+    %% database table whose rows the code carries as dicts. The view-model builders are
+    %% left out: they only reshape results for the templates.
+
+    namespace Boundary {
+        class WebRoutes {
+            <<boundary, utility>>
+            +live_submit()
+            +live_results()
+            +lepak_submit()
+            +lepak_event(event_id)
+            +eat_submit()
+            +eat_area(area)
+            +eat_place(place_id)
+        }
+        class OneMapAdapter {
+            <<boundary>>
+            +tokens TokenSource
+            +token bool
+            +search(query, page, redact) dict
+            +route(start, end, route_type) dict
+            +transit_route(start, end, departure) dict
+            +drive_route(start, end) dict
+        }
+        class TokenSource {
+            <<boundary>>
+            +configured bool
+            +get(force_renew) str
+        }
+        class DataMallAdapter {
+            <<boundary>>
+            +carpark_availability() list
+            +pages(endpoint, max_pages) list
+        }
+        class LlmAdapter {
+            <<boundary>>
+            +call_tool(system, user, tool) dict
+        }
+        class TelegramPostSource {
+            <<boundary>>
+            +posts(channel, since_post_id) list
+        }
+        class GooglePlacesAdapter {
+            <<boundary>>
+            +cap DailyCap
+            +find_place_id(name, lat, lon, radius_m) str
+            +details(place_id) dict
+        }
+        class DailyCap {
+            <<boundary>>
+            +limit int
+            +used int
+            +take() bool
+        }
+        class DataGovAdapter {
+            <<boundary>>
+            +datastore_pages(resource_id, page_size, filters) list
+            +download_file(dataset_id, max_polls) dict
+        }
+        class OverpassAdapter {
+            <<boundary>>
+            +query(overpass_ql) dict
+            +amenities(selectors, bbox) dict
+        }
+    }
+
+    namespace Control {
+        class LepakSearch {
+            <<control, utility>>
+            +search(events, origin, categories, date_option, mode, max_minutes, router, now, parking) dict
+            +sort_and_filter(results, sort, hidden, page) tuple
+        }
+        class EatSearch {
+            <<control, utility>>
+            +search(places, origin, cuisines, tiers, when, mode, max_minutes, router, now, parking) dict
+            +browse(places, area, cuisines, tiers, now) list
+            +sort_and_filter(results, sort, hidden, page, cuisine_filter) tuple
+        }
+        class EatRatings {
+            <<control, utility>>
+            +attach(results, adapter)
+        }
+        class EatHours {
+            <<control, utility>>
+            +parse(text) Hours
+            +status(text, when) dict
+        }
+        class ScoringEngine {
+            <<control>>
+            +strategies Dict~str, ScoringStrategy~
+            +snapshot Snapshot
+            +factors() list
+            +compare(areas, choices) dict
+        }
+        class ScoringStrategy {
+            <<control, abstract>>
+            +key str
+            +label str
+            +missing_reason str
+            +option_labels dict
+            +schema()*
+            +precompute(blocks, sources)*
+            +meta(sources) dict
+            +options(snapshot) dict
+            +validate_options(options)
+            +category_scores(snapshot, areas, options)* dict
+            +raw_values(snapshot, areas, options) dict
+            +notes(snapshot, areas, options) dict
+            +factor_notes(snapshot, options) list
+        }
+        class PublicTransportScorer {
+            <<control>>
+        }
+        class HousingAffordabilityScorer {
+            <<control>>
+        }
+        class AmenitiesScorer {
+            <<control>>
+        }
+        class GreeneryScorer {
+            <<control>>
+        }
+        class HealthcareScorer {
+            <<control>>
+        }
+        class CommuteScorer {
+            <<control>>
+            +router CommuteRouter
+        }
+        class CommuteRouter {
+            <<control>>
+            +adapter OneMapAdapter
+            +locations LocationService
+            +locate(postal) tuple
+            +minutes(origins, postal, mode) dict
+        }
+        class LocationService {
+            <<control>>
+            +adapter OneMapAdapter
+            +offline_postal
+            +postal(postal) tuple
+            +place(venue, address) dict
+            +for_session(offline_postal)$ LocationService
+        }
+        class EventRouter {
+            <<control>>
+            +adapter OneMapAdapter
+            +route(origin, destination, mode, departure) dict
+            +route_many(origin, items, mode, now, departure) dict
+        }
+        class ParkingService {
+            <<control>>
+            +adapter DataMallAdapter
+            +near(lat, lon) dict
+        }
+        class Ingestor {
+            <<control>>
+            +store EventStore
+            +llm LlmAdapter
+            +locations LocationService
+            +run(source, channels, now) dict
+        }
+    }
+
+    namespace Entity {
+        class Snapshot {
+            <<entity>>
+            +query(sql, params) list
+            +meta() dict
+            +areas(names) dict
+            +postal_location(postal) tuple
+        }
+        class Neighbourhood {
+            <<entity, table>>
+            +name str
+            +region str
+            +in_scope bool
+            +n_blocks int
+            +n_flats int
+            +small_sample bool
+        }
+        class EventStore {
+            <<entity>>
+            +events(now) list
+            +event(event_id) dict
+            +commit_batch(events, channel, last_post_id, now) tuple
+            +purge_ended(now) int
+            +last_post_id(channel) int
+        }
+        class Event {
+            <<entity, table>>
+            +id int
+            +title str
+            +category str
+            +start_at str
+            +ends_at str
+            +all_day bool
+            +venue str
+            +place_name str
+            +lat float
+            +lon float
+            +summary str
+        }
+        class PlaceStore {
+            <<entity>>
+            +places list
+            +meta dict
+            +get(place_id) dict
+            +load(path)$ PlaceStore
+        }
+        class Place {
+            <<entity, table>>
+            +id int
+            +name str
+            +kind str
+            +stalls int
+            +price_tier str
+            +cuisines list
+            +opening_hours str
+            +lat float
+            +lon float
+            +planning_area str
+            +wikipedia_title str
+            +google_place_id str
+        }
+        class Hours {
+            <<entity>>
+            +week dict
+            +is_open(when) bool
+            +span_at(when) tuple
+            +next_opening(when, within_days) datetime
+        }
+        class FactorChoice {
+            <<entity, dataclass>>
+            +weight int
+            +options dict
+        }
+        class SessionStore {
+            <<entity>>
+            +new_id() str
+            +get(sid) SessionState
+        }
+        class SessionState {
+            <<entity>>
+            +router CommuteRouter
+            +locations LocationService
+            +event_router EventRouter
+            +last_request
+            +lepak
+            +eat
+            +eat_anchor
+        }
+    }
+
+    %% Arrows follow UML: <|-- generalization; *-- composition (filled diamond on the
+    %% whole: it creates the part and the part dies with it); o-- aggregation (hollow
+    %% diamond: the part is made elsewhere or shared); --> association (a lasting
+    %% reference held in a field); ..> dependency (used only during a call: a parameter,
+    %% a function call, or an object it creates and hands back).
+
+    %% ==== Web layer: per-request use only ====
+    WebRoutes ..> SessionStore : looks up this browser's state
+    WebRoutes ..> ScoringEngine : creates per request
+    WebRoutes ..> LepakSearch : calls
+    WebRoutes ..> EatSearch : calls
+    WebRoutes ..> EatRatings : after each Eat search
+    WebRoutes ..> EventStore : opens per request
+    WebRoutes ..> PlaceStore : reads places
+    WebRoutes ..> ParkingService : refreshes on a detail screen
+
+    %% ==== Where to Lepak and Where to Eat: collaborators passed in as parameters ====
+    LepakSearch ..> EventRouter : route_many
+    LepakSearch ..> ParkingService : drive mode
+    EatSearch ..> EventRouter : route_many
+    EatSearch ..> ParkingService : drive mode
+    EatSearch ..> EatHours : opening status
+    EatHours ..> Hours : creates
+    EatRatings ..> GooglePlacesAdapter : details
+
+    %% ==== Where to Live: Strategy pattern ====
+    ScoringStrategy <|-- PublicTransportScorer
+    ScoringStrategy <|-- HousingAffordabilityScorer
+    ScoringStrategy <|-- AmenitiesScorer
+    ScoringStrategy <|-- GreeneryScorer
+    ScoringStrategy <|-- HealthcareScorer
+    ScoringStrategy <|-- CommuteScorer
+    ScoringEngine "1" o-- "6" ScoringStrategy : dispatches to (interface only)
+    ScoringEngine "*" --> "1" Snapshot : reads
+    ScoringEngine ..> FactorChoice : takes as input
+    CommuteScorer "*" --> "1" CommuteRouter : the session's router
+
+    %% ==== Shared routing and location services ====
+    CommuteRouter "1" *-- "1" OneMapAdapter
+    CommuteRouter "1" *-- "1" LocationService : its own lookups
+    LocationService "*" --> "1" OneMapAdapter : its own, or its router's
+    LocationService ..> Snapshot : HDB postal codes when OneMap is down
+    EventRouter "1" *-- "1" OneMapAdapter
+    ParkingService "1" *-- "1" DataMallAdapter
+
+    %% ==== Event ingestion (background, off by default) ====
+    Ingestor ..> TelegramPostSource : reads posts from
+    Ingestor "1" --> "1" LlmAdapter
+    Ingestor "1" --> "1" LocationService
+    Ingestor "1" --> "1" EventStore : writes
+
+    %% ==== Adapters' helpers ====
+    OneMapAdapter "*" o-- "1" TokenSource : one shared per process
+    GooglePlacesAdapter "1" *-- "1" DailyCap
+
+    %% ==== Stores and their rows ====
+    Snapshot "1" *-- "*" Neighbourhood : planning_area rows
+    EventStore "1" *-- "*" Event : event rows
+    PlaceStore "1" *-- "*" Place : place rows
+    Place ..> Hours : opening_hours parsed into
+
+    %% ==== Per-browser-tab session state, in memory only ====
+    SessionStore "1" *-- "*" SessionState : one per session id, dropped on expiry
+    SessionState "1" *-- "1" CommuteRouter : Commute route cache
+    SessionState "1" *-- "0..1" LocationService : created on first search
+    SessionState "1" *-- "0..1" EventRouter : created on first search

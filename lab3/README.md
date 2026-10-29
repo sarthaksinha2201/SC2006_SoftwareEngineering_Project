@@ -1,14 +1,14 @@
 # Lab 3 deliverables
 
-Per the Lab 3 manual §4. Everything below lives in its normal place in the repo — this folder
+Per the Lab 3 manual §4. The three diagrams in `diagrams/` are copies of `docs/` taken on 29 Oct 2026 for submission; `docs/` stays the working copy. Everything below lives in its normal place in the repo — this folder
 points to it rather than duplicating it, so there's one copy of each artefact to keep current.
 
 | Deliverable | Where |
 |---|---|
 | Complete Use Case model (diagram and descriptions) | [`lab3_FR_NFR.docx`](lab3_FR_NFR.docx) — Use Case Diagram + UC-1 through UC-13 |
-| Design Model — class diagram | [`docs/class-diagram.md`](../docs/class-diagram.md) |
-| Design Model — dialog map | [`docs/dialog-map.md`](../docs/dialog-map.md) |
-| System architecture | [`docs/architecture.md`](../docs/architecture.md) |
+| Design Model — class diagram | [`diagrams/class-diagram.md`](diagrams/class-diagram.md) |
+| Design Model — dialog map | [`diagrams/dialog-map.md`](diagrams/dialog-map.md) |
+| System architecture | [`diagrams/architecture.md`](diagrams/architecture.md) |
 | Application skeleton | [`gowhere/`](../gowhere/) — see note below |
 | Design issues, patterns, architectural style (§3.1.3, §3.2.1, §3.2.2) | [`design-issues.md`](design-issues.md) |
 | PDF report (§3.3.5: AI tech-stack re-prompt + AI-generated minimal skeleton + critique) | [`ai_report/report.pdf`](ai_report/report.pdf); the AI's skeleton, kept apart from `gowhere/`: [`ai_report/ai_generated_skeleton.zip`](ai_report/ai_generated_skeleton.zip) |
@@ -29,7 +29,7 @@ three features), organized into packages matching the design model's stereotypes
 - `gowhere/etl/` — the offline data-snapshot build
 - `gowhere/web/` — Flask routes, view models, templates, static assets
 
-See [`docs/class-diagram.md`](../docs/class-diagram.md) for exactly which class lives where. Every
+See [`diagrams/class-diagram.md`](diagrams/class-diagram.md) for exactly which class lives where. Every
 class there carries its boundary, control or entity stereotype. Its notes cover the two places the
 code differs from the Lab 2 class names: Flask's route and search functions are drawn as
 `«utility»` classes rather than wrapped in boundary/control classes, and `Neighbourhood`, `Event`

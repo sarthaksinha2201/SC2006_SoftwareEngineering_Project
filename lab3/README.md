@@ -11,7 +11,7 @@ points to it rather than duplicating it, so there's one copy of each artefact to
 | System architecture | [`docs/architecture.md`](../docs/architecture.md) |
 | Application skeleton | [`gowhere/`](../gowhere/) — see note below |
 | Design issues, patterns, architectural style (§3.1.3, §3.2.1, §3.2.2) | [`design-issues.md`](design-issues.md) |
-| PDF report (§3.3.5: AI tech-stack re-prompt + AI-generated minimal skeleton + critique) | **Not yet done** — tracked separately |
+| PDF report (§3.3.5: AI tech-stack re-prompt + AI-generated minimal skeleton + critique) | [`ai_report/report.pdf`](ai_report/report.pdf); the AI's skeleton, kept apart from `gowhere/`: [`ai_report/ai_generated_skeleton.zip`](ai_report/ai_generated_skeleton.zip) |
 
 ## On "application skeleton"
 

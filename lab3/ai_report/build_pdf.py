@@ -16,8 +16,15 @@ CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 CITES = re.compile(r"((?: (?:GoWhere_requirements_and_use_ca…|class_diagram_mermaid))+)(?=\s*$)")
 
 
-def inline(t):
+def inline(t, cites=False):
     t = html.escape(t, quote=False)
+    # Citation markers are substituted after escaping, not before: they're real HTML
+    # (a <span> tag) being inserted into already-escaped text, not markdown to escape.
+    # Substituting before escape() was making html.escape() mangle the just-inserted
+    # <span class="cite"> tags into literal visible text in the rendered PDF.
+    if cites:
+        t = CITES.sub(lambda m: ' <span class="cite">[cites: '
+                      + ", ".join(m.group(1).split()) + "]</span>", t)
     t = re.sub(r"`([^`]+)`", r"<code>\1</code>", t)
     t = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", t)
     t = re.sub(r"(?<![\w*])\*([^*]+?)\*(?![\w*])", r"<i>\1</i>", t)
@@ -35,9 +42,6 @@ def convert(md, cites=False):
 
     while i < len(lines):
         line = lines[i]
-        if cites:
-            line = CITES.sub(lambda m: ' <span class="cite">[cites: '
-                             + ", ".join(m.group(1).split()) + "]</span>", line)
         s = line.strip()
         if s.startswith("```"):
             close_lists()
@@ -49,17 +53,17 @@ def convert(md, cites=False):
         elif s.startswith("|") and i + 1 < len(lines) and re.match(r"^\|[-| :]+\|$", lines[i + 1].strip()):
             close_lists()
             row = lambda r: [c.strip() for c in r.strip().strip("|").split("|")]
-            out.append("<table><tr>" + "".join(f"<th>{inline(c)}</th>" for c in row(s)) + "</tr>")
+            out.append("<table><tr>" + "".join(f"<th>{inline(c, cites)}</th>" for c in row(s)) + "</tr>")
             i += 2
             while i < len(lines) and lines[i].strip().startswith("|"):
-                out.append("<tr>" + "".join(f"<td>{inline(c)}</td>" for c in row(lines[i])) + "</tr>")
+                out.append("<tr>" + "".join(f"<td>{inline(c, cites)}</td>" for c in row(lines[i])) + "</tr>")
                 i += 1
             out.append("</table>")
             continue
         elif m := re.match(r"^(#{1,4}) (.*)", s):
             close_lists()
             n = len(m.group(1))
-            out.append(f"<h{n}>{inline(m.group(2))}</h{n}>")
+            out.append(f"<h{n}>{inline(m.group(2), cites)}</h{n}>")
         elif s == "---":
             close_lists(); out.append("<hr>")
         elif s.startswith(">"):
@@ -68,7 +72,7 @@ def convert(md, cites=False):
             while i < len(lines) and lines[i].strip().startswith(">"):
                 quote.append(lines[i].strip()[1:].strip()); i += 1
             paras = "\n".join(quote).split("\n\n")
-            out.append("<blockquote>" + "".join(f"<p>{'<br>'.join(inline(x) for x in p.splitlines())}</p>"
+            out.append("<blockquote>" + "".join(f"<p>{'<br>'.join(inline(x, cites) for x in p.splitlines())}</p>"
                                                 for p in paras) + "</blockquote>")
             continue
         elif m := re.match(r"^(\s*)([-*]|\d+\.) (.*)", line):
@@ -76,12 +80,12 @@ def convert(md, cites=False):
             close_lists(indent)
             if not lists or lists[-1][1] < indent:
                 out.append(f"<{tag}>"); lists.append((tag, indent))
-            out.append(f"<li>{inline(m.group(3))}</li>")
+            out.append(f"<li>{inline(m.group(3), cites)}</li>")
         elif not s:
             close_lists()
         else:
             close_lists()
-            out.append(f"<p>{inline(s)}</p>")
+            out.append(f"<p>{inline(s, cites)}</p>")
         i += 1
     close_lists()
     return "\n".join(out)

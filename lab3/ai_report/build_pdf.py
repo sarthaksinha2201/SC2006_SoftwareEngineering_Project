@@ -1,4 +1,5 @@
-"""Builds report.pdf from report.md plus the two AI responses (Appendices A and B).
+"""Builds report.pdf from report.md, inserting the two AI responses verbatim where it says
+{{RESPONSE_A}} and {{RESPONSE_B}}.
 
     python3 build_pdf.py
 
@@ -113,14 +114,13 @@ li { margin: 2pt 0; }
 .cite { font-size: 8.5pt; color: #555; }
 """
 
+NOTE = ('<p class="cite">ChatGPT\'s file-citation markers are shown as [cites: …]: '
+        '<code>GoWhere_requirements_and_use_ca…</code> is the requirements document, '
+        '<code>class_diagram_mermaid</code> the class diagram.</p>')
 body = convert((HERE / "report.md").read_text())
-for letter, name, title in [("A", "response_A_tech_stack.md", "Part 1 response (tech-stack re-prompt), verbatim"),
-                            ("B", "response_B_skeleton.md", "Part 2 response (minimal skeleton), verbatim")]:
-    body += (f'<section class="appendix"><h2>Appendix {letter} — {title}</h2>'
-             '<p class="appendix-note">Copied as ChatGPT displayed it. Its file-citation markers are shown as '
-             '[cites: …]: <code>GoWhere_requirements_and_use_ca…</code> is the requirements document, '
-             '<code>class_diagram_mermaid</code> the class diagram.</p>'
-             f'<div class="response">{convert((HERE / name).read_text(), cites=True)}</div></section>')
+for key, name in [("{{RESPONSE_A}}", "response_A_tech_stack.md"), ("{{RESPONSE_B}}", "response_B_skeleton.md")]:
+    body = body.replace(f"<p>{key}</p>",
+                        f'<div class="response">{convert((HERE / name).read_text(), cites=True)}</div>' + NOTE)
 
 page = f'<!doctype html><html><head><meta charset="utf-8"><title>SC2006 Lab 3 AI report</title><style>{CSS}</style></head><body>{body}</body></html>'
 (HERE / "report.html").write_text(page)

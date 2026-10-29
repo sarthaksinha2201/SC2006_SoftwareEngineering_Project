@@ -77,7 +77,7 @@ The output is submitted as `lab3/ai_report/ai_generated_skeleton.zip`, separate 
 **Has it missed anything obvious?**
 
 - **No home page template.**
-- **Nothing builds the data snapshot or the place list.** The data.gov.sg and Overpass adapters exist, but nothing calls them. Our class diagram does not show those build classes either, so the AI could not have known about them.
+- **Nothing builds the data snapshot or the place list.** The data.gov.sg and Overpass adapters exist, but nothing calls them. Our class diagram did not show those build classes either, so the AI could not have known about them. We have since added them.
 - **No `data/` folder.**
 - **Only a development `run.py`.** There is no production server and no ingestion schedule.
 - **Each TODO is a single line,** so the operations listed in the class diagram are lost.

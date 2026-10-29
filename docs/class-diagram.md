@@ -21,8 +21,9 @@ classDiagram
     %% Boundary, Control or Entity group. A module of plain functions (web routes,
     %% lepak.search, eat.search, eat.ratings, eat.hours) also carries <<utility>>, UML's
     %% notation for free functions grouped in one place. An <<entity, table>> class is a
-    %% database table whose rows the code carries as dicts. The view-model builders are
-    %% left out: they only reshape results for the templates.
+    %% database table whose rows the code carries as dicts. A <<boundary, page>> class is
+    %% one screen: a Jinja template in gowhere/web/templates, matching a dialog map state.
+    %% The view-model builders are left out: they only reshape results for the templates.
 
     namespace Boundary {
         class WebRoutes {
@@ -83,6 +84,70 @@ classDiagram
             <<boundary>>
             +query(overpass_ql) dict
             +amenities(selectors, bbox) dict
+        }
+        class HomePage {
+            <<boundary, page>>
+            +links to the three features
+        }
+        class LiveSetupPage {
+            <<boundary, page>>
+            +areas
+            +include, weight per factor
+            +factor options
+            +destination_postal, mode
+        }
+        class LiveResultsPage {
+            <<boundary, page>>
+            +ranking and recommendation
+            +chart and map
+            +breakdown dialog, UC-5
+            +excluded factors
+            +link to Where to Eat in each area
+        }
+        class LepakSetupPage {
+            <<boundary, page>>
+            +categories, date_option
+            +origin postal or location
+            +mode, max_minutes
+        }
+        class LepakResultsPage {
+            <<boundary, page>>
+            +events with travel time
+            +sort, page
+        }
+        class EventDetailPage {
+            <<boundary, page>>
+            +route map and steps, UC-2
+            +carparks in drive mode, UC-3
+            +source posts
+            +link to Where to Eat near the event
+        }
+        class EatSetupPage {
+            <<boundary, page>>
+            +cuisines, price tiers, when
+            +origin postal or location
+            +mode, max_minutes
+        }
+        class EatResultsPage {
+            <<boundary, page>>
+            +places with travel time and rating
+            +sort, page
+        }
+        class EatAreaPage {
+            <<boundary, page>>
+            +places in one area, no routing
+            +sort, page
+        }
+        class PlaceDetailPage {
+            <<boundary, page>>
+            +opening hours, rating
+            +route map and steps
+            +carparks in drive mode, UC-3
+        }
+        class ErrorPage {
+            <<boundary, page>>
+            +title, messages
+            +link back to its feature
         }
     }
 
@@ -182,6 +247,21 @@ classDiagram
             +locations LocationService
             +run(source, channels, now) dict
         }
+        class SessionStore {
+            <<control>>
+            +new_id() str
+            +get(sid) SessionState
+        }
+        class SessionState {
+            <<control>>
+            +router CommuteRouter
+            +locations LocationService
+            +event_router EventRouter
+            +last_request
+            +lepak
+            +eat
+            +eat_anchor
+        }
     }
 
     namespace Entity {
@@ -200,6 +280,17 @@ classDiagram
             +n_blocks int
             +n_flats int
             +small_sample bool
+        }
+        class HDBBlock {
+            <<entity, table>>
+            +id int
+            +blk_no str
+            +street str
+            +postal str
+            +lat float
+            +lon float
+            +planning_area str
+            +total_dwelling_units int
         }
         class EventStore {
             <<entity>>
@@ -257,21 +348,6 @@ classDiagram
             +weight int
             +options dict
         }
-        class SessionStore {
-            <<entity>>
-            +new_id() str
-            +get(sid) SessionState
-        }
-        class SessionState {
-            <<entity>>
-            +router CommuteRouter
-            +locations LocationService
-            +event_router EventRouter
-            +last_request
-            +lepak
-            +eat
-            +eat_anchor
-        }
     }
 
     %% Arrows follow UML: <|-- generalization; *-- composition (filled diamond on the
@@ -281,6 +357,17 @@ classDiagram
     %% a function call, or an object it creates and hands back).
 
     %% ==== Web layer: per-request use only ====
+    WebRoutes ..> HomePage : renders
+    WebRoutes ..> LiveSetupPage : renders
+    WebRoutes ..> LiveResultsPage : renders
+    WebRoutes ..> LepakSetupPage : renders
+    WebRoutes ..> LepakResultsPage : renders
+    WebRoutes ..> EventDetailPage : renders
+    WebRoutes ..> EatSetupPage : renders
+    WebRoutes ..> EatResultsPage : renders
+    WebRoutes ..> EatAreaPage : renders
+    WebRoutes ..> PlaceDetailPage : renders
+    WebRoutes ..> ErrorPage : renders
     WebRoutes ..> SessionStore : looks up this browser's state
     WebRoutes ..> ScoringEngine : creates per request
     WebRoutes ..> LepakSearch : calls
@@ -331,6 +418,9 @@ classDiagram
 
     %% ==== Stores and their rows ====
     Snapshot "1" *-- "*" Neighbourhood : planning_area rows
+    Snapshot "1" *-- "*" HDBBlock : hdb_block rows
+    HDBBlock "*" --> "1" Neighbourhood : planning_area
+    ScoringStrategy ..> HDBBlock : precompute(blocks), one value per block
     EventStore "1" *-- "*" Event : event rows
     PlaceStore "1" *-- "*" Place : place rows
     Place ..> Hours : opening_hours parsed into
@@ -346,16 +436,23 @@ classDiagram
 
 - **Boundary, Control, Entity.** Every class carries its Fox/Bruegge stereotype and sits in the
   matching group:
-  - **Boundary**: the actors' side of the system. `WebRoutes` takes the User's requests; each
-    Adapter is the system's interface to one External Service actor (OneMap, LTA DataMall, the
+  - **Boundary**: the actors' side of the system. `WebRoutes` takes the User's requests and
+    renders one `«boundary, page»` class per screen (a Jinja template: `HomePage` is
+    `home.html`, `LiveSetupPage` is `live_setup.html`, and so on), the same screens as the
+    dialog map's states; each Adapter is the system's interface to one External Service actor (OneMap, LTA DataMall, the
     LLM Service, Telegram, Google Places, data.gov.sg, Overpass). `TokenSource` and `DailyCap` are
     parts of their adapters.
   - **Control**: the use cases' logic: the scoring engine and its strategies, the Lepak and Eat
-    searches, ratings, opening hours, the routers, `LocationService`, `ParkingService` and
-    `Ingestor`.
+    searches, ratings, opening hours, the routers, `LocationService`, `ParkingService`,
+    `Ingestor`, and the per-session state (`SessionStore`, `SessionState`; see below).
   - **Entity**: the information the system keeps, in its stores (`Snapshot`, `EventStore`,
-    `PlaceStore`), the rows they hold, and per-session state.
-- **No `WhereToLiveUI` or `EventSearchController` wrapper classes** (the Lab 2 placeholder names):
+    `PlaceStore`) and the rows they hold, including `HDBBlock`.
+- **Lab 2's screen classes became page classes.** `WhereToLiveUI`, `WhereToGoUI` and
+  `ScoreBreakdownUI` are now `LiveSetupPage`/`LiveResultsPage`, `LepakSetupPage`/`LepakResultsPage`
+  and the breakdown dialog inside `LiveResultsPage`. Their attributes are what each screen collects
+  or shows; they have no operations because a template has none (the user's actions are links and
+  forms handled by `WebRoutes`).
+- **No `ComparisonController` or `EventSearchController` wrapper classes** (the Lab 2 names):
   the real web layer is Flask route functions (`gowhere/web/routes.py`) and view-model builder
   functions (`view_models.py`, `lepak_views.py`, `eat_views.py`), not classes. Wrapping them in
   classes would add indirection with no behaviour to justify it — `DECISIONS.md` §4 makes the same
@@ -365,9 +462,9 @@ classDiagram
   `EatHours` = `eat/hours.py`). `«utility»` is UML's own notation for a module of free functions,
   so the diagram keeps its Boundary and Control roles without inventing classes the code doesn't
   have.
-- **`Neighbourhood`, `Event` and `Place` are `«entity, table»`**: each is a database table
-  (`planning_area` in `snapshot.db`, `event` in `events.db`, `place` in `eat.db`), with the columns
-  the app uses. The code carries each row as a plain `dict` all the way to the templates rather than
+- **`Neighbourhood`, `HDBBlock`, `Event` and `Place` are `«entity, table»`**: each is a database
+  table (`planning_area` and `hdb_block` in `snapshot.db`, `event` in `events.db`, `place` in
+  `eat.db`), with the columns the app uses. The code carries each row as a plain `dict` all the way to the templates rather than
   wrapping it in a class: a class with no behaviour beyond field access buys nothing a dict doesn't
   already give. The entity classes that *do* exist in code (`FactorChoice`, `Hours`) earn their keep
   with actual logic (`Hours.is_open`). `Route` and `Carpark` aren't stored at all: they are built per
@@ -376,6 +473,13 @@ classDiagram
   and `gowhere/eat/search.py` both call `route_many` on the same per-session instance
   (`SessionState.event_router`) — the Supportability NFR's "added with only small additive changes
   at the shared seams" claim, in class form.
+- **`HDBBlock` is the unit of measurement.** Every factor is measured per block and weighted by
+  `total_dwelling_units` (flats), not per Planning Area: each strategy's `precompute(blocks, …)`
+  writes one row per block, keyed by `block_id`. This is the answer to the Lab 1 tutor feedback
+  that a single area-level transport figure misrepresents a large area like Tampines.
+- **`SessionStore` and `SessionState` are control, not entity.** They hold no information the
+  system keeps: a session lives in memory for two hours and is gone on restart. What they do hold
+  is that browser's control objects, so the use-case flow can continue across requests.
 - **Each session owns its routers.** `SessionState` holds that browser's `CommuteRouter` (with its
   route cache), `LocationService` (its postal-code lookups) and `EventRouter`, in memory only
   (`DECISIONS.md` §17). That is why the app must run as one process.

@@ -4,11 +4,11 @@ flowchart TB
     subgraph Process["One always-on process: python -m gowhere.serve (Waitress)"]
         direction TB
 
-        subgraph WebLayer["Web layer (Flask) -- Boundary"]
+        subgraph WebLayer["Web layer (Flask)"]
             Routes["routes.py<br/>(controllers: live_*, lepak_*, eat_*)"]
             Views["view-model builders<br/>view_models.py / lepak_views.py / eat_views.py"]
             Templates["Jinja templates + static assets<br/>Leaflet, MapLibre, Chart.js -- vendored, never a CDN"]
-            Session["SessionStore / SessionState<br/>in-memory, one per browser tab;<br/>owns that session's routers"]
+            Session["SessionStore / SessionState (control)<br/>in-memory, one per browser tab;<br/>owns that session's routers"]
         end
 
         subgraph LiveFeature["Where to Live"]

@@ -4,8 +4,9 @@ classDiagram
     %% Boundary, Control or Entity group. A module of plain functions (web routes,
     %% lepak.search, eat.search, eat.ratings, eat.hours) also carries <<utility>>, UML's
     %% notation for free functions grouped in one place. An <<entity, table>> class is a
-    %% database table whose rows the code carries as dicts. The view-model builders are
-    %% left out: they only reshape results for the templates.
+    %% database table whose rows the code carries as dicts. A <<boundary, page>> class is
+    %% one screen: a Jinja template in gowhere/web/templates, matching a dialog map state.
+    %% The view-model builders are left out: they only reshape results for the templates.
 
     namespace Boundary {
         class WebRoutes {
@@ -66,6 +67,70 @@ classDiagram
             <<boundary>>
             +query(overpass_ql) dict
             +amenities(selectors, bbox) dict
+        }
+        class HomePage {
+            <<boundary, page>>
+            +links to the three features
+        }
+        class LiveSetupPage {
+            <<boundary, page>>
+            +areas
+            +include, weight per factor
+            +factor options
+            +destination_postal, mode
+        }
+        class LiveResultsPage {
+            <<boundary, page>>
+            +ranking and recommendation
+            +chart and map
+            +breakdown dialog, UC-5
+            +excluded factors
+            +link to Where to Eat in each area
+        }
+        class LepakSetupPage {
+            <<boundary, page>>
+            +categories, date_option
+            +origin postal or location
+            +mode, max_minutes
+        }
+        class LepakResultsPage {
+            <<boundary, page>>
+            +events with travel time
+            +sort, page
+        }
+        class EventDetailPage {
+            <<boundary, page>>
+            +route map and steps, UC-2
+            +carparks in drive mode, UC-3
+            +source posts
+            +link to Where to Eat near the event
+        }
+        class EatSetupPage {
+            <<boundary, page>>
+            +cuisines, price tiers, when
+            +origin postal or location
+            +mode, max_minutes
+        }
+        class EatResultsPage {
+            <<boundary, page>>
+            +places with travel time and rating
+            +sort, page
+        }
+        class EatAreaPage {
+            <<boundary, page>>
+            +places in one area, no routing
+            +sort, page
+        }
+        class PlaceDetailPage {
+            <<boundary, page>>
+            +opening hours, rating
+            +route map and steps
+            +carparks in drive mode, UC-3
+        }
+        class ErrorPage {
+            <<boundary, page>>
+            +title, messages
+            +link back to its feature
         }
     }
 
@@ -165,6 +230,21 @@ classDiagram
             +locations LocationService
             +run(source, channels, now) dict
         }
+        class SessionStore {
+            <<control>>
+            +new_id() str
+            +get(sid) SessionState
+        }
+        class SessionState {
+            <<control>>
+            +router CommuteRouter
+            +locations LocationService
+            +event_router EventRouter
+            +last_request
+            +lepak
+            +eat
+            +eat_anchor
+        }
     }
 
     namespace Entity {
@@ -183,6 +263,17 @@ classDiagram
             +n_blocks int
             +n_flats int
             +small_sample bool
+        }
+        class HDBBlock {
+            <<entity, table>>
+            +id int
+            +blk_no str
+            +street str
+            +postal str
+            +lat float
+            +lon float
+            +planning_area str
+            +total_dwelling_units int
         }
         class EventStore {
             <<entity>>
@@ -240,21 +331,6 @@ classDiagram
             +weight int
             +options dict
         }
-        class SessionStore {
-            <<entity>>
-            +new_id() str
-            +get(sid) SessionState
-        }
-        class SessionState {
-            <<entity>>
-            +router CommuteRouter
-            +locations LocationService
-            +event_router EventRouter
-            +last_request
-            +lepak
-            +eat
-            +eat_anchor
-        }
     }
 
     %% Arrows follow UML: <|-- generalization; *-- composition (filled diamond on the
@@ -264,6 +340,17 @@ classDiagram
     %% a function call, or an object it creates and hands back).
 
     %% ==== Web layer: per-request use only ====
+    WebRoutes ..> HomePage : renders
+    WebRoutes ..> LiveSetupPage : renders
+    WebRoutes ..> LiveResultsPage : renders
+    WebRoutes ..> LepakSetupPage : renders
+    WebRoutes ..> LepakResultsPage : renders
+    WebRoutes ..> EventDetailPage : renders
+    WebRoutes ..> EatSetupPage : renders
+    WebRoutes ..> EatResultsPage : renders
+    WebRoutes ..> EatAreaPage : renders
+    WebRoutes ..> PlaceDetailPage : renders
+    WebRoutes ..> ErrorPage : renders
     WebRoutes ..> SessionStore : looks up this browser's state
     WebRoutes ..> ScoringEngine : creates per request
     WebRoutes ..> LepakSearch : calls
@@ -314,6 +401,9 @@ classDiagram
 
     %% ==== Stores and their rows ====
     Snapshot "1" *-- "*" Neighbourhood : planning_area rows
+    Snapshot "1" *-- "*" HDBBlock : hdb_block rows
+    HDBBlock "*" --> "1" Neighbourhood : planning_area
+    ScoringStrategy ..> HDBBlock : precompute(blocks), one value per block
     EventStore "1" *-- "*" Event : event rows
     PlaceStore "1" *-- "*" Place : place rows
     Place ..> Hours : opening_hours parsed into

@@ -4,6 +4,16 @@ Built from the real code in `gowhere/` (class and method names verified against 
 Lab 2 placeholder diagram, which predates most of the implementation and all of Where to Eat).
 Raw source also lives on its own at [`class-diagram.mmd`](class-diagram.mmd).
 
+**Reading the arrows** (standard UML; each one chosen from what the code does, not how it looks):
+
+| Arrow | Relationship | In this diagram |
+|---|---|---|
+| solid line, hollow triangle | Generalization | the six scorers inherit `ScoringStrategy` |
+| solid line, filled diamond on the whole | Composition: the whole creates the part, and the part goes when it goes | a session owns its routers; a router creates its own `OneMapAdapter`; a store holds its rows |
+| solid line, hollow diamond on the whole | Aggregation: the part is made elsewhere or shared | the engine is handed its six strategies; every `OneMapAdapter` shares one `TokenSource` |
+| solid line, open arrow | Association: a lasting reference kept in a field | `Ingestor` keeps its `EventStore`, `LlmAdapter` and `LocationService` |
+| dashed line, open arrow | Dependency: used only during a call | a route calls a search; a search is passed the router; `EatHours` creates `Hours` |
+
 ```mermaid
 classDiagram
     %% GoWhere design class model, built from the real code (gowhere/), not the Lab 2
@@ -264,24 +274,30 @@ classDiagram
         }
     }
 
-    %% ==== Web layer: who calls what ====
-    WebRoutes --> SessionStore : looks up this browser's state
-    WebRoutes --> ScoringEngine : Where to Live
-    WebRoutes --> LepakSearch : Where to Lepak
-    WebRoutes --> EatSearch : Where to Eat
-    WebRoutes --> EatRatings : after each Eat search
-    WebRoutes --> EventStore : reads events
-    WebRoutes --> PlaceStore : reads places
-    WebRoutes --> ParkingService : refreshes on a detail screen
+    %% Arrows follow UML: <|-- generalization; *-- composition (filled diamond on the
+    %% whole: it creates the part and the part dies with it); o-- aggregation (hollow
+    %% diamond: the part is made elsewhere or shared); --> association (a lasting
+    %% reference held in a field); ..> dependency (used only during a call: a parameter,
+    %% a function call, or an object it creates and hands back).
 
-    %% ==== Where to Lepak and Where to Eat ====
-    LepakSearch --> EventRouter : route_many
-    LepakSearch --> ParkingService : drive mode
-    EatSearch --> EventRouter : route_many
-    EatSearch --> ParkingService : drive mode
+    %% ==== Web layer: per-request use only ====
+    WebRoutes ..> SessionStore : looks up this browser's state
+    WebRoutes ..> ScoringEngine : creates per request
+    WebRoutes ..> LepakSearch : calls
+    WebRoutes ..> EatSearch : calls
+    WebRoutes ..> EatRatings : after each Eat search
+    WebRoutes ..> EventStore : opens per request
+    WebRoutes ..> PlaceStore : reads places
+    WebRoutes ..> ParkingService : refreshes on a detail screen
+
+    %% ==== Where to Lepak and Where to Eat: collaborators passed in as parameters ====
+    LepakSearch ..> EventRouter : route_many
+    LepakSearch ..> ParkingService : drive mode
+    EatSearch ..> EventRouter : route_many
+    EatSearch ..> ParkingService : drive mode
     EatSearch ..> EatHours : opening status
     EatHours ..> Hours : creates
-    EatRatings --> GooglePlacesAdapter : details
+    EatRatings ..> GooglePlacesAdapter : details
 
     %% ==== Where to Live: Strategy pattern ====
     ScoringStrategy <|-- PublicTransportScorer
@@ -290,40 +306,40 @@ classDiagram
     ScoringStrategy <|-- GreeneryScorer
     ScoringStrategy <|-- HealthcareScorer
     ScoringStrategy <|-- CommuteScorer
-    ScoringEngine "1" --> "6" ScoringStrategy : dispatches to (interface only)
-    ScoringEngine --> Snapshot : reads
+    ScoringEngine "1" o-- "6" ScoringStrategy : dispatches to (interface only)
+    ScoringEngine "*" --> "1" Snapshot : reads
     ScoringEngine ..> FactorChoice : takes as input
+    CommuteScorer "*" --> "1" CommuteRouter : the session's router
 
     %% ==== Shared routing and location services ====
-    CommuteScorer --> CommuteRouter : uses
-    CommuteRouter --> OneMapAdapter : uses
-    CommuteRouter --> LocationService : uses
-    LocationService --> OneMapAdapter : uses
+    CommuteRouter "1" *-- "1" OneMapAdapter
+    CommuteRouter "1" *-- "1" LocationService : its own lookups
+    LocationService "*" --> "1" OneMapAdapter : its own, or its router's
     LocationService ..> Snapshot : HDB postal codes when OneMap is down
-    EventRouter --> OneMapAdapter : uses
-    ParkingService --> DataMallAdapter : uses
+    EventRouter "1" *-- "1" OneMapAdapter
+    ParkingService "1" *-- "1" DataMallAdapter
 
     %% ==== Event ingestion (background, off by default) ====
     Ingestor ..> TelegramPostSource : reads posts from
-    Ingestor --> LlmAdapter : uses
-    Ingestor --> LocationService : uses
-    Ingestor --> EventStore : writes
+    Ingestor "1" --> "1" LlmAdapter
+    Ingestor "1" --> "1" LocationService
+    Ingestor "1" --> "1" EventStore : writes
 
     %% ==== Adapters' helpers ====
-    OneMapAdapter --> TokenSource : renews from
-    GooglePlacesAdapter --> DailyCap : checks before each call
+    OneMapAdapter "*" o-- "1" TokenSource : one shared per process
+    GooglePlacesAdapter "1" *-- "1" DailyCap
 
     %% ==== Stores and their rows ====
-    Snapshot "1" --> "*" Neighbourhood : planning_area rows
-    EventStore "1" --> "*" Event : event rows
-    PlaceStore "1" --> "*" Place : place rows
+    Snapshot "1" *-- "*" Neighbourhood : planning_area rows
+    EventStore "1" *-- "*" Event : event rows
+    PlaceStore "1" *-- "*" Place : place rows
     Place ..> Hours : opening_hours parsed into
 
     %% ==== Per-browser-tab session state, in memory only ====
-    SessionStore "1" --> "*" SessionState : holds, one per session id
-    SessionState "1" --> "1" CommuteRouter : owns (Commute route cache)
-    SessionState "1" --> "0..1" LocationService : owns, created on first search
-    SessionState "1" --> "0..1" EventRouter : owns, created on first search
+    SessionStore "1" *-- "*" SessionState : one per session id, dropped on expiry
+    SessionState "1" *-- "1" CommuteRouter : Commute route cache
+    SessionState "1" *-- "0..1" LocationService : created on first search
+    SessionState "1" *-- "0..1" EventRouter : created on first search
 ```
 
 ## Notes

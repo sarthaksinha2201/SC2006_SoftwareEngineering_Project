@@ -71,13 +71,15 @@ This also rules out Vercel and Netlify: both run your app as stateless, short-li
 serverless functions with no shared memory and no persistent disk between requests, which
 breaks the same assumption. A normal single-process host is what this app expects.
 
-**[Render](https://render.com), free Web Service** is the easiest fit:
+**[Render](https://render.com), free Web Service** is the easiest fit. It runs the
+`Dockerfile` in this repo, the same image CI builds and checks (`DECISIONS.md` section 36):
 
-1. Connect this GitHub repo. Every push to `main` redeploys automatically — no manual
-   step after this.
-2. Build command: `pip install -r requirements.txt`
-3. Start command: `python -m gowhere.serve --host 0.0.0.0 --port $PORT`
-4. Add any of the API keys above as environment variables in Render's dashboard (never
+1. Create a Web Service from this GitHub repo and choose the **Docker** runtime. Render
+   builds the `Dockerfile`; there is no build or start command to enter. The image starts
+   one server on the port Render gives it in `$PORT`.
+2. Render should deploy only after CI passes; turn that on in the service's Auto-Deploy
+   setting.
+3. Add any of the API keys above as environment variables in Render's dashboard (never
    commit a `.env` file). `GOWHERE_SECRET_KEY` too, if you want sessions to survive a
    restart rather than resetting to a random key each time.
 
@@ -86,8 +88,8 @@ after that takes 30-50 seconds to wake up. Harmless for a casual demo; if it mat
 either open the URL yourself a minute beforehand or upgrade to a paid instance (no
 spin-down, same setup otherwise).
 
-[Railway](https://railway.app) works the same way (connect repo, same start command,
-auto-deploy on push) if you'd rather avoid spin-down from the start — no free tier, but
+[Railway](https://railway.app) works the same way (connect the repo, it builds the same
+`Dockerfile`, auto-deploy on push) if you'd rather avoid spin-down from the start — no free tier, but
 cheaper than Render's paid tier for an always-on instance.
 
 More detail: [docs/demo.md](docs/demo.md) (running and demo script),

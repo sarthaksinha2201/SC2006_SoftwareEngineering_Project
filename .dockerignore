@@ -1,0 +1,20 @@
+# Keep secrets, local state and everything the running app doesn't read out of the build.
+# Unlike .gitignore, a pattern here matches from the top only, so "**/" means at any depth.
+.env
+.git
+.venv/
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+data/raw/
+data/cache/
+data/logs/
+docs/
+lab3/
+tests/
+scripts/
+transport test/
+**/*.pdf
+**/*.docx
+**/node_modules/
+**/.DS_Store

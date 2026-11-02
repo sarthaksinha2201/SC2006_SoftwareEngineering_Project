@@ -12,8 +12,8 @@ from the Where to Live functional requirements (Lectures 16–17), then run.
 - **Environment:** the real committed snapshot (`data/snapshot.db`, generated 14 Oct 2026) and
   the six real factors. OneMap is an External Service outside the class, so a fake answers
   for it: every postal code resolves, every route takes 30 min (transit) or 20 min (car).
-- **Executed:** 2 Nov 2026, commit `fb927c7` plus the test file. **23 pass. 2 fail and
-  show defect D1.**
+- **First run:** 2 Nov 2026, commit `fb927c7` plus the test file. **23 passed. 2 failed: defect D1.**
+- **After the fix:** 2 Nov 2026. **25 of 25 pass.** BB-17 and BB-18 now guard against D1 coming back (regression tests).
 
 > This replaces `docs/black-box-tests.md` (Lab 2/S4) for Lab 4. That table spans several
 > classes, while §3.2.1 asks for one control class. It stays in the repo as the earlier version.
@@ -83,8 +83,8 @@ rejected with exactly the message shown (FR 1.1.2.2: "state the allowed range").
 | BB-14 | E16 | weight 5.5 | Greenery: weight must be a whole number from 1 to 10 | same | ok Pass |
 | BB-15 | E18 | Healthcare with no facility type | Healthcare: options must be exactly facility type | same | ok Pass |
 | BB-16 | E20 | facility type `clinic` | Healthcare: facility type must be one of ['gp', 'hospital', 'polyclinic'] | same | ok Pass (see O1) |
-| BB-17 | E22 (BV −1) | budget minimum −1 | Housing Affordability: budget minimum must be a number from 0 to 5,000,000 | …from 0 to **5e+06** | no **Fail: D1** |
-| BB-18 | E23 (BV 5,000,001) | budget maximum 5,000,001 | Housing Affordability: budget maximum must be a number from 0 to 5,000,000 | …from 0 to **5e+06** | no **Fail: D1** |
+| BB-17 | E22 (BV −1) | budget minimum −1 | Housing Affordability: budget minimum must be a number from 0 to 5,000,000 | first run: …from 0 to **5e+06** (D1); after fix: same as expected | ok Pass after fix |
+| BB-18 | E23 (BV 5,000,001) | budget maximum 5,000,001 | Housing Affordability: budget maximum must be a number from 0 to 5,000,000 | first run: …from 0 to **5e+06** (D1); after fix: same as expected | ok Pass after fix |
 | BB-19 | E25 (BV max + 1) | budget 700,001–700,000 | budget minimum must not exceed budget maximum | same | ok Pass (see O2) |
 | BB-20 | E27 (BV 0) | no amenity types | Amenities: choose one or more of supermarket, hawker_centre, library, mall, gym, cafe, each once | same | ok Pass (see O1) |
 | BB-21 | E28 | gym, gym | as BB-20 | same | ok Pass |
@@ -93,15 +93,17 @@ rejected with exactly the message shown (FR 1.1.2.2: "state the allowed range").
 | BB-24 | E32 (BV 7) | postal 1234567 | as BB-23 | same | ok Pass |
 | BB-25 | E33 | postal 12345A | as BB-23 | same | ok Pass |
 
-In code the two failing cases are marked `xfail(strict=True)`. The suite stays green while
-the defect is open. Once the message is fixed, the two cases pass, `strict` turns that
-into a failure, and the marker must be removed. A fix cannot go unrecorded.
+**Defect lifecycle.**
+1. The first run failed BB-17 and BB-18.
+2. They were marked `xfail(strict=True)` while D1 was open, so the suite stayed green but the defect stayed visible.
+3. The fix made them pass, and `strict` then forced the marker's removal.
+4. They are now ordinary tests, so every later run checks that D1 has not come back.
 
 ## 3. Defects and observations
 
 | ID | Severity | Finding | Reachable by a user? | Fix |
 |---|---|---|---|---|
-| **D1** | Medium | The budget limit is printed with `:g`, so the message reads "from 0 to 5e+06" (`engine.py` line 147). | **Yes.** The budget fields on the setup page are free number inputs. Typing 6000000 for the maximum shows "budget maximum must be a number from 0 to 5e+06." (checked through the real Flask app, HTTP 400). | Format whole numbers with thousands separators, then remove the `xfail` marker. |
+| **D1 (fixed)** | Medium | The budget limit was printed with `:g`, so the message read "from 0 to 5e+06" (`engine.py`). | **Yes.** The budget fields on the setup page are free number inputs. Typing 6000000 for the maximum shows "budget maximum must be a number from 0 to 5e+06." (checked through the real Flask app, HTTP 400). | **Fixed 2 Nov 2026:** `_number()` in `engine.py` prints limits with thousands separators. The web page now says "from 0 to 5,000,000" (checked through the Flask app). |
 | O1 | Low | Two messages show code keys, not the names users see: `['gp', 'hospital', 'polyclinic']`, `hawker_centre`. The engine's own comment (line 127) says messages must name things as users see them. | No. These values come from radio buttons and checkboxes, so only a forged request reaches them. | Optional: use the factors' display labels. |
 | O2 | Low | The min > max message has no "Housing Affordability:" prefix, unlike every other option message. It comes from `HousingAffordabilityScorer.validate_options`, not the engine. | Yes, but the message is still clear. | Optional. |
 

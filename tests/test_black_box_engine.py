@@ -138,20 +138,12 @@ INVALID = {
               "Commute: destination postal code must be a 6-digit Singapore postal code"),
 }
 
-# Open defect found by this test (docs/testing/black-box-scoring-engine.md, D1): the
-# budget limit is printed with :g, so a user who types 6000000 reads "from 0 to 5e+06".
-# strict=True: once the message is fixed these cases pass, xfail turns into a failure,
-# and this marker must be removed, so the fix cannot go unnoticed.
-OPEN_DEFECTS = {"BB-17", "BB-18"}
+# BB-17 and BB-18 found defect D1 (docs/testing/black-box-scoring-engine.md): the budget
+# limit was printed with :g, so a user who typed 6000000 read "from 0 to 5e+06". Fixed;
+# they now guard against it coming back.
 
 
-def _case(cid):
-    marks = [pytest.mark.xfail(strict=True, reason="defect D1: budget limit shown as 5e+06")
-             ] if cid in OPEN_DEFECTS else []
-    return pytest.param(cid, id=cid, marks=marks)
-
-
-@pytest.mark.parametrize("case", [_case(c) for c in INVALID])
+@pytest.mark.parametrize("case", INVALID, ids=list(INVALID))
 def test_invalid_requests_are_rejected_with_a_message(engine, case):
     areas, choices, message = INVALID[case]
     with pytest.raises(InvalidRequest) as err:

@@ -19,6 +19,11 @@ MIN_WEIGHT, MAX_WEIGHT = 1, 10
 CLOSE_CALL_TENTHS = 2   # 0.2
 
 
+def _number(x):
+    """A limit as users write it: 5,000,000, not 5e+06 (which :g gives for a budget)."""
+    return f"{x:,.0f}" if float(x).is_integer() else f"{x:,}"
+
+
 class NoFactorsLeft(Exception):
     """Every included factor was dropped for missing data."""
 
@@ -145,7 +150,8 @@ class ScoringEngine:
                         raise InvalidRequest(f"{label}: {opt(name)} must be {allowed[name].description}")
                     if isinstance(allowed[name], NumberRange):
                         raise InvalidRequest(f"{label}: {opt(name)} must be a number from "
-                                             f"{allowed[name].minimum:g} to {allowed[name].maximum:g}")
+                                             f"{_number(allowed[name].minimum)} to "
+                                             f"{_number(allowed[name].maximum)}")
                     raise InvalidRequest(f"{label}: {opt(name)} must be one of {allowed[name]}")
             self.strategies[key].validate_options(choice.options)
         return {a: {k: info[a][k] for k in ("region", "n_blocks", "n_flats", "small_sample")}

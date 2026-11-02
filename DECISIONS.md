@@ -915,3 +915,18 @@ The two food-deal channels have plenty of posts with a date, but most deals run 
 
 **Decision:** Where to Eat ships without a halal filter or tag. §30's plan (pending MUIS permission) is closed, not paused.
 **Reason:** The class diagram is now the design model the demo and Lab 5 are judged on. A halal filter needs a new data source, its adapter or reference file, and a new field on `Place`, which means another round of class diagram, data dictionary and use case changes for one filter. The user chose to keep the design model stable instead. No MUIS data was ever fetched, so nothing needs removing from the code or the data.
+
+## 36. Deployment and the delivery pipeline (2 Nov 2026)
+
+Agreed with Sarthak (his answers to `Sarthak_deploy_questions.md`).
+
+**Decision:** GoWhere is packaged as a **Docker image** and hosted on **Render's free tier**. The pipeline is: push → GitHub Actions runs the tests with a branch-coverage report → builds the image and checks that it starts → Render deploys that image, only after CI passes.
+**Reason:** Docker answers "how is it packaged", Render answers "where does it run"; they are not alternatives. Testing the built image means what passed CI is what is deployed. Render was chosen in Sarthak's README (16 Oct) as the easiest single-process host; Vercel and Netlify are ruled out by the in-memory sessions (§4, §17). Until this decision nothing had been deployed: the README held instructions only.
+
+**Decision:** The free tier is accepted. Someone opens the site a minute before the demo to wake it. `data/events.db` stays committed to git, as it already is, so each deploy ships the latest events.
+**Reason:** No one has to pay or put in a card. The free tier sleeps after about 15 minutes idle and wipes its disk on every deploy; both are harmless for a demo when the events file travels with the code.
+
+**Decision:** Once the CI workflow has run on `main`, `main` is protected: every change, including both Claude sessions' work, goes through a pull request that CI must pass. Repo admins may bypass the rule in an emergency.
+**Reason:** Lecture 9's continuous integration ("after any integration, all the unit tests must pass") enforced by the tool rather than by habit. Until now about 107 of 135 commits went straight to `main`. The bypass covers a broken demo the night before.
+
+**Verified before handing over (2 Nov):** in a fresh clone with no `.env` and an empty environment, all 475 tests pass and `/`, `/live`, `/lepak` and `/eat` return 200, so CI needs no secrets. A count of `def test_` lines (315) is lower than pytest's count (475) because parametrized tests run once per case; quote pytest's number.

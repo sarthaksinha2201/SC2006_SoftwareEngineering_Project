@@ -1,0 +1,123 @@
+# Continuous integration (DECISIONS.md section 36): every push runs the whole test suite
+# with branch coverage, then builds the Docker image and checks that it starts and serves
+# its four entry pages. No secrets: the tests and the app run without any keys.
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest-cov
+
+      - name: Run the tests with branch coverage
+        run: python -m pytest --cov=gowhere --cov-branch --cov-report=term-missing --cov-report=xml
+
+      - name: Upload coverage.xml
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
+          if-no-files-found: ignore
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          python - >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          if not Path("coverage.xml").exists():
+              print("No coverage report: the test step failed before writing one.")
+              raise SystemExit
+          root = ET.parse("coverage.xml").getroot()
+          lines, lines_hit = int(root.get("lines-valid")), int(root.get("lines-covered"))
+          branches, branches_hit = int(root.get("branches-valid")), int(root.get("branches-covered"))
+          print("## Coverage of `gowhere/`\n")
+          print("| | Covered | Total | % |")
+          print("|---|---:|---:|---:|")
+          print(f"| Statements | {lines_hit} | {lines} | {100 * lines_hit / lines:.1f}% |")
+          print(f"| Branches | {branches_hit} | {branches} | {100 * branches_hit / branches:.1f}% |")
+          print("\nPer-file detail: the `coverage` artifact, or the test step's log.")
+          EOF
+
+  image:
+    name: image
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the image
+        run: docker build -t gowhere .
+
+      - name: Start the container
+        run: docker run -d --name gowhere -p 8000:8000 -e PORT=8000 gowhere
+
+      - name: Wait for it to answer
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS -o /dev/null http://127.0.0.1:8000/; then
+              echo "Answered after about ${i} s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "No answer after 30 s"
+          exit 1
+
+      - name: Check the four entry pages return 200
+        run: |
+          status=0
+          for path in / /live /lepak /eat; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:8000${path}")
+            echo "${path} -> ${code}"
+            [ "$code" = 200 ] || status=1
+          done
+          exit $status
+
+      - name: Check the image's contents and its user
+        run: |
+          docker exec gowhere sh -c '
+            check() { if eval "$1"; then echo "ok: $2"; else echo "FAILED: $2"; exit 1; fi; }
+            check "test \$(id -u) != 0" "runs as $(id -un), not root"
+            for f in gowhere/serve.py data/snapshot.db data/eat.db data/events.db data/reference/venue_images.csv; do
+              check "test -e $f" "has $f"
+            done
+            check "test ! -e .env" "no .env"
+            check "test -f data/logs/serve.log" "wrote data/logs/serve.log"
+          '
+          # SQLite removes events.db-wal when the last connection closes, so check while open.
+          docker exec -i gowhere python - <<'EOF'
+          import os
+          from gowhere.lepak.store import EventStore
+          store = EventStore()
+          print(len(store.events()), "events readable")
+          assert os.path.exists("data/events.db-wal"), "could not create events.db-wal"
+          print("opened events.db in WAL mode (created events.db-wal)")
+          EOF
+
+      - name: Container log
+        if: always()
+        run: docker logs gowhere || true
+
+      - name: Stop the container
+        if: always()
+        run: docker rm -f gowhere || true

@@ -16,12 +16,18 @@ def area(page, name):
     return page.get_by_role("checkbox", name=re.compile(rf"^{name}\b"))
 
 
-def choose_neighbourhoods(page, *names):
-    """Tick neighbourhoods in the list under the 3D map picker, as a keyboard user does.
-    The list is the form's real state; the map only drives it (app.js initAreaPicker)."""
+def open_area_list(page):
+    """Open the list under the 3D map picker, as a keyboard user does. The list is the
+    form's real state; the map only drives it (app.js initAreaPicker). Wait for the map
+    first: building it closes the list, which hides the checkboxes from the locators."""
     summary = page.locator("#picker-fallback > summary")
     expect(summary).to_have_text("Or choose from a list")      # the map picker was built
     summary.click()
+    expect(page.locator("#picker-fallback")).to_have_attribute("open", "")
+
+
+def choose_neighbourhoods(page, *names):
+    open_area_list(page)
     for name in names:
         area(page, name).check()
 
@@ -51,6 +57,8 @@ def test_e2e_1_live_compare_then_change_the_comparison(page):
     # The comparison is kept in this browser's session, so changing it starts from it.
     page.get_by_role("link", name="Change the comparison").click()
     expect(page).to_have_url(re.compile(r"/live$"))
+    expect(page.locator("#picker-count")).to_have_text("2 of 2–4 chosen")
+    open_area_list(page)
     expect(area(page, "Bedok")).to_be_checked()
     expect(area(page, "Tampines")).to_be_checked()
     expect(area(page, "Bishan")).not_to_be_checked()
@@ -63,6 +71,7 @@ def test_e2e_2_live_rejects_one_neighbourhood_and_says_why(page):
 
     expect(page).to_have_url(re.compile(r"/live$"))
     expect(page.locator(".note--warning").first).to_have_text("Select 2 to 4 neighbourhoods.")
+    open_area_list(page)
     expect(area(page, "Bedok")).to_be_checked()     # input kept
 
 
@@ -122,6 +131,7 @@ def test_e2e_4_each_browser_has_its_own_session(browser, base_url, app):
 
     b.goto("/live/results")                        # nothing compared in this browser
     expect(b).to_have_url(re.compile(r"/live$"))
+    open_area_list(b)
     expect(area(b, "Bedok")).not_to_be_checked()
 
     (cookie,) = alice.cookies()

@@ -4,8 +4,11 @@
 # and the app run without any keys.
 name: CI
 
+# A pull request is tested once, by its pull_request run; a push to main (the merge) is
+# tested again. Pushing every branch as well ran each PR's checks twice.
 on:
   push:
+    branches: [main]
   pull_request:
     branches: [main]
 

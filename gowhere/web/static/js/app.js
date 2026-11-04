@@ -257,6 +257,9 @@
 
       var byKey = {};
       geojson.features.forEach(function (f) { byKey[f.properties.key] = f; });
+      // The bar is on screen from here, so fill it now rather than when the map has
+      // loaded: on a slow GPU that took seconds, with an empty bar (tests/e2e, E2E-1).
+      redraw();
 
       var map = new maplibregl.Map({
         container: mapEl,

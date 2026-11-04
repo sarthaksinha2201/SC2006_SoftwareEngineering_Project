@@ -1,6 +1,7 @@
-# Continuous integration (DECISIONS.md section 36): every push runs the whole test suite
-# with branch coverage, then builds the Docker image and checks that it starts and serves
-# its four entry pages. No secrets: the tests and the app run without any keys.
+# Continuous integration (DECISIONS.md sections 36 and 37): every push runs the whole test
+# suite with branch coverage, then the browser end-to-end tests, then builds the Docker
+# image and checks that it starts and serves its four entry pages. No secrets: the tests
+# and the app run without any keys.
 name: CI
 
 on:
@@ -58,9 +59,39 @@ jobs:
           print("\nPer-file detail: the `coverage` artifact, or the test step's log.")
           EOF
 
+  e2e:
+    name: e2e
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies and Chromium
+        run: |
+          pip install -r requirements.txt pytest-playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Run the browser end-to-end tests
+        run: python -m pytest tests/e2e -v --tracing retain-on-failure --output test-results
+
+      # A failed test leaves a Playwright trace: open it with `playwright show-trace`
+      # to step through the screens, network calls and console of that run.
+      - name: Upload traces of failed tests
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results
+          if-no-files-found: ignore
+
   image:
     name: image
-    needs: test
+    needs: [test, e2e]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

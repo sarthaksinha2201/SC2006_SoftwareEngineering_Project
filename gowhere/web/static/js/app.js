@@ -317,6 +317,19 @@
         redraw();
       });
 
+      // A town ticked in the list shows on the map and in the count too; before this,
+      // the bar kept saying "0 of 2–4 chosen" (found by tests/e2e, E2E-1). toggle()
+      // sets .checked directly, which fires no change event, so this never runs twice.
+      Object.keys(boxes).forEach(function (k) {
+        boxes[k].addEventListener("change", function () {
+          if (byKey[k] && map.getSource("areas")) {
+            map.setFeatureState({ source: "areas", id: byKey[k].id },
+                                { selected: boxes[k].checked });
+          }
+          redraw();
+        });
+      });
+
       map.on("mousemove", "areas-3d", function (e) {
         var f = e.features[0];
         if (hovered !== null && hovered !== f.id) {

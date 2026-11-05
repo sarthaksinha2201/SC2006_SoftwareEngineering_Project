@@ -257,6 +257,9 @@
 
       var byKey = {};
       geojson.features.forEach(function (f) { byKey[f.properties.key] = f; });
+      // The bar is on screen from here, so fill it now rather than when the map has
+      // loaded: on a slow GPU that took seconds, with an empty bar (tests/e2e, E2E-1).
+      redraw();
 
       var map = new maplibregl.Map({
         container: mapEl,
@@ -315,6 +318,19 @@
         });
         map.fitBounds(bounds(geojson), { padding: 28, duration: 0 });
         redraw();
+      });
+
+      // A town ticked in the list shows on the map and in the count too; before this,
+      // the bar kept saying "0 of 2–4 chosen" (found by tests/e2e, E2E-1). toggle()
+      // sets .checked directly, which fires no change event, so this never runs twice.
+      Object.keys(boxes).forEach(function (k) {
+        boxes[k].addEventListener("change", function () {
+          if (byKey[k] && map.getSource("areas")) {
+            map.setFeatureState({ source: "areas", id: byKey[k].id },
+                                { selected: boxes[k].checked });
+          }
+          redraw();
+        });
       });
 
       map.on("mousemove", "areas-3d", function (e) {

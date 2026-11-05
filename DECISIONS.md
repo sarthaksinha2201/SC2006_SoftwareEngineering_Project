@@ -930,3 +930,14 @@ Agreed with Sarthak (his answers to `Sarthak_deploy_questions.md`).
 **Reason:** Lecture 9's continuous integration ("after any integration, all the unit tests must pass") enforced by the tool rather than by habit. Until now about 107 of 135 commits went straight to `main`. The bypass covers a broken demo the night before.
 
 **Verified before handing over (2 Nov):** in a fresh clone with no `.env` and an empty environment, all 475 tests pass and `/`, `/live`, `/lepak` and `/eat` return 200, so CI needs no secrets. A count of `def test_` lines (315) is lower than pytest's count (475) because parametrized tests run once per case; quote pytest's number.
+
+## 37. Browser end-to-end tests (4 Nov 2026)
+
+**Decision:** Four Playwright tests in `tests/e2e/` drive Chromium through the three features: compare two neighbourhoods, see the breakdown and come back to the same choice (E2E-1); a one-neighbourhood comparison rejected with its message (E2E-2); a Lepak search, an event, then Where to Eat near it and one place (E2E-3); two browsers with separate sessions and a cookie that holds only the session id (E2E-4). They run in CI as their own `e2e` job, after `test` and before `image`.
+**Reason:** The unit tests and the Flask test client never run the JavaScript (map picker, category wheel, dialog) or carry state across screens in a browser; these do. Python and pytest rather than Playwright's Node runner, so the team works in one language and one test command.
+
+**Decision:** The app runs in the test process with the real snapshot, place list and the Lepak ingestion fixtures (as of 30 Sep 2026 12:00). OneMap, LTA DataMall and Google Places are stood in for, as in every other test, and the browser is refused any address outside the app.
+**Reason:** No keys and no network, so CI needs no secrets and the result never depends on an outside service or the day the test runs. It also means the tests never spend the Google daily cap (§29), even with a real key in `.env`. The deployed image is still checked separately by the `image` job.
+
+**Found by E2E-1 and fixed:** ticking neighbourhoods in the list under the 3D map left the picker bar at "0 of 2–4 chosen" and the map unhighlighted, because only map clicks updated them. `app.js` now updates both when a list checkbox changes.
+

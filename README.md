@@ -48,6 +48,8 @@ HDB resales to score Housing Affordability, and the app tells you so.
 
 ```bash
 .venv/bin/python -m pytest -q                       # tests: no network or keys needed
+.venv/bin/pip install pytest-playwright && .venv/bin/python -m playwright install chromium
+.venv/bin/python -m pytest tests/e2e --headed        # browser tests; watch them run
 .venv/bin/python -m gowhere.ingest.run              # fetch new events (needs OPENAI_API_KEY)
 .venv/bin/python -m gowhere.eat.build               # rebuild the places to eat from data/raw
 .venv/bin/python -m gowhere.lepak.images            # venue photos for new events (no key)

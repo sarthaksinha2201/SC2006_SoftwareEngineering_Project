@@ -3,7 +3,9 @@ import csv
 import io
 
 from gowhere.adapters.http import HttpError
-from gowhere.etl.geocode import SearchCache, geocode_all, write_failure_log
+from gowhere.etl import geocode
+from gowhere.etl.geocode import (SearchCache, geocode_all, geocode_postal, geocode_postal_codes,
+                                 load_geocodes, load_postal_geocodes, write_failure_log)
 
 
 def hit(blk, road, lat=1.35, lon=103.85):
@@ -70,3 +72,69 @@ def test_every_failure_is_logged(tmp_path):
     rows = list(csv.DictReader(open(log)))
     assert len(rows) == len(failures) == 3
     assert {r["status"] for r in rows} == {"no_match", "error"}
+
+
+# ---- postal codes: polyclinics and supermarkets are located by postal code -----------
+
+def test_a_postal_code_is_searched_once_and_then_read_from_the_cache(tmp_path):
+    cache, adapter = SearchCache(tmp_path / "c.sqlite"), FakeOneMap({"123456": hit("1", "BEACH ROAD")})
+    assert geocode_postal("123456", adapter, cache) == {"lat": 1.35, "lon": 103.85}
+    assert geocode_postal("123456", adapter, cache) == {"lat": 1.35, "lon": 103.85}
+    assert adapter.calls == ["123456"]
+
+
+def test_a_result_for_a_different_postal_code_is_not_accepted(tmp_path):
+    adapter = FakeOneMap({"654321": hit("1", "BEACH ROAD")})          # its POSTAL is 123456
+    assert geocode_postal("654321", adapter, SearchCache(tmp_path / "c.sqlite")) is None
+
+
+def places(monkeypatch, *rows):
+    monkeypatch.setattr(geocode, "postal_code_places", lambda: list(rows))
+
+
+def test_two_places_in_one_building_cost_one_search(tmp_path, monkeypatch):
+    places(monkeypatch, ("Clinic", "123456"), ("Supermarket", "123456"))
+    adapter = FakeOneMap({"123456": hit("1", "BEACH ROAD")})
+    assert geocode_postal_codes(adapter, SearchCache(tmp_path / "c.sqlite")) == []
+    assert adapter.calls == ["123456"]
+
+
+def test_every_postal_failure_is_named_and_the_rest_still_run(tmp_path, monkeypatch):
+    places(monkeypatch, ("Lost Clinic", "000001"), ("Down Clinic", "000002"), ("Good Clinic", "123456"))
+    adapter = FakeOneMap({"123456": hit("1", "BEACH ROAD")}, fail={"000002"})
+    failures = geocode_postal_codes(adapter, SearchCache(tmp_path / "c.sqlite"))
+    assert failures == ["Lost Clinic (000001): no OneMap match", "Down Clinic (000002): HTTP 503"]
+    assert adapter.calls == ["000001", "000002", "123456"]
+
+
+def test_a_failed_postal_search_is_retried_next_run(tmp_path, monkeypatch):
+    places(monkeypatch, ("Clinic", "123456"))
+    cache = SearchCache(tmp_path / "c.sqlite")
+    geocode_postal_codes(FakeOneMap({}, fail={"123456"}), cache)
+    retry = FakeOneMap({"123456": hit("1", "BEACH ROAD")})
+    assert geocode_postal_codes(retry, cache) == [] and retry.calls == ["123456"]
+
+
+# ---- offline: the snapshot build reads only the cache --------------------------------
+
+def test_offline_blocks_resolve_from_the_cache_and_the_rest_are_marked_uncached(tmp_path):
+    path = tmp_path / "c.sqlite"
+    SearchCache(path).put("1 BEACH RD", hit("1", "BEACH ROAD"))
+    results = load_geocodes(path, blocks=BLOCKS[:2])
+    assert [r["status"] for r in results] == ["ok", "uncached"]
+
+
+def test_offline_postal_codes_separate_found_from_never_searched(tmp_path):
+    path = tmp_path / "c.sqlite"
+    cache = SearchCache(path)
+    cache.put("123456", hit("1", "BEACH ROAD"))
+    cache.put("654321", {"found": 0, "results": []})
+    assert load_postal_geocodes(["123456", "654321", "000001"], path) == {
+        "123456": {"lat": 1.35, "lon": 103.85}, "654321": None, "000001": None}
+
+
+def test_the_cache_keeps_one_answer_per_query(tmp_path):
+    cache = SearchCache(tmp_path / "c.sqlite")
+    cache.put("q", {"found": 0})
+    cache.put("q", {"found": 1})
+    assert cache.get("q") == {"found": 1} and len(cache) == 1 and cache.get("other") is None

@@ -93,10 +93,11 @@ def places(monkeypatch, *rows):
 
 
 def test_two_places_in_one_building_cost_one_search(tmp_path, monkeypatch):
-    places(monkeypatch, ("Clinic", "123456"), ("Supermarket", "123456"))
-    adapter = FakeOneMap({"123456": hit("1", "BEACH ROAD")})
-    assert geocode_postal_codes(adapter, SearchCache(tmp_path / "c.sqlite")) == []
-    assert adapter.calls == ["123456"]
+    # A failing search, because a successful one would be saved by the cache anyway.
+    places(monkeypatch, ("Clinic", "000002"), ("Supermarket", "000002"))
+    adapter = FakeOneMap({}, fail={"000002"})
+    failures = geocode_postal_codes(adapter, SearchCache(tmp_path / "c.sqlite"))
+    assert adapter.calls == ["000002"] and failures == ["Clinic (000002): HTTP 503"]
 
 
 def test_every_postal_failure_is_named_and_the_rest_still_run(tmp_path, monkeypatch):

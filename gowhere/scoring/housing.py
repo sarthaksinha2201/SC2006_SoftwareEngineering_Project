@@ -78,7 +78,7 @@ CREATE INDEX housing_transaction_area_type ON housing_transaction(planning_area,
 
     def validate_options(self, options):
         if options["budget_min"] > options["budget_max"]:
-            raise InvalidRequest("budget minimum must not exceed budget maximum")
+            raise InvalidRequest(f"{self.label}: budget minimum must not exceed budget maximum")
 
     def _counts(self, snapshot, areas, options):
         """{area: (matching transactions, of which within budget)}"""

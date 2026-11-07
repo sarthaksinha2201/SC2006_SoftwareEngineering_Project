@@ -56,6 +56,9 @@ class ScoringStrategy(ABC):
     # How an option is named in messages shown to users; otherwise its key with
     # underscores as spaces ("facility_type" -> "facility type").
     option_labels = {}
+    # How an option's values are named in messages shown to users, as
+    # {option name: {value: label}}; values not listed are shown as they are.
+    value_labels = {}
 
     # ---- ETL time (offline, builds the snapshot) --------------------------------
 

@@ -19,6 +19,8 @@ from gowhere.snapshot import Snapshot
 
 POSTAL = "018956"
 ALL_AMENITIES = ["supermarket", "hawker_centre", "library", "mall", "gym", "cafe"]
+AMENITIES_MESSAGE = ("Amenities: choose one or more of supermarkets, hawker centres, libraries, "
+                     "malls, gyms, cafes, each once")
 GREENERY = {"greenery": F(5)}
 
 
@@ -113,20 +115,20 @@ INVALID = {
     "BB-15": (["BEDOK", "TAMPINES"], {"healthcare": F(5, {})},
               "Healthcare: options must be exactly facility type"),
     "BB-16": (["BEDOK", "TAMPINES"], {"healthcare": F(5, {"facility_type": "clinic"})},
-              "Healthcare: facility type must be one of ['gp', 'hospital', 'polyclinic']"),
+              "Healthcare: facility type must be one of GP clinic (CHAS), public acute hospital, polyclinic"),
     "BB-17": (["BEDOK", "TAMPINES"], {"housing_affordability": housing(budget_min=-1)},
               "Housing Affordability: budget minimum must be a number from 0 to 5,000,000"),
     "BB-18": (["BEDOK", "TAMPINES"], {"housing_affordability": housing(budget_max=5_000_001)},
               "Housing Affordability: budget maximum must be a number from 0 to 5,000,000"),
     "BB-19": (["BEDOK", "TAMPINES"],
               {"housing_affordability": housing(budget_min=700_001, budget_max=700_000)},
-              "budget minimum must not exceed budget maximum"),
+              "Housing Affordability: budget minimum must not exceed budget maximum"),
     "BB-20": (["BEDOK", "TAMPINES"], {"amenities": F(5, {"amenity_types": []})},
-              "Amenities: choose one or more of " + ", ".join(ALL_AMENITIES) + ", each once"),
+              AMENITIES_MESSAGE),
     "BB-21": (["BEDOK", "TAMPINES"], {"amenities": F(5, {"amenity_types": ["gym", "gym"]})},
-              "Amenities: choose one or more of " + ", ".join(ALL_AMENITIES) + ", each once"),
+              AMENITIES_MESSAGE),
     "BB-22": (["BEDOK", "TAMPINES"], {"amenities": F(5, {"amenity_types": ["cinema"]})},
-              "Amenities: choose one or more of " + ", ".join(ALL_AMENITIES) + ", each once"),
+              AMENITIES_MESSAGE),
     "BB-23": (["BEDOK", "TAMPINES"],
               {"commute": F(5, {"destination_postal": "12345", "mode": "pt"})},
               "Commute: destination postal code must be a 6-digit Singapore postal code"),

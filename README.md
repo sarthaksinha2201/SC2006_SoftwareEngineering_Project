@@ -32,6 +32,7 @@ The app runs without any keys. Without them, some features fall back:
 | `ONEMAP_EMAIL` + `ONEMAP_PASSWORD` | Commute is left out of Where to Live. Lepak shows straight-line distances instead of travel times and routes. |
 | `LTA_DATAMALL_KEY` | Lepak's drive mode shows "Parking information unavailable". |
 | `OPENAI_API_KEY` | You can't fetch new events; the app shows the ones already in the repo. |
+| `GOOGLE_MAPS_API_KEY` | Where to Eat shows places without Google ratings. |
 
 To enable a feature, create a file named `.env` in the project folder with the keys you
 have, one per line, for example `ONEMAP_EMAIL=you@example.com`. The `.env` file is ignored

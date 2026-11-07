@@ -135,7 +135,7 @@ def test_dropped_factor_named_with_area_and_reason(client):
     ({"weight_greenery": "11"}, "weight must be"),
     ({"include_housing_affordability": "1", "weight_housing_affordability": "5",
       "flat_type": "4 ROOM", "budget_min": "700000", "budget_max": "400000"},
-     "Budget minimum must not exceed"),
+     "budget minimum must not exceed"),
 ])
 def test_invalid_submissions_rerender_setup_with_message(client, over, message):
     r = client.post("/live", data=form(**over))

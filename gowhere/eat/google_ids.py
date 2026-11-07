@@ -6,8 +6,9 @@
 Uses Text Search asking only for the place ID, the "Text Search Essentials (IDs Only)"
 SKU, which Google does not charge for. The place ID is the one piece of Places content
 Google's policies allow to be stored indefinitely, so it is all that is kept, in
-data/raw/google_place_ids.json, keyed by our place's source URL so a rebuild re-attaches
-it. Restartable: places already resolved are skipped.
+data/raw/google_place_ids.json, keyed by place (`key`) so a rebuild re-attaches it.
+Restartable: places already resolved are skipped. A daily quota can stop a run early, so
+hawker centres go first.
 
 An IDs-only search returns no name, so a match can't be checked here. It is checked at
 request time instead, when the rating call returns Google's name (gowhere.eat.ratings).
@@ -33,14 +34,21 @@ def load(raw_dir=None):
     return json.loads(p.read_text()) if p.exists() else {}
 
 
+def key(place):
+    """What a place's ID is stored under. Each OSM place has its own URL, but every NEA
+    hawker centre has the one dataset URL, so those need the name as well."""
+    url = place["source_url"]
+    return f"{url}#{place['name']}" if place.get("source") == "nea" else url
+
+
 def resolve(places, adapter, known=None, sleep=time.sleep, save=None, every=200):
-    """{source_url: place ID or None}. `known` entries are kept, not re-asked."""
+    """{key: place ID or None}. `known` entries are kept, not re-asked."""
     ids = dict(known or {})
     for n, p in enumerate(places, 1):
-        if p["source_url"] in ids:
+        if key(p) in ids:
             continue
         try:
-            ids[p["source_url"]] = adapter.find_place_id(p["name"], p["lat"], p["lon"])
+            ids[key(p)] = adapter.find_place_id(p["name"], p["lat"], p["lon"])
         except PlacesError as e:
             log.warning("stopped at %d of %d: %s", n, len(places), e)
             break
@@ -59,7 +67,8 @@ def main():
     if not adapter.configured:
         raise SystemExit("GOOGLE_MAPS_API_KEY is not set in .env")
     save = lambda ids: path().write_text(json.dumps(ids))
-    ids = resolve(places, adapter, known=load(), save=save)
+    hawkers_first = sorted(places, key=lambda p: p.get("source") != "nea")
+    ids = resolve(hawkers_first, adapter, known=load(), save=save)
     save(ids)
     found = sum(v is not None for v in ids.values())
     print(f"{found} of {len(places)} places have a Google place ID ({len(ids)} asked)")

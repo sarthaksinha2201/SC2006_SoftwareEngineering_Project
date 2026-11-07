@@ -14,8 +14,10 @@ Two calls, priced differently (Google Maps Platform pricing, read 19 Oct 2026):
 **The daily cap.** Every details call is counted against `daily_cap` (per Singapore
 calendar day, per process) BEFORE it is sent. Once the cap is reached, details() returns
 None without calling Google, and the app shows places without ratings. The default
-(config.GOOGLE_DAILY_CAP) keeps within the free 1,000 a month. The Google Cloud console
-quota and budget alert are the second line; this is the one the code controls.
+(config.google_daily_cap) keeps within the free 1,000 a month. The Google Cloud console
+quota and budget alert are the second line; this is the one the code controls. The count
+is in memory, so a restart zeroes it: on a host that sleeps, the console quota is the
+only real limit.
 
 The key comes from GOOGLE_MAPS_API_KEY in .env. It is sent in a header, never a URL, and
 scrubbed from any error text.
@@ -46,10 +48,12 @@ def _scrub(text, key):
 
 
 class DailyCap:
-    """At most `limit` uses per Singapore calendar day. Thread-safe."""
+    """At most `limit` uses per Singapore calendar day. Thread-safe. `limit` is a number,
+    or a function from a date to a number when some days may use more."""
 
     def __init__(self, limit, clock=lambda: datetime.now(SGT)):
-        self.limit, self._clock = limit, clock
+        self._limit_on = limit if callable(limit) else lambda day: limit
+        self._clock = clock
         self._day, self._used = None, 0
         self._lock = threading.Lock()
 
@@ -59,10 +63,15 @@ class DailyCap:
             today = self._clock().date()
             if today != self._day:
                 self._day, self._used = today, 0
-            if self._used >= self.limit:
+            if self._used >= self._limit_on(today):
                 return False
             self._used += 1
             return True
+
+    @property
+    def limit(self):
+        """Today's limit."""
+        return self._limit_on(self._clock().date())
 
     @property
     def used(self):
@@ -75,7 +84,7 @@ class GooglePlacesAdapter:
         self.key = key if key is not None else os.getenv("GOOGLE_MAPS_API_KEY")
         self.session = session or requests.Session()
         self.timeout_s = timeout_s
-        self.cap = cap or DailyCap(config.GOOGLE_DAILY_CAP if daily_cap is None else daily_cap)
+        self.cap = cap or DailyCap(config.google_daily_cap if daily_cap is None else daily_cap)
 
     @property
     def configured(self):

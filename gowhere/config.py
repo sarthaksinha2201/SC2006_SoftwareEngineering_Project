@@ -1,5 +1,6 @@
 """Filesystem locations and model constants shared by the ETL and the web app."""
 import os
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -95,8 +96,20 @@ EAT_PATH = DATA_DIR / "eat.db"           # built offline by gowhere.eat.build; c
 # Google Place Details calls per Singapore day, counted before each call. Ratings are the
 # "Place Details Enterprise" SKU: 1,000 free a month, then US$20 per 1,000. 32 a day is
 # 992 in a 31-day month, inside the free tier. Raise it only with a budget in mind
-# (DECISIONS.md 29).
+# (DECISIONS.md 29 and 30).
 GOOGLE_DAILY_CAP = 32
+# Demo week spends more of November's 1,000. 80 a day for these 5 days, then 32 a day to
+# the end of the month, is 976 (a test checks the sum). After that, 32 again.
+GOOGLE_DEMO_CAP = 80
+GOOGLE_DEMO_DAYS = (date(2026, 11, 8), date(2026, 11, 12))
+
+
+def google_daily_cap(day):
+    """How many Place Details calls `day` may use."""
+    first, last = GOOGLE_DEMO_DAYS
+    return GOOGLE_DEMO_CAP if first <= day <= last else GOOGLE_DAILY_CAP
+
+
 RATING_WORKERS = 8                       # parallel Place Details calls per search
 OSM_FOOD_TAGS = ['["amenity"="restaurant"]', '["amenity"="cafe"]', '["amenity"="fast_food"]',
                  '["amenity"="food_court"]', '["amenity"="ice_cream"]',

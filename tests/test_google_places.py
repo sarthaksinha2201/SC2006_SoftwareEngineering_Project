@@ -6,6 +6,7 @@ from datetime import date, datetime
 
 import pytest
 
+from gowhere import config
 from gowhere.adapters.google_places import (DETAILS_FIELDS, DailyCap, GooglePlacesAdapter,
                                             PlacesError)
 from gowhere.eat import google_ids, ratings
@@ -56,9 +57,25 @@ def test_once_the_cap_is_spent_google_is_not_called_at_all():
     assert len(session.calls) == 3                       # the 4th and 5th never left
 
 
+def test_the_cap_can_depend_on_the_day():
+    day = [datetime(2026, 11, 8, 9, 0)]
+    cap = DailyCap(lambda d: 2 if d.day == 8 else 1, clock=lambda: day[0])
+    assert cap.limit == 2 and [cap.take(), cap.take(), cap.take()] == [True, True, False]
+    day[0] = datetime(2026, 11, 9, 9, 0)
+    assert cap.limit == 1 and [cap.take(), cap.take()] == [True, False]
+
+
+def test_the_default_cap_is_80_through_demo_day_and_32_either_side():
+    caps = {d: config.google_daily_cap(date(2026, 11, d)) for d in (7, 8, 12, 13)}
+    assert caps == {7: 32, 8: 80, 12: 80, 13: 32}
+
+
 def test_the_default_cap_stays_inside_googles_free_tier():
-    from gowhere import config
-    assert config.GOOGLE_DAILY_CAP * 31 <= 1000         # Place Details Enterprise: 1,000 free
+    limit = 1000                                        # Place Details Enterprise: 1,000 free
+    november_left = [date(2026, 11, d) for d in range(8, 31)]
+    assert sum(config.google_daily_cap(d) for d in november_left) <= limit
+    december = [date(2026, 12, d) for d in range(1, 32)]
+    assert sum(config.google_daily_cap(d) for d in december) <= limit
 
 
 # ---- the calls ----
@@ -163,6 +180,25 @@ def test_resolve_skips_known_places_and_stops_cleanly_on_error():
     a = Adapter()
     ids = google_ids.resolve(places, a, known={"u0": "id-A"}, sleep=lambda s: None)
     assert ids == {"u0": "id-A", "u1": "id-B"} and a.asked == ["B", "C"]
+
+
+def test_each_hawker_centre_gets_its_own_id_though_they_share_a_source_url():
+    shared = "https://data.gov.sg/datasets/hawkers/view"
+    places = [{"name": "Maxwell", "lat": 1.3, "lon": 103.8, "source": "nea", "source_url": shared},
+              {"name": "Newton", "lat": 1.3, "lon": 103.8, "source": "nea", "source_url": shared},
+              {"name": "Cafe", "lat": 1.3, "lon": 103.8, "source": "osm", "source_url": "node/1"}]
+
+    class Adapter:
+        def find_place_id(self, name, lat, lon):
+            return f"id-{name}"
+    ids = google_ids.resolve(places, Adapter(), sleep=lambda s: None)
+    assert [ids[google_ids.key(p)] for p in places] == ["id-Maxwell", "id-Newton", "id-Cafe"]
+
+
+def test_every_real_place_has_a_key_of_its_own():
+    from gowhere.eat.store import PlaceStore
+    places = PlaceStore.load(config.EAT_PATH).places
+    assert len({google_ids.key(p) for p in places}) == len(places)
 
 
 # ---- the screens ----

@@ -204,7 +204,7 @@ def main():
     counts["notable"] = sum(bool(p.get("wikipedia_title")) for p in places)
     gids = google_ids.load(raw_dir)
     for p in places:
-        p["google_place_id"] = gids.get(p["source_url"])
+        p["google_place_id"] = gids.get(google_ids.key(p))
     counts["google_place_ids"] = sum(bool(p["google_place_id"]) for p in places)
     meta = {**{k: str(v) for k, v in counts.items()}, **coverage(places),
             "wikipedia_as_of": wiki_as_of or "",

@@ -24,6 +24,7 @@ FACILITY_LABELS = {
 class HealthcareScorer(ScoringStrategy):
     key = "healthcare"
     label = "Healthcare"
+    value_labels = {"facility_type": FACILITY_LABELS}
 
     def schema(self):
         return """

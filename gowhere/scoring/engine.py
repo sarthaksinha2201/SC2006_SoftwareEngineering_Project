@@ -134,6 +134,8 @@ class ScoringEngine:
             strategy = self.strategies[key]
             label = strategy.label
             opt = lambda name: strategy.option_labels.get(name, name.replace("_", " "))
+            values = lambda name, vs: ", ".join(
+                str(strategy.value_labels.get(name, {}).get(v, v)) for v in vs)
             if not isinstance(choice.weight, int) or not MIN_WEIGHT <= choice.weight <= MAX_WEIGHT:
                 raise InvalidRequest(f"{label}: weight must be a whole number "
                                      f"from {MIN_WEIGHT} to {MAX_WEIGHT}")
@@ -145,14 +147,16 @@ class ScoringEngine:
                 if value not in allowed[name]:
                     if isinstance(allowed[name], SubsetOf):
                         raise InvalidRequest(f"{label}: choose one or more of "
-                                             f"{', '.join(allowed[name].choices)}, each once")
+                                             f"{values(name, allowed[name].choices)}, each once")
                     if isinstance(allowed[name], TextPattern):
                         raise InvalidRequest(f"{label}: {opt(name)} must be {allowed[name].description}")
                     if isinstance(allowed[name], NumberRange):
                         raise InvalidRequest(f"{label}: {opt(name)} must be a number from "
                                              f"{_number(allowed[name].minimum)} to "
                                              f"{_number(allowed[name].maximum)}")
-                    raise InvalidRequest(f"{label}: {opt(name)} must be one of {allowed[name]}")
+                    shown = (values(name, allowed[name]) if name in strategy.value_labels
+                             else allowed[name])
+                    raise InvalidRequest(f"{label}: {opt(name)} must be one of {shown}")
             self.strategies[key].validate_options(choice.options)
         return {a: {k: info[a][k] for k in ("region", "n_blocks", "n_flats", "small_sample")}
                 for a in areas}

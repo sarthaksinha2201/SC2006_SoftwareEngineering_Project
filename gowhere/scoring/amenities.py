@@ -42,6 +42,7 @@ def all_combinations():
 class AmenitiesScorer(ScoringStrategy):
     key = "amenities"
     label = "Amenities"
+    value_labels = {"amenity_types": AMENITY_TYPES}
 
     def __init__(self, radius_m=config.AMENITY_RADIUS_M, cap=config.AMENITY_CAP):
         self.radius_m, self.cap = radius_m, cap

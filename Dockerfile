@@ -25,4 +25,6 @@ RUN useradd --create-home --uid 10001 gowhere \
 USER gowhere
 
 EXPOSE 8000
-CMD ["sh", "-c", "python -m gowhere.serve --host 0.0.0.0 --port ${PORT:-8000}"]
+# Ingests events now and then every 6 hours (DECISIONS.md section 38). The schedule is a
+# thread inside this one process. GOWHERE_INGEST_EVERY_HOURS=0 turns it off.
+CMD ["sh", "-c", "python -m gowhere.serve --host 0.0.0.0 --port ${PORT:-8000} --ingest-every-hours ${GOWHERE_INGEST_EVERY_HOURS:-6}"]

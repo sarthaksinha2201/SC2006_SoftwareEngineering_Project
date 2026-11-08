@@ -85,11 +85,19 @@ breaks the same assumption. A normal single-process host is what this app expect
 3. Add any of the API keys above as environment variables in Render's dashboard (never
    commit a `.env` file). `GOWHERE_SECRET_KEY` too, if you want sessions to survive a
    restart rather than resetting to a random key each time.
+4. The image fetches new events at start-up and then every 6 hours, which needs
+   `OPENAI_API_KEY`. Without that key the site still works and shows the events in the
+   repo. Set `GOWHERE_INGEST_EVERY_HOURS=0` to turn the schedule off.
 
 Free-tier caveat: the instance spins down after ~15 minutes idle, so the first request
 after that takes 30-50 seconds to wake up. Harmless for a casual demo; if it matters,
 either open the URL yourself a minute beforehand or upgrade to a paid instance (no
 spin-down, same setup otherwise).
+
+The free tier also changes what "every 6 hours" means. A sleeping instance runs nothing,
+and waking it starts again from the events in the repo. So events are fetched once each
+time it wakes, in the background, and the 6-hour timer only fires if it stays awake that
+long (`DECISIONS.md` section 38).
 
 [Railway](https://railway.app) works the same way (connect the repo, it builds the same
 `Dockerfile`, auto-deploy on push) if you'd rather avoid spin-down from the start — no free tier, but

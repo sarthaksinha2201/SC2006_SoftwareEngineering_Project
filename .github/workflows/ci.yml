@@ -127,6 +127,9 @@ jobs:
           done
           exit $status
 
+      - name: Check the ingestion schedule is on
+        run: docker logs gowhere 2>&1 | grep "ingestion scheduled every 6.0 h"
+
       - name: Check the image's contents and its user
         run: |
           docker exec gowhere sh -c '

@@ -850,6 +850,8 @@ Researched after §25a concluded the feature would ship with no quality signal. 
 
 **Third run (9 Nov 2026):** the 100 hawker centres nearest ION Orchard, all matched, each with its own ID. **296 of 8,604 places** now have an ID, including 103 of the 123 hawker centres. The other 20 are the farthest from the demo area and wait for the next day's quota.
 
+**Fourth run (12 Nov 2026, demo day):** the last 20 hawker centres, then the places an Eat search rates from the events nearest ION Orchard after that morning's ingestion (Wheelock Place, House of Tan Yeok Nee, Plaza Singapura, Swissôtel The Stamford). 100 lookups, 98 matched. **391 of 8,604 places** now have an ID, including all 123 hawker centres.
+
 **Decision:** Reduce the routing budget from **40 candidates to 25** (destination and unlisted slots 10 to 6).
 **Reason:** Measured over 8 interleaved searches per configuration. 25 places at 16 workers: median 4.47 s, p90 6.30 s, 8.5 rate-limit retries per search, 2 routes lost. 40 at 16 workers: median 5.29 s, p90 6.45 s, 14 retries, 3 lost. 40 at 8 workers: median 5.68 s, p90 **7.97 s** — against an 8-second target — 10.5 retries, 4 lost. Fewer candidates wins on every measure, while fewer workers pushes the 90th percentile to the limit. Note what "lost" means: a route refused twice falls back to a straight-line estimate, so rate limiting costs **accuracy**, not merely time. The change also cuts rating lookups to 25 per search, raising the free allowance to about 40 searches a month.
 

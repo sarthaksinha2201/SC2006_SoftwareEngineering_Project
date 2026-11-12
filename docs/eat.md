@@ -61,7 +61,7 @@ and is never guessed.
     month, then US$20 per 1,000, i.e. US$0.02 a lookup.
   - A rating is shown only if Google's name for the place matches ours.
   - Ratings live only in that user's session memory.
-  - A hard daily cap, `config.GOOGLE_DAILY_CAP`, defaults to 32 (992 in a 31-day month)
+  - A hard daily cap, `config.google_daily_cap`, defaults to 32 (992 in a 31-day month), and 80 for demo week (8 to 12 Nov 2026, DECISIONS.md section 30)
     and is counted before every call. Once it is spent, places show without ratings, and
     "Highest rated" disappears rather than sorting nothing.
   - A place with no rating shows none, which never reads as a low rating.
